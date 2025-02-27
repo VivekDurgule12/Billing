@@ -5,7 +5,7 @@ function Item({ item, index, removeItem, updateItem }) {
 
   const handleEdit = () => setIsEditing(true);
   const handleSave = () => {
-    if (!item.name || Number(item.quantity) < 1 || Number(item.price) < 0) {
+    if (!item.name || Number(item.quantity) < 0 || Number(item.price) < 0) {
       alert('Please fill all fields correctly before saving.');
       return;
     }
