@@ -72,7 +72,7 @@ function App() {
   };
 
   const totalAmount = items
-    .filter((item) => item.name && Number(item.quantity) >= 1 && Number(item.price) >= 0)
+    .filter((item) => item.name && Number(item.quantity) >= 0 && Number(item.price) >= 0)
     .reduce((sum, item) => sum + Number(item.total), 0);
 
   const handleLogin = (username, password) => {
