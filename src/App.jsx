@@ -46,7 +46,7 @@ function App() {
   const addItem = () => {  
     if (items.length > 0) {  
       const lastItem = items[items.length - 1];  
-      if (!lastItem.name || Number(lastItem.quantity) < 1 || Number(lastItem.price) < 0) {  
+      if (!lastItem.name || Number(lastItem.quantity) < 0 || Number(lastItem.price) < 0) {  
         alert('Please complete the previous item before adding a new one.');  
         return;  
       }  
