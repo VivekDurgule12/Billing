@@ -77,7 +77,7 @@ function App() {
 
   const handleLogin = (username, password) => {
     // Static credentials check
-    if (username === 'vivek' && password === 'vivek12') {
+    if (username === 'Vivek' && password === 'Vivek12') {
       setIsLoggedIn(true);
       localStorage.setItem('isLoggedIn', 'true');
     } else {
