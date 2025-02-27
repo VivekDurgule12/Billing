@@ -15,11 +15,13 @@ function App() {
   const [items, setItems] = useState([]);
   const [remainingAmount, setRemainingAmount] = useState(0);
 
+  // Check login status
   useEffect(() => {
     const loggedIn = localStorage.getItem('isLoggedIn');
     if (loggedIn === 'true') setIsLoggedIn(true);
   }, []);
 
+  // Load data from localStorage after login
   useEffect(() => {
     if (isLoggedIn) {
       setCustomer(JSON.parse(localStorage.getItem('customer')) || customer);
@@ -28,6 +30,7 @@ function App() {
     }
   }, [isLoggedIn]);
 
+  // Save changes to localStorage
   useEffect(() => {
     if (isLoggedIn) localStorage.setItem('customer', JSON.stringify(customer));
   }, [customer]);
@@ -40,19 +43,24 @@ function App() {
     if (isLoggedIn) localStorage.setItem('remainingAmount', remainingAmount);
   }, [remainingAmount]);
 
+  // Add new item only if the last one is filled correctly
   const addItem = () => {
     if (items.length > 0) {
       const lastItem = items[items.length - 1];
-      if (!lastItem.name || Number(lastItem.quantity) <= 0 || Number(lastItem.price) <= 0) {
-        alert('Please complete the previous item with valid values before adding a new one.');
+
+      if (!lastItem.name || Number(lastItem.quantity) < 0.25 || Number(lastItem.price) <= 0) {
+        alert('Please fill all fields correctly before adding a new item.');
         return;
       }
     }
+
     setItems([...items, { id: Date.now(), name: '', quantity: '1', price: '0', total: 0, isEditing: true }]);
   };
 
+  // Remove an item from the list
   const removeItem = (id) => setItems(items.filter((item) => item.id !== id));
 
+  // Update item details while ensuring valid values
   const updateItem = (id, field, value) => {
     setItems((prevItems) =>
       prevItems.map((item) => {
@@ -62,10 +70,13 @@ function App() {
           let quantity = parseFloat(updatedItem.quantity) || 0;
           let price = parseFloat(updatedItem.price) || 0;
 
-          if (quantity < 0.25) quantity = 0.25;
-          if (price < 0) price = 0;
+          // Enforce validation: Minimum quantity 0.25, price should be positive
+          if (quantity < 0.25 || price <= 0) {
+            updatedItem.total = 0; // Invalid total
+          } else {
+            updatedItem.total = (quantity * price).toFixed(2);
+          }
 
-          updatedItem.total = (quantity * price).toFixed(2);
           return updatedItem;
         }
         return item;
@@ -73,11 +84,30 @@ function App() {
     );
   };
 
+  // Calculate the total amount with correct rounding
   const totalAmount = items
     .filter((item) => item.name && Number(item.quantity) >= 0.25 && Number(item.price) >= 0)
     .reduce((sum, item) => sum + Number(item.total), 0)
     .toFixed(2);
 
+  // Save invoice only if all fields are correctly filled
+  const handleSaveInvoice = () => {
+    const hasIncompleteItems = items.some(
+      (item) => !item.name || Number(item.quantity) < 0.25 || Number(item.price) <= 0
+    );
+
+    if (hasIncompleteItems) {
+      alert('Please fill all fields correctly before saving.');
+      return;
+    }
+
+    localStorage.setItem('items', JSON.stringify(items));
+    localStorage.setItem('customer', JSON.stringify(customer));
+    localStorage.setItem('remainingAmount', remainingAmount);
+    alert('Invoice saved successfully!');
+  };
+
+  // Handle login
   const handleLogin = (username, password) => {
     if (username === 'Vivek' && password === 'Vivek12') {
       setIsLoggedIn(true);
@@ -87,13 +117,10 @@ function App() {
     }
   };
 
+  // Handle logout
   const handleLogout = () => {
     setIsLoggedIn(false);
     localStorage.setItem('isLoggedIn', 'false');
-    // Optionally clear app data on logout
-    // localStorage.removeItem('customer');
-    // localStorage.removeItem('items');
-    // localStorage.removeItem('remainingAmount');
   };
 
   return (
@@ -132,6 +159,7 @@ function App() {
             items={items}
             totalAmount={totalAmount}
             remainingAmount={remainingAmount}
+            onSaveInvoice={handleSaveInvoice}
           />
         </div>
       ) : (
