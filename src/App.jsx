@@ -15,30 +15,27 @@ function App() {
   const [items, setItems] = useState([]);
   const [remainingAmount, setRemainingAmount] = useState(0);
 
-  // Check local storage for login state on mount
   useEffect(() => {
     const loggedIn = localStorage.getItem('isLoggedIn');
     if (loggedIn === 'true') setIsLoggedIn(true);
   }, []);
 
-  // Main app data persistence
   useEffect(() => {
     if (isLoggedIn) {
-      const savedCustomer = localStorage.getItem('customer');
-      if (savedCustomer) setCustomer(JSON.parse(savedCustomer));
-      const savedItems = localStorage.getItem('items');
-      if (savedItems) setItems(JSON.parse(savedItems));
-      const savedRemaining = localStorage.getItem('remainingAmount');
-      if (savedRemaining) setRemainingAmount(parseFloat(savedRemaining) || 0);
+      setCustomer(JSON.parse(localStorage.getItem('customer')) || customer);
+      setItems(JSON.parse(localStorage.getItem('items')) || []);
+      setRemainingAmount(parseFloat(localStorage.getItem('remainingAmount')) || 0);
     }
   }, [isLoggedIn]);
 
   useEffect(() => {
     if (isLoggedIn) localStorage.setItem('customer', JSON.stringify(customer));
   }, [customer]);
+
   useEffect(() => {
     if (isLoggedIn) localStorage.setItem('items', JSON.stringify(items));
   }, [items]);
+
   useEffect(() => {
     if (isLoggedIn) localStorage.setItem('remainingAmount', remainingAmount);
   }, [remainingAmount]);
@@ -46,8 +43,8 @@ function App() {
   const addItem = () => {
     if (items.length > 0) {
       const lastItem = items[items.length - 1];
-      if (!lastItem.name || Number(lastItem.quantity) < 1 || Number(lastItem.price) < 0) {
-        alert('Please complete the previous item before adding a new one.');
+      if (!lastItem.name || Number(lastItem.quantity) <= 0 || Number(lastItem.price) <= 0) {
+        alert('Please complete the previous item with valid values before adding a new one.');
         return;
       }
     }
@@ -60,10 +57,15 @@ function App() {
     setItems((prevItems) =>
       prevItems.map((item) => {
         if (item.id === id) {
-          const updatedItem = { ...item, [field]: value };
-          const quantity = Number(updatedItem.quantity) || 0;
-          const price = Number(updatedItem.price) || 0;
-          updatedItem.total = quantity * price;
+          let updatedItem = { ...item, [field]: value };
+
+          let quantity = parseFloat(updatedItem.quantity) || 0;
+          let price = parseFloat(updatedItem.price) || 0;
+
+          if (quantity < 0.25) quantity = 0.25;
+          if (price < 0) price = 0;
+
+          updatedItem.total = (quantity * price).toFixed(2);
           return updatedItem;
         }
         return item;
@@ -72,11 +74,11 @@ function App() {
   };
 
   const totalAmount = items
-    .filter((item) => item.name && Number(item.quantity) >= 0 && Number(item.price) >= 0)
-    .reduce((sum, item) => sum + Number(item.total), 0);
+    .filter((item) => item.name && Number(item.quantity) >= 0.25 && Number(item.price) >= 0)
+    .reduce((sum, item) => sum + Number(item.total), 0)
+    .toFixed(2);
 
   const handleLogin = (username, password) => {
-    // Static credentials check
     if (username === 'Vivek' && password === 'Vivek12') {
       setIsLoggedIn(true);
       localStorage.setItem('isLoggedIn', 'true');
