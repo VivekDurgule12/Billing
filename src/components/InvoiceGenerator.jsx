@@ -21,6 +21,8 @@ function InvoiceGenerator({ customer, items, totalAmount, remainingAmount }) {
     doc.text('Items', 20, 80);
     doc.setFontSize(10);
     doc.setTextColor(0, 0, 0);
+    
+    // Table headers
     const headers = ['S.No', 'Item Name', 'Qty', 'Price', 'Total'];
     const startY = 90;
     headers.forEach((header, i) => doc.text(header, 20 + i * 40, startY));
@@ -30,6 +32,7 @@ function InvoiceGenerator({ customer, items, totalAmount, remainingAmount }) {
     const validItems = items.filter(
       (item) => item.name && Number(item.quantity) >= 1 && Number(item.price) >= 0
     );
+    
     validItems.forEach((item, index) => {
       doc.text(`${index + 1}`, 20, y);
       doc.text(item.name, 60, y);
@@ -45,7 +48,6 @@ function InvoiceGenerator({ customer, items, totalAmount, remainingAmount }) {
     doc.text(`Remaining Amount: ₹${formatINR(remainingAmount)}`, 20, y + 20);
     doc.text(`Final Bill Total: ₹${formatINR(totalAmount)}`, 20, y + 30);
 
-    // Save and provide feedback
     const fileName = `invoice_${customer.name || 'bill'}.pdf`;
     doc.save(fileName);
     alert(`PDF downloaded as "${fileName}"! Check your Downloads folder.`);
@@ -55,30 +57,40 @@ function InvoiceGenerator({ customer, items, totalAmount, remainingAmount }) {
     const validItems = items.filter(
       (item) => item.name && Number(item.quantity) >= 1 && Number(item.price) >= 0
     );
-    const text = [
-      `Invoice`,
-      `Customer: ${customer.name || 'N/A'}`,
-      `Address: ${customer.address || 'N/A'}`,
-      `Date: ${customer.date || 'N/A'}`,
-      '',
-      'Items:',
-      'S.No  Item Name           Qty  Price      Total',
-      validItems
-        .map((item, index) =>
-          `${(index + 1).toString().padEnd(6)}${item.name.padEnd(20)}${item.quantity.toString().padEnd(5)}₹${formatINR(item.price).padEnd(11)}₹${formatINR(item.total)}`
-        )
-        .join('\n'),
-      '',
-      `Total Amount: ₹${formatINR(totalAmount)}`,
-      `Remaining Amount: ₹${formatINR(remainingAmount)}`,
-      `Final Bill Total: ₹${formatINR(totalAmount)}`,
-    ].join('\n');
+
+    const header = `------------------------------------------------------------\n` +
+                   `| S.No | Item Name           | Qty  | Price      | Total      |\n` +
+                   `------------------------------------------------------------`;
+
+    const rows = validItems
+      .map((item, index) => {
+        const serialNo = (index + 1).toString().padEnd(5);
+        const itemName = item.name.padEnd(18);
+        const qty = item.quantity.toString().padEnd(5);
+        const price = `₹${formatINR(item.price)}`.padEnd(10);
+        const total = `₹${formatINR(item.total)}`.padEnd(10);
+        return `| ${serialNo} | ${itemName} | ${qty} | ${price} | ${total} |`;
+      })
+      .join("\n");
+
+    const footer = `------------------------------------------------------------\n` +
+                   `Total Amount: ₹${formatINR(totalAmount)}\n` +
+                   `Remaining Amount: ₹${formatINR(remainingAmount)}\n` +
+                   `Final Bill Total: ₹${formatINR(totalAmount)}\n`;
+
+    const text = `Invoice\n` +
+                 `Customer: ${customer.name || "N/A"}\n` +
+                 `Address: ${customer.address || "N/A"}\n` +
+                 `Date: ${customer.date || "N/A"}\n\n` +
+                 header + "\n" +
+                 rows + "\n" +
+                 footer;
 
     if (navigator.share) {
       navigator.share({ text });
     } else {
       navigator.clipboard.writeText(text);
-      alert('Invoice copied to clipboard!');
+      alert("Invoice copied to clipboard!");
     }
   };
 
