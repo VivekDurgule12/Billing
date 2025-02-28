@@ -57,6 +57,7 @@ function InvoiceGenerator({ customer, items, totalAmount, remainingAmount }) {
     );
     const text = [
       `Invoice`,
+      `Durgule Store`,
       `Customer: ${customer.name || 'N/A'}`,
       `Address: ${customer.address || 'N/A'}`,
       `Date: ${customer.date || 'N/A'}`,
