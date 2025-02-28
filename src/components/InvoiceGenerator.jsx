@@ -66,6 +66,7 @@ function InvoiceGenerator({ customer, items, totalAmount, remainingAmount }) {
       validItems
         .map((item, index) =>
           `${(index + 1).toString().padEnd(6)}${item.name.padEnd(20)}${item.quantity.toString().padEnd(5)}₹${formatINR(item.price).padEnd(11)}₹${formatINR(item.total)}`
+'________________________________________'
         )
         .join('\n'),
       '',
