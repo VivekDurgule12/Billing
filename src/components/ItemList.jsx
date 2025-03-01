@@ -2,8 +2,6 @@ import React, { useEffect, useRef } from 'react';
 
 const ItemList = ({ items, removeItem, addItem, handleKeyDown, handleBlur, handleChange, focusedItemId, focusedField }) => {
     const inputRefs = useRef({});
-    const enterPressCount = useRef(0); // Tracks number of Enter presses
-    const enterPressTimer = useRef(null); // Timer to reset the counter
 
     // Focus management: Automatically focus an input when specified by the parent
     useEffect(() => {
@@ -12,21 +10,12 @@ const ItemList = ({ items, removeItem, addItem, handleKeyDown, handleBlur, handl
         }
     }, [focusedItemId, focusedField, items]);
 
-    // Handle double Enter press in the price field
-    const handleDoubleEnter = (e, field, itemId) => {
-        if (e.key === 'Enter' && field === 'price') {
-            enterPressCount.current += 1;
 
-            if (enterPressCount.current === 2) {
-                addItem(); // Add a new item
-                enterPressCount.current = 0; // Reset the counter
-                clearTimeout(enterPressTimer.current); // Clear the timer
-            } else {
-                // Reset counter after 500ms if no second Enter press
-                enterPressTimer.current = setTimeout(() => {
-                    enterPressCount.current = 0;
-                }, 500);
-            }
+    // Handle Enter key presses in the price field.  Now just defers to the parent's handler.
+    const handlePriceKeyDown = (e, field, itemId) => {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Prevent default form submission
+            handleKeyDown(e, field, itemId);
         }
     };
 
@@ -41,12 +30,9 @@ const ItemList = ({ items, removeItem, addItem, handleKeyDown, handleBlur, handl
                     }
 
                     // Calculate the total: qty * price
-                    const qty = Number(item.quantity) || 0; // Default to 0 if not a number
-                    const price = Number(item.price) || 0;  // Default to 0 if not a number
+                    const qty = Number(item.quantity) || 0;
+                    const price = Number(item.price) || 0;
                     const total = qty * price;
-
-                    // Create the display string (not used in UI but kept for consistency)
-                    const displayText = `${item.name || 'Unnamed'} - Qty:${qty} * ₹${price.toFixed(2)} = ₹${total.toFixed(2)}`;
 
                     return (
                         <div key={item.id} className="flex flex-wrap gap-3 items-center bg-gray-700 p-3 rounded-lg">
@@ -56,7 +42,6 @@ const ItemList = ({ items, removeItem, addItem, handleKeyDown, handleBlur, handl
                             {/* Name Input */}
                             <input
                                 type="text"
-                                id={`${item.id}-name`}
                                 value={item.name || ''}
                                 onChange={(e) => handleChange(e, "name", item.id)}
                                 onKeyDown={(e) => handleKeyDown(e, "name", item.id)}
@@ -70,7 +55,6 @@ const ItemList = ({ items, removeItem, addItem, handleKeyDown, handleBlur, handl
                             {/* Quantity Input */}
                             <input
                                 type="number"
-                                id={`${item.id}-quantity`}
                                 value={item.quantity || ''}
                                 onChange={(e) => handleChange(e, "quantity", item.id)}
                                 onKeyDown={(e) => handleKeyDown(e, "quantity", item.id)}
@@ -85,13 +69,9 @@ const ItemList = ({ items, removeItem, addItem, handleKeyDown, handleBlur, handl
                             {/* Price Input */}
                             <input
                                 type="number"
-                                id={`${item.id}-price`}
                                 value={item.price || ''}
                                 onChange={(e) => handleChange(e, "price", item.id)}
-                                onKeyDown={(e) => {
-                                    handleKeyDown(e, "price", item.id); // Existing keydown handler
-                                    handleDoubleEnter(e, "price", item.id); // Check for double Enter
-                                }}
+                                onKeyDown={(e) => handlePriceKeyDown(e, "price", item.id)} // Combined handler for price
                                 onBlur={() => handleBlur("price", item.id)}
                                 ref={(el) => (inputRefs.current[item.id]["price"] = el)}
                                 placeholder="Price (₹)"
@@ -110,11 +90,12 @@ const ItemList = ({ items, removeItem, addItem, handleKeyDown, handleBlur, handl
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
-                            <span className="text-sm text-white">={total}</span>
+                            <span className="text-sm text-white">= ₹{total.toFixed(2)}</span>
                         </div>
                     );
                 })}
             </div>
+
         </div>
     );
 };
