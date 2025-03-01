@@ -579,7 +579,7 @@ function App() {
     const { total } = calculateTotals();
 
     const generateInvoiceText = () => {
-        let text = "INVOICE\n";
+        let text = "INVOICE \n DURGULE STORE";
         text += "----------------------------------------\n";
         text += `Customer: ${customer.name || "N/A"}\n`;
         text += `Email: ${customer.email || "N/A"}\n`;
