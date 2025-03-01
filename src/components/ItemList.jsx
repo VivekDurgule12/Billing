@@ -1,5 +1,3 @@
-// Inside ItemList.js
-
 import React, { useEffect, useRef } from 'react';
 
 const ItemList = ({ items, removeItem, updateItem, handleKeyDown, handleBlur, handleChange, focusedItemId, focusedField }) => {
@@ -7,7 +5,7 @@ const ItemList = ({ items, removeItem, updateItem, handleKeyDown, handleBlur, ha
 
     useEffect(() => {
         if (focusedItemId && focusedField && inputRefs.current[focusedItemId] && inputRefs.current[focusedItemId][focusedField]) {
-            inputRefs.current[focusedItemId][focusedField].focus();
+            inputRefs.current[focusedItemId][focusedField]?.focus();
         }
     }, [focusedItemId, focusedField, items]);
 
@@ -28,7 +26,7 @@ const ItemList = ({ items, removeItem, updateItem, handleKeyDown, handleBlur, ha
                                 defaultValue={item.name}
                                 onChange={(e) => handleChange(e, "name", item.id)}
                                 onKeyDown={(e) => handleKeyDown(e, "name", item.id)}
-                                onBlur={(e) => handleBlur("name", item.id)}
+                                onBlur={() => handleBlur("name", item.id)}
                                 ref={(el) => (inputRefs.current[item.id]["name"] = el)}
                                 placeholder="Item Name"
                                 className="flex-1 bg-gray-600 text-white p-2 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200 min-w-40"
@@ -57,7 +55,7 @@ const ItemList = ({ items, removeItem, updateItem, handleKeyDown, handleBlur, ha
                                 className="w-24 bg-gray-600 text-white p-2 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
                                 min="0"
                             />
-                            <button onClick={() => removeItem(item.id)} className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-all duration-200">
+                            <button onClick={() => removeItem(item.id)} className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-all duration-200" aria-label="Remove Item">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
