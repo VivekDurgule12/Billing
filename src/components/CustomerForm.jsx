@@ -17,14 +17,14 @@ function CustomerForm({ customer, setCustomer, onKeyPress }) {
           onKeyPress={(e) => onKeyPress(e, 'name')}
           className="bg-gray-600/50 text-white p-3 rounded-lg border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
         />
-        <input
+        {/* <input
           type="email"
           placeholder="Email"
           value={customer.email}
           onChange={handleChange('email')}
           onKeyPress={(e) => onKeyPress(e, 'email')}
           className="bg-gray-600/50 text-white p-3 rounded-lg border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
-        />
+        /> */}
         <input
           type="text"
           placeholder="Address"
