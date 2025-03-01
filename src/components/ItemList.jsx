@@ -29,7 +29,7 @@ const ItemList = ({ items, removeItem, updateItem, handleKeyDown, handleBlur, ha
                                 onBlur={() => handleBlur("name", item.id)}
                                 ref={(el) => (inputRefs.current[item.id]["name"] = el)}
                                 placeholder="Item Name"
-                                className="flex-1 bg-gray-600 text-white p-2 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
+                                className="flex-1 bg-gray-600 text-white p-2 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200 min-w-40"
                             />
                             <input
                                 type="number"
@@ -40,7 +40,7 @@ const ItemList = ({ items, removeItem, updateItem, handleKeyDown, handleBlur, ha
                                 onBlur={() => handleBlur("quantity", item.id)}
                                 ref={(el) => (inputRefs.current[item.id]["quantity"] = el)}
                                 placeholder="Qty"
-                                className="w-16 bg-gray-600 text-white p-2 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
+                                className="w-24 bg-gray-600 text-white p-2 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
                                 min="0"
                             />
                             <input
@@ -52,11 +52,11 @@ const ItemList = ({ items, removeItem, updateItem, handleKeyDown, handleBlur, ha
                                 onBlur={() => handleBlur("price", item.id)}
                                 ref={(el) => (inputRefs.current[item.id]["price"] = el)}
                                 placeholder="Price (₹)"
-                                className="w-20 bg-gray-600 text-white p-2 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
+                                className="w-24 bg-gray-600 text-white p-2 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
                                 min="0"
                             />
                             <button onClick={() => removeItem(item.id)} className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-all duration-200">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
