@@ -620,11 +620,12 @@ function App() {
         const invoiceText = generateInvoiceText();
 
         if (shareToWhatsapp) {
-            if (!customer.phone) {
-                alert("Customer phone number is required to send to WhatsApp.");
-                return;
-            }
-            const whatsappURL = `https://wa.me/${customer.phone}?text=${encodeURIComponent(invoiceText)}`;
+            // if (!customer.phone) {
+            //     alert("Customer phone number is required to send to WhatsApp.");
+            //     return;
+            // }
+            //const whatsappURL = `https://wa.me/${customer.phone}?text=${encodeURIComponent(invoiceText)}`;
+            const whatsappURL = `https://wa.me/${customer.phone || "9112251220"}?text=${encodeURIComponent(invoiceText)}`;
             window.open(whatsappURL, '_blank');
         } else {
             if (navigator.share) {
