@@ -4,7 +4,8 @@ const ItemList = ({ items, removeItem, updateItem, handleKeyDown, handleBlur, ha
     const inputRefs = useRef({});
 
     useEffect(() => {
-        if (focusedItemId && focusedField && inputRefs.current[focusedItemId] && inputRefs.current[focusedItemId][focusedField]) {
+        // Use optional chaining for safety
+        if (focusedItemId && focusedField && inputRefs.current && inputRefs.current[focusedItemId] && inputRefs.current[focusedItemId][focusedField]) {
             inputRefs.current[focusedItemId][focusedField]?.focus();
         }
     }, [focusedItemId, focusedField, items]);
@@ -26,10 +27,11 @@ const ItemList = ({ items, removeItem, updateItem, handleKeyDown, handleBlur, ha
                                 defaultValue={item.name}
                                 onChange={(e) => handleChange(e, "name", item.id)}
                                 onKeyDown={(e) => handleKeyDown(e, "name", item.id)}
-                                onBlur={() => handleBlur("name", item.id)}
+                                onBlur={(e) => handleBlur("name", item.id)}
                                 ref={(el) => (inputRefs.current[item.id]["name"] = el)}
                                 placeholder="Item Name"
                                 className="flex-1 bg-gray-600 text-white p-2 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200 min-w-40"
+                                inputMode="text" //Specific to mobile for better keyboard
                             />
                             <input
                                 type="number"
@@ -42,6 +44,7 @@ const ItemList = ({ items, removeItem, updateItem, handleKeyDown, handleBlur, ha
                                 placeholder="Qty"
                                 className="w-24 bg-gray-600 text-white p-2 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
                                 min="0"
+                                inputMode="numeric" //Specific to mobile for better keyboard
                             />
                             <input
                                 type="number"
@@ -54,6 +57,7 @@ const ItemList = ({ items, removeItem, updateItem, handleKeyDown, handleBlur, ha
                                 placeholder="Price (₹)"
                                 className="w-24 bg-gray-600 text-white p-2 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
                                 min="0"
+                                inputMode="decimal" //Specific to mobile for better keyboard
                             />
                             <button onClick={() => removeItem(item.id)} className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-all duration-200" aria-label="Remove Item">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
