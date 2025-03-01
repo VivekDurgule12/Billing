@@ -1,27 +1,20 @@
 import React from 'react';
 
 function BillingSummary({ totalAmount, remainingAmount, setRemainingAmount }) {
-  const formatINR = (number) => Number(number).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
   return (
-    <div className="mb-8 bg-gray-600 p-6 rounded-xl border border-orange-600 shadow-lg">
-      <h2 className="text-2xl font-bold text-teal-400 mb-4 text-center tracking-wide">Billing Summary</h2>
-      <div className="space-y-4">
-        <p className="text-lg text-gray-200 text-center">
-          Total Amount: <span className="font-bold text-orange-400">₹{formatINR(totalAmount)}</span>
-        </p>
-        <input
-          type="number"
-          min="0"
-          step="0.01"
-          value={remainingAmount}
-          onChange={(e) => setRemainingAmount(parseFloat(e.target.value) || 0)}
-          placeholder="Remaining Amount (₹)"
-          className="w-full p-3 bg-gray-700 border border-gray-500 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:outline-none transition-all duration-200"
-        />
-        <p className="text-xl font-bold text-gray-200 text-center">
-          Final Bill: <span className="text-teal-400">₹{formatINR(totalAmount)}</span>
-        </p>
+    <div className="bg-gray-700/50 rounded-xl p-6 shadow-md">
+      <h2 className="text-2xl font-semibold text-teal-300 mb-4">Billing Summary</h2>
+      <div className="space-y-2">
+        <p className="font-bold">Total Amount: ₹{totalAmount.toFixed(2)}</p>
+        <div className="mt-4">
+          <label className="block text-sm">Remaining Amount (₹):</label>
+          <input
+            type="number"
+            value={remainingAmount}
+            onChange={(e) => setRemainingAmount(parseFloat(e.target.value) || 0)}
+            className="w-full bg-gray-600/50 text-white p-2 rounded-lg border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
+          />
+        </div>
       </div>
     </div>
   );

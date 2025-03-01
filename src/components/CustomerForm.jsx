@@ -1,29 +1,52 @@
 import React from 'react';
 
-function CustomerForm({ customer, setCustomer }) {
+function CustomerForm({ customer, setCustomer, onKeyPress }) {
+  const handleChange = (field) => (e) => {
+    setCustomer({ ...customer, [field]: e.target.value });
+  };
+
   return (
-    <div className="mb-8 bg-gray-600 p-6 rounded-xl border border-teal-600 shadow-lg">
-      <h2 className="text-2xl font-bold text-orange-400 mb-4 text-center tracking-wide">Customer Details</h2>
-      <div className="space-y-4">
+    <div className="bg-gray-700/50 rounded-xl p-6 shadow-md">
+      <h2 className="text-2xl font-semibold text-teal-300 mb-4">Customer Details</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <input
           type="text"
           placeholder="Customer Name"
           value={customer.name}
-          onChange={(e) => setCustomer({ ...customer, name: e.target.value })}
-          className="w-full p-3 bg-gray-700 border border-gray-500 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:outline-none transition-all duration-200"
+          onChange={handleChange('name')}
+          onKeyPress={(e) => onKeyPress(e, 'name')}
+          className="bg-gray-600/50 text-white p-3 rounded-lg border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
+        />
+        <input
+          type="email"
+          placeholder="Email"
+          value={customer.email}
+          onChange={handleChange('email')}
+          onKeyPress={(e) => onKeyPress(e, 'email')}
+          className="bg-gray-600/50 text-white p-3 rounded-lg border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
         />
         <input
           type="text"
           placeholder="Address"
           value={customer.address}
-          onChange={(e) => setCustomer({ ...customer, address: e.target.value })}
-          className="w-full p-3 bg-gray-700 border border-gray-500 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-teal-500 focus:outline-none transition-all duration-200"
+          onChange={handleChange('address')}
+          onKeyPress={(e) => onKeyPress(e, 'address')}
+          className="bg-gray-600/50 text-white p-3 rounded-lg border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
+        />
+        <input
+          type="tel"
+          placeholder="Phone"
+          value={customer.phone}
+          onChange={handleChange('phone')}
+          onKeyPress={(e) => onKeyPress(e, 'phone')}
+          className="bg-gray-600/50 text-white p-3 rounded-lg border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
         />
         <input
           type="date"
           value={customer.date}
-          onChange={(e) => setCustomer({ ...customer, date: e.target.value })}
-          className="w-full p-3 bg-gray-700 border border-gray-500 rounded-lg text-white focus:ring-2 focus:ring-teal-500 focus:outline-none transition-all duration-200"
+          onChange={handleChange('date')}
+          onKeyPress={(e) => onKeyPress(e, 'date')}
+          className="bg-gray-600/50 text-white p-3 rounded-lg border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
         />
       </div>
     </div>
