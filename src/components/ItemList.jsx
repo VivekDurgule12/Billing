@@ -73,7 +73,7 @@ const ItemList = ({ items, removeItem, updateItem, handleKeyDown, handleBlur, ha
                 value={item.quantity || ''} // Ensure default value is a string
                 onChange={(e) => handleChange(e, "quantity", item.id)}
                 onKeyDown={(e) => handleKeyDown(e, "quantity", item.id)}
-                onBlur={() => handleBlur("quantity", item.id)}
+                onBlur={(e) => handleBlur("quantity", item.id)}
                 ref={(el) => {
                   if (el) inputRefs.current[item.id]["quantity"] = el;
                 }}
@@ -81,7 +81,6 @@ const ItemList = ({ items, removeItem, updateItem, handleKeyDown, handleBlur, ha
                 className="w-24 bg-gray-600 text-white p-3 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
                 min="0"
                 inputMode="numeric"
-                onClick={() => handleInputClick("quantity", item.id)}
               />
 
               {/* Price Input */}
@@ -98,7 +97,6 @@ const ItemList = ({ items, removeItem, updateItem, handleKeyDown, handleBlur, ha
                 className="w-24 bg-gray-600 text-white p-3 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
                 min="0"
                 inputMode="decimal"
-                onClick={() => handleInputClick("price", item.id)}
               />
 
               {/* Remove Button */}
