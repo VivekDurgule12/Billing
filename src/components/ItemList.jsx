@@ -7,26 +7,35 @@ const ItemList = ({
   handleKeyDown,
   handleBlur,
   handleChange,
-  focusedItemId,
-  focusedField,
 }) => {
   const inputRefs = useRef({});
 
-  // Focus management: Automatically focus an input when specified by the parent
   useEffect(() => {
-    if (
-      focusedItemId &&
-      focusedField &&
-      inputRefs.current[focusedItemId]?.[focusedField]
-    ) {
-      inputRefs.current[focusedItemId][focusedField].focus();
-    }
-  }, [focusedItemId, focusedField, items]);
+    items.forEach((item) => {
+      if (!inputRefs.current[item.id]) {
+        inputRefs.current[item.id] = {};
+      }
+    });
+  }, [items]);
 
-  const handlePriceKeyDown = (e, field, itemId) => {
+  const handleEnterKey = (e, field, itemId, index) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleKeyDown(e, field, itemId);
+      setTimeout(() => {
+        if (field === "name") {
+          inputRefs.current[itemId]?.quantity?.focus();
+        } else if (field === "quantity") {
+          inputRefs.current[itemId]?.price?.focus();
+        } else if (field === "price") {
+          addItem();
+          setTimeout(() => {
+            const newItem = items[index + 1];
+            if (newItem && inputRefs.current[newItem.id]) {
+              inputRefs.current[newItem.id].name?.focus();
+            }
+          }, 150);
+        }
+      }, 100);
     }
   };
 
@@ -40,11 +49,6 @@ const ItemList = ({
           if (!inputRefs.current[item.id]) {
             inputRefs.current[item.id] = {};
           }
-
-          const qty = Number(item.quantity) || 0;
-          const price = Number(item.price) || 0;
-          const total = qty * price;
-
           return (
             <div
               key={item.id}
@@ -58,9 +62,11 @@ const ItemList = ({
                 type="text"
                 value={item.name || ""}
                 onChange={(e) => handleChange(e, "name", item.id)}
-                onKeyDown={(e) => handleKeyDown(e, "name", item.id)}
+                onKeyDown={(e) => handleEnterKey(e, "name", item.id, index)}
                 onBlur={() => handleBlur("name", item.id)}
-                ref={(el) => (inputRefs.current[item.id]["name"] = el)}
+                ref={(el) => {
+                  if (el) inputRefs.current[item.id].name = el;
+                }}
                 placeholder="Item Name"
                 className="flex-1 bg-gray-600 text-white p-3 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200 min-w-40"
                 inputMode="text"
@@ -70,9 +76,11 @@ const ItemList = ({
                 type="number"
                 value={item.quantity || ""}
                 onChange={(e) => handleChange(e, "quantity", item.id)}
-                onKeyDown={(e) => handleKeyDown(e, "quantity", item.id)}
+                onKeyDown={(e) => handleEnterKey(e, "quantity", item.id, index)}
                 onBlur={() => handleBlur("quantity", item.id)}
-                ref={(el) => (inputRefs.current[item.id]["quantity"] = el)}
+                ref={(el) => {
+                  if (el) inputRefs.current[item.id].quantity = el;
+                }}
                 placeholder="Qty"
                 className="w-24 bg-gray-600 text-white p-3 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
                 min="0"
@@ -83,9 +91,11 @@ const ItemList = ({
                 type="number"
                 value={item.price || ""}
                 onChange={(e) => handleChange(e, "price", item.id)}
-                onKeyDown={(e) => handlePriceKeyDown(e, "price", item.id)}
+                onKeyDown={(e) => handleEnterKey(e, "price", item.id, index)}
                 onBlur={() => handleBlur("price", item.id)}
-                ref={(el) => (inputRefs.current[item.id]["price"] = el)}
+                ref={(el) => {
+                  if (el) inputRefs.current[item.id].price = el;
+                }}
                 placeholder="Price (₹)"
                 className="w-24 bg-gray-600 text-white p-3 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
                 min="0"
@@ -112,7 +122,7 @@ const ItemList = ({
                   />
                 </svg>
               </button>
-              <span className="text-sm text-white">= ₹{total.toFixed(2)}</span>
+              <span className="text-sm text-white">= ₹{(item.quantity * item.price).toFixed(2)}</span>
             </div>
           );
         })}
