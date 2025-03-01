@@ -1,3 +1,5 @@
+// Inside ItemList.js
+
 import React, { useEffect, useRef } from 'react';
 
 const ItemList = ({ items, removeItem, updateItem, handleKeyDown, handleBlur, handleChange, focusedItemId, focusedField }) => {
@@ -26,7 +28,7 @@ const ItemList = ({ items, removeItem, updateItem, handleKeyDown, handleBlur, ha
                                 defaultValue={item.name}
                                 onChange={(e) => handleChange(e, "name", item.id)}
                                 onKeyDown={(e) => handleKeyDown(e, "name", item.id)}
-                                onBlur={() => handleBlur("name", item.id)}
+                                onBlur={(e) => handleBlur("name", item.id)}
                                 ref={(el) => (inputRefs.current[item.id]["name"] = el)}
                                 placeholder="Item Name"
                                 className="flex-1 bg-gray-600 text-white p-2 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200 min-w-40"
