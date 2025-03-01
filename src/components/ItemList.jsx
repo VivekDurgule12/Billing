@@ -4,15 +4,18 @@ const ItemList = ({ items, removeItem, handleKeyDown, handleBlur, handleChange, 
     const inputRefs = useRef({});
 
     useEffect(() => {
-        if (focusedItemId && focusedField && inputRefs.current[focusedItemId] && inputRefs.current[focusedItemId][focusedField]) {
-            setTimeout(() => {
-                inputRefs.current[focusedItemId][focusedField]?.focus();
-            }, 100); // Slight delay for better mobile focus handling
-        }
+        setTimeout(() => {
+            if (focusedItemId && focusedField && inputRefs.current[focusedItemId]?.[focusedField]) {
+                const input = inputRefs.current[focusedItemId][focusedField];
+                input.focus();
+                input.select(); // Selects text for better UX on mobile
+            }
+        }, 200); // Slightly increased delay for mobile compatibility
     }, [focusedItemId, focusedField, items]);
 
-    const handleInputClick = (field, itemId) => {
-        if (inputRefs.current[itemId] && inputRefs.current[itemId][field]) {
+    const handleInputClick = (field, itemId, event) => {
+        event.preventDefault(); // Prevent ghost clicks
+        if (inputRefs.current[itemId]?.[field]) {
             inputRefs.current[itemId][field].focus();
         }
     };
@@ -28,28 +31,29 @@ const ItemList = ({ items, removeItem, handleKeyDown, handleBlur, handleChange, 
                     return (
                         <div key={item.id} className="flex flex-wrap gap-3 items-center bg-gray-700 p-3 rounded-lg">
                             <span className="text-white font-medium w-6 text-right">{index + 1}.</span>
-                            
+
                             {/* Name Input */}
                             <input
                                 type="text"
-                                id={`${item.id}-name`}
-                                defaultValue={item.name}
+                                value={item.name}
                                 onChange={(e) => handleChange(e, "name", item.id)}
                                 onKeyDown={(e) => handleKeyDown(e, "name", item.id)}
                                 onBlur={() => handleBlur("name", item.id)}
                                 ref={(el) => (inputRefs.current[item.id]["name"] = el)}
                                 placeholder="Item Name"
                                 className="flex-1 bg-gray-600 text-white p-3 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200 min-w-40"
+                                autoComplete="off"
+                                autoCorrect="off"
+                                spellCheck="false"
                                 inputMode="text"
-                                onClick={() => handleInputClick("name", item.id)}
-                                onTouchStart={() => handleInputClick("name", item.id)} // Added for mobile
+                                onClick={(e) => handleInputClick("name", item.id, e)}
+                                onTouchStart={(e) => handleInputClick("name", item.id, e)}
                             />
 
                             {/* Quantity Input */}
                             <input
                                 type="number"
-                                id={`${item.id}-quantity`}
-                                defaultValue={item.quantity}
+                                value={item.quantity}
                                 onChange={(e) => handleChange(e, "quantity", item.id)}
                                 onKeyDown={(e) => handleKeyDown(e, "quantity", item.id)}
                                 onBlur={() => handleBlur("quantity", item.id)}
@@ -58,15 +62,14 @@ const ItemList = ({ items, removeItem, handleKeyDown, handleBlur, handleChange, 
                                 className="w-24 bg-gray-600 text-white p-3 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
                                 min="0"
                                 inputMode="numeric"
-                                onClick={() => handleInputClick("quantity", item.id)}
-                                onTouchStart={() => handleInputClick("quantity", item.id)} // Added for mobile
+                                onClick={(e) => handleInputClick("quantity", item.id, e)}
+                                onTouchStart={(e) => handleInputClick("quantity", item.id, e)}
                             />
 
                             {/* Price Input */}
                             <input
                                 type="number"
-                                id={`${item.id}-price`}
-                                defaultValue={item.price}
+                                value={item.price}
                                 onChange={(e) => handleChange(e, "price", item.id)}
                                 onKeyDown={(e) => handleKeyDown(e, "price", item.id)}
                                 onBlur={() => handleBlur("price", item.id)}
@@ -75,8 +78,8 @@ const ItemList = ({ items, removeItem, handleKeyDown, handleBlur, handleChange, 
                                 className="w-24 bg-gray-600 text-white p-3 rounded-md border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
                                 min="0"
                                 inputMode="decimal"
-                                onClick={() => handleInputClick("price", item.id)}
-                                onTouchStart={() => handleInputClick("price", item.id)} // Added for mobile
+                                onClick={(e) => handleInputClick("price", item.id, e)}
+                                onTouchStart={(e) => handleInputClick("price", item.id, e)}
                             />
 
                             {/* Remove Button */}
