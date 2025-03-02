@@ -7,12 +7,12 @@ function BillingSummary({ totalAmount, remainingAmount, setRemainingAmount }) {
       <div className="space-y-2">
         <p className="font-bold">Total Amount: ₹{totalAmount.toFixed(2)}</p>
         <div className="mt-4">
-          <label className="block text-sm">Remaining Amount (₹):</label>
+          <label className="block text-sm mt-5">Remaining Amount (₹):</label>
           <input
             type="number"
             value={remainingAmount}
             onChange={(e) => setRemainingAmount(parseFloat(e.target.value) || 0)}
-            className="w-full bg-gray-600/50 text-white p-2 rounded-lg border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
+            className="w-full mt-3 bg-gray-600/50 text-white p-2 rounded-lg border border-gray-500 focus:border-teal-400 focus:outline-none transition-all duration-200"
           />
         </div>
       </div>

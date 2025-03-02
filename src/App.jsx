@@ -923,41 +923,24 @@ function App() {
                             </button>
                             <button
                                 onClick={() => shareInvoice(true)} // Pass true to trigger WhatsApp
-                                className="bg-gradient-to-r from-green-500 to-emerald-500 w-full sm:w-64 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-lg hover:shadow-xl text-lg font-semibold flex items-center justify-center gap-2 transform hover:-translate-y-1"
+                                className="bg-gradient-to-r from-green-600 to-emerald-500 w-full sm:w-64 py-3 rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-lg hover:shadow-xl text-lg font-semibold flex items-center justify-center gap-2 transform hover:-translate-y-1"
                             >
-                                <svg
-                                    className="w-5 h-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375H7.5a3.375 3.375 0 00-3.375 3.375v2.625m16.5 0H12.546a.75.75 0 01-.75-.75v-4.5a.75.75 0 01.75-.75h6.954m-16.5 0H7.454a.75.75 0 00.75.75v4.5a.75.75 0 00-.75.75h-6.954M18 10.875v-1.5a2.25 2.25 0 00-2.25-2.25H4.25A2.25 0 002 9.375v7.5a2.25 2.25 0 002.25 2.25h11.5A2.25 2.25 0 0018 16.5v-1.5m-15 3.75h1.5a1.5 1.5 0 001.5-1.5V5.25a1.5 1.5 0 00-1.5-1.5H3m12.75 0h1.5a1.5 1.5 0 011.5 1.5v15a1.5 1.5 0 01-1.5-1.5H15"
-                                    />
-                                </svg>
+                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+    <path fill="#25D366" d="M12.04 2.01C6.51 2.01 2 6.5 2 12.01c0 2.191.63 4.233 1.72 5.974L2 22l4.138-1.679a10.03 10.03 0 0 0 5.902 1.65c5.53 0 10.04-4.49 10.04-9.99s-4.51-9.98-10.04-9.98zm0 18.01c-1.812 0-3.497-.52-4.936-1.423l-.354-.22-2.454.994.942-2.394-.23-.366A8.044 8.044 0 0 1 4 12.01c0-4.41 3.592-8 8.04-8s8.04 3.59 8.04 8-3.592 8-8.04 8zm4.521-6.023c-.248-.125-1.471-.725-1.699-.805-.229-.08-.395-.124-.561.124-.167.249-.644.805-.791.973-.146.167-.291.186-.54.06-.248-.125-1.048-.387-1.995-1.237-.737-.653-1.232-1.462-1.378-1.711s-.015-.382.11-.506c.114-.113.248-.296.373-.445.125-.15.166-.25.248-.415.083-.166.042-.31-.02-.435-.062-.125-.561-1.35-.768-1.848-.202-.484-.407-.417-.561-.426-.146-.008-.31-.01-.474-.01a.92.92 0 0 0-.66.31c-.227.249-.868.849-.868 2.071 0 .292.052.575.124.847.228.805.717 1.49.806 1.604.104.124 1.68 2.57 4.075 3.605.57.246 1.017.392 1.366.502.573.181 1.093.155 1.504.093.458-.07 1.471-.602 1.678-1.182.208-.58.208-1.076.146-1.182-.063-.106-.229-.172-.478-.297z"/>
+</svg>
+
                                 Share on WhatsApp
                             </button>
                              <button
                                 onClick={() => downloadInvoiceAsText(generateInvoiceText())}
                                 className="bg-gradient-to-r from-gray-500 to-gray-600 w-full sm:w-64 py-3 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl text-lg font-semibold flex items-center justify-center gap-2 transform hover:-translate-y-1"
                             >
-                                <svg
-                                    className="w-5 h-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L7 7m3-3V15"
-                                    />
-                                </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+    <path d="M7 10l5 5 5-5"/>
+    <path d="M12 15V3"/>
+</svg>
+
                                 Download Invoice
                             </button>
                         </div>

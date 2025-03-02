@@ -1,0 +1,10 @@
+<svg width="150" height="100" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shopping Bag -->
+  <rect x="50" y="30" width="50" height="50" fill="#8B4513"/>
+  <path d="M60,30 Q75,10 90,30" fill="none" stroke="#5A2D0C" stroke-width="2"/>
+  
+  <!-- Store Name -->
+  <text x="75" y="95" text-anchor="middle" font-family="Arial" font-size="18" fill="#333333">
+    Durgule Store
+  </text>
+</svg>
