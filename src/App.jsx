@@ -479,8 +479,6 @@
 
 
 
-
-
 import React, { useCallback, useEffect, useState, useRef } from "react";
 import BillingSummary from "./components/BillingSummary";
 import CustomerForm from "./components/CustomerForm";
@@ -677,42 +675,40 @@ function App() {
                 item.name && isValidNumber(item.quantity) && isValidNumber(item.price)
         );
 
-        const total = validItems.reduce(
+        const totalAmount = validItems.reduce(
             (sum, item) => sum + Number(item.quantity) * Number(item.price),
             0
         );
-        return { total };
+        const totalQuantity = validItems.reduce(
+            (sum, item) => sum + Number(item.quantity) ,
+            0
+        );
+        return { totalAmount, totalQuantity };
     }, [items]);
 
-    const { total } = calculateTotals();
+    const { totalAmount, totalQuantity } = calculateTotals();
 
     const generateInvoiceText = () => {
         let text = "||श्री|| \nINVOICE \nDURGULE STORE\n";
-        text += "------------------------------\n";
+        text += "----------------------------------------\n";
         text += `Customer: ${customer.name || "N/A"}\n`;
         text += `Email: ${customer.email || "N/A"}\n`;
         text += `Address: ${customer.address || "N/A"}\n`;
         text += `Phone: ${customer.phone || "N/A"}\n`;
         text += `Date: ${customer.date || "N/A"}\n`;
-        text += "------------------------------\n";
+        text += "----------------------------------------\n";
         text += "Items:\n";
         items.forEach((item, index) => {
             text += `${index + 1}. ${item.name || "Unnamed"} - Qty:${item.quantity || "0"} * ₹${
                 item.price || "0"
             } - ₹${item.total.toFixed(2)}\n`;
         });
-        // text += "----------------------------------------\n";
-        // text += `Total: ₹${total.toFixed(2)}\n`;
-        // text += `Remaining: ₹${remainingAmount.toFixed(2)}\n`;
-        // text += `Total Bill: ₹${(remainingAmount + total).toFixed(2)}\n`;
-        // text += "----------------------------------------\n";
-        text += "------------------------------\n";
+        text += "----------------------------------------\n";
         text += `Weight: ${totalQuantity.toFixed(2)} Kg.\n`;
         text += `Total: ₹${totalAmount.toFixed(2)}\n`;
         text += `Remaining: ₹${remainingAmount.toFixed(2)}\n`;
         text += `Total Bill: ₹${(remainingAmount + totalAmount).toFixed(2)}\n`;
-        text += "------------------------------\n";
-
+        text += "----------------------------------------\n";
         return text;
     };
 
@@ -954,14 +950,14 @@ function App() {
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <BillingSummary
-                                totalAmount={total}
+                                totalAmount={totalAmount}
                                 remainingAmount={remainingAmount}
                                 setRemainingAmount={setRemainingAmount}
                             />
                             <InvoiceGenerator
                                 customer={customer}
                                 items={items}
-                                totalAmount={total}
+                                totalAmount={totalAmount}
                                 remainingAmount={remainingAmount}
                             />
                         </div>
