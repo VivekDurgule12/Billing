@@ -300,119 +300,26 @@ function App() {
     };
 
     
-    const handlePrint = useCallback(() => {
-        "use strict";
+    // const handlePrint = useCallback(() => {
+    //     "use strict";
     
-        if (!items?.length || totalAmount === 0) {
-          alert("Invoice is empty. Cannot print.");
-          return;
-        }
-    
-        const invoiceContent = generateInvoiceText();
-        if (!invoiceContent?.trim()) {
-          alert("Invoice content is empty. Cannot print.");
-          return;
-        }
-    
-        // Split invoice content into lines
-        const lines = invoiceContent.split("\n");
-    
-        // Calculate the index where the last 3 lines begin
-        const lastThreeIndex = Math.max(1, lines.length - 6);
-    
-        const billHtml = `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <meta charset="UTF-8">
-              <title>Invoice</title>
-              <style>
-                @page {
-                  size: 76mm;
-                  margin: 0;
-                }
-                body {
-                  width: 76mm;
-                  margin: 0;
-                  padding: 5px;
-                  font-family: monospace;
-                  font-size: 9pt;
-                  line-height: 1.2;
-                  -webkit-print-color-adjust: exact;
-                }
-                .center {
-                  text-align: center;
-                  font-weight: bold;
-                }
-                .left {
-                  text-align: left;
-                }
-                .bold {
-                  font-weight: bold;
-                }
-                .instruction { /* Added style for instruction */
-                  text-align: center;
-                  font-style: italic;
-                  margin-top: 10px;
-                  font-size: 8pt; /* Slightly smaller font */
-                }
-              </style>
-            </head>
-            <body>
-              ${lines
-                .map((line, index) => {
-                  if (index < 3) {
-                    return `<div class="center bold">${line}</div>`;
-                  } else if (index >= lastThreeIndex) {
-                    return `<div class="left bold">${line}</div>`;
-                  } else {
-                    return `<div class="left">${line}</div>`;
-                  }
-                })
-                .join("")}
-             
-            </body>
-          </html>
-        `;
-    
-        const printWindow = window.open("", "_blank");
-        if (!printWindow) {
-          alert("Failed to open print window.");
-          return;
-        }
-    
-        printWindow.document.write(billHtml);
-        printWindow.document.close();
-    
-        // Delay to allow rendering, then just trigger print dialog, DO NOT CLOSE
-        setTimeout(() => {
-          printWindow.focus();
-          printWindow.print();
-          // printWindow.close(); <--- REMOVE this line
-        }, 500);
-    
-      }, [items, totalAmount, generateInvoiceText]);
-
-   
-   
-      
     //     if (!items?.length || totalAmount === 0) {
     //       alert("Invoice is empty. Cannot print.");
     //       return;
     //     }
-      
+    
     //     const invoiceContent = generateInvoiceText();
     //     if (!invoiceContent?.trim()) {
     //       alert("Invoice content is empty. Cannot print.");
     //       return;
     //     }
-      
+    
     //     // Split invoice content into lines
     //     const lines = invoiceContent.split("\n");
-      
+    
     //     // Calculate the index where the last 3 lines begin
-    //     const lastThreeIndex = Math.max(1, lines.length - 6); // Ensure it does not go negative
-      
+    //     const lastThreeIndex = Math.max(1, lines.length - 6);
+    
     //     const billHtml = `
     //       <!DOCTYPE html>
     //       <html>
@@ -443,41 +350,140 @@ function App() {
     //             .bold {
     //               font-weight: bold;
     //             }
+    //             .instruction { /* Added style for instruction */
+    //               text-align: center;
+    //               font-style: italic;
+    //               margin-top: 10px;
+    //               font-size: 8pt; /* Slightly smaller font */
+    //             }
     //           </style>
     //         </head>
     //         <body>
     //           ${lines
     //             .map((line, index) => {
     //               if (index < 3) {
-    //                 return `<div class="center bold">${line}</div>`; // First 3 lines centered & bold
+    //                 return `<div class="center bold">${line}</div>`;
     //               } else if (index >= lastThreeIndex) {
-    //                 return `<div class="left bold">${line}</div>`; // Last 3 lines bold & left-aligned
+    //                 return `<div class="left bold">${line}</div>`;
     //               } else {
-    //                 return `<div class="left">${line}</div>`; // Regular items left-aligned
+    //                 return `<div class="left">${line}</div>`;
     //               }
     //             })
     //             .join("")}
+             
     //         </body>
     //       </html>
     //     `;
-      
-    //     // ✅ Works for both mobile & desktop
+    
     //     const printWindow = window.open("", "_blank");
     //     if (!printWindow) {
     //       alert("Failed to open print window.");
     //       return;
     //     }
-      
+    
     //     printWindow.document.write(billHtml);
     //     printWindow.document.close();
-      
-    //     // Delay to allow proper rendering before printing
+    
+    //     // Delay to allow rendering, then just trigger print dialog, DO NOT CLOSE
     //     setTimeout(() => {
     //       printWindow.focus();
     //       printWindow.print();
-    //       printWindow.close();
+    //       // printWindow.close(); <--- REMOVE this line
     //     }, 500);
+    
     //   }, [items, totalAmount, generateInvoiceText]);
+
+    const handlePrint = useCallback(() => {
+        "use strict";
+    
+        if (!items?.length || totalAmount === 0) {
+            alert("Invoice is empty. Cannot print.");
+            return;
+        }
+    
+        const invoiceContent = generateInvoiceText();
+        if (!invoiceContent?.trim()) {
+            alert("Invoice content is empty. Cannot print.");
+            return;
+        }
+    
+        // Retrieve customer details
+        const customerName = customer?.name || "Customer";
+        const invoiceDate = customer?.date || new Date().toISOString().split("T")[0]; // Default to today if date is missing
+    
+        // Generate a printable title
+        const sanitizedCustomerName = customerName.replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
+        const sanitizedInvoiceDate = invoiceDate.replace(/[^0-9-]/g, "");
+        const fileName = `${sanitizedCustomerName}_Invoice_${sanitizedInvoiceDate}`;
+    
+        const lines = invoiceContent.split("\n");
+        const lastThreeIndex = Math.max(1, lines.length - 6);
+    
+        const billHtml = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <title>${fileName}</title> <!-- Set title dynamically -->
+              <style>
+                @page {
+                  size: 76mm;
+                  margin: 0;
+                }
+                body {
+                  width: 76mm;
+                  margin: 0;
+                  padding: 5px;
+                  font-family: monospace;
+                  font-size: 9pt;
+                  line-height: 1.2;
+                  -webkit-print-color-adjust: exact;
+                }
+                .center {
+                  text-align: center;
+                  font-weight: bold;
+                }
+                .left {
+                  text-align: left;
+                }
+                .bold {
+                  font-weight: bold;
+                }
+              </style>
+            </head>
+            <body>
+              ${lines
+                .map((line, index) => {
+                  if (index < 3) {
+                    return `<div class="center bold">${line}</div>`;
+                  } else if (index >= lastThreeIndex) {
+                    return `<div class="left bold">${line}</div>`;
+                  } else {
+                    return `<div class="left">${line}</div>`;
+                  }
+                })
+                .join("")}
+            </body>
+          </html>
+        `;
+    
+        const printWindow = window.open("", "_blank");
+        if (!printWindow) {
+            alert("Failed to open print window.");
+            return;
+        }
+    
+        printWindow.document.write(billHtml);
+        printWindow.document.close();
+    
+        setTimeout(() => {
+            printWindow.focus();
+            printWindow.print();
+        }, 500);
+    
+    }, [items, totalAmount, generateInvoiceText, customer]);
+    
+
       
       
 
@@ -640,8 +646,7 @@ function App() {
     //       printWindow.print();
     //       printWindow.close();
     //     }, 500);
-    //   }, [items, totalAmount, generateInvoiceText]);
-      
+    //   }, [items, totalAmount, generateInvoiceTe
       
       const PrintButton = () => (
         <button
