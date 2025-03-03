@@ -429,33 +429,33 @@ function App() {
               <style>
 
 
-                @page {
-  size: 57mm auto; /* Fixed width, dynamic height */
-  margin: 0; /* No margin for full paper use */
-}
+                @page {  
+              size: 76mm;  
+              margin: 0;  
+            }  
+            body {  
+              width: 76mm;  
+              margin: 0;  
+              padding: 5px;  
+              font-family: monospace;  
+              font-size: 9pt;  
+              line-height: 1.2;  
+              -webkit-print-color-adjust: exact;  
+            }  
+            .center {  
+              text-align: center;  
+              font-weight: bold;  
+            }  
+            .left {  
+              text-align: left;  
+            }  
+            .bold {  
+              font-weight: bold;  
+            }
 
-body {
-  width: 57mm;
-  margin: 0;
-  padding: 5px;
-  font-family: monospace;
-  font-size: 9pt;
-  line-height: 1.2;
-  -webkit-print-color-adjust: exact;
-}
+Make for responsive
 
-.center {
-  text-align: center;
-  font-weight: bold;
-}
 
-.left {
-  text-align: left;
-}
-
-.bold {
-  font-weight: bold;
-}
 
 /* Prevents page breaks */
 * {
