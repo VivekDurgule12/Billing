@@ -449,6 +449,59 @@ function App() {
                 .bold {
                   font-weight: bold;
                 }
+@media print {
+  @page {
+    size: 76mm auto; /* Auto height for varying content */
+    margin: 0;
+  }
+  body {
+    width: 76mm;
+    margin: 0;
+    padding: 5px;
+    font-family: monospace;
+    font-size: 9pt;
+    line-height: 1.2;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+
+
+
+@media screen {
+  body {
+    width: 100%;
+    max-width: 400px; /* Adjust based on expected display width */
+    margin: 0 auto;
+    padding: 10px;
+    font-family: monospace;
+    font-size: 11pt;
+    line-height: 1.4;
+  }
+}
+
+.center {
+  text-align: center;
+  font-weight: bold;
+}
+
+.left {
+  text-align: left;
+}
+
+.bold {
+  font-weight: bold;
+}
+
+@media (max-width: 400px) {
+  body {
+    font-size: 10pt; /* Slightly smaller text for smaller screens */
+    padding: 5px;
+  }
+}
+
+
+
               </style>
             </head>
             <body>
