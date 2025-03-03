@@ -225,9 +225,9 @@ function App() {
         let text = "||श्री|| \nINVOICE \nDURGULE STORE\n";
         text += "----------------------------------------\n";
         text += `Customer: ${customer.name || "N/A"}\n`;
-        text += `Email: ${customer.email || "N/A"}\n`;
+        // text += `Email: ${customer.email || "N/A"}\n`;
         text += `Address: ${customer.address || "N/A"}\n`;
-        text += `Phone: $c || "N/A"}\n`;
+        text += `Phone:  ${customer.phone || "N/A"}\n`;
         text += `Date: ${customer.date || "N/A"}\n`;
         text += "----------------------------------------\n";
         text += "Items:\n";
@@ -300,22 +300,26 @@ function App() {
     };
 
     
-
-
     const handlePrint = useCallback(() => {
         "use strict";
-      
+    
         if (!items?.length || totalAmount === 0) {
           alert("Invoice is empty. Cannot print.");
           return;
         }
-      
+    
         const invoiceContent = generateInvoiceText();
         if (!invoiceContent?.trim()) {
           alert("Invoice content is empty. Cannot print.");
           return;
         }
-      
+    
+        // Split invoice content into lines
+        const lines = invoiceContent.split("\n");
+    
+        // Calculate the index where the last 3 lines begin
+        const lastThreeIndex = Math.max(1, lines.length - 6);
+    
         const billHtml = `
           <!DOCTYPE html>
           <html>
@@ -326,100 +330,159 @@ function App() {
                 @page {
                   size: 76mm;
                   margin: 0;
-                  padding: 0;
                 }
                 body {
                   width: 76mm;
                   margin: 0;
-                  padding: 1mm 2mm;
+                  padding: 5px;
                   font-family: monospace;
                   font-size: 9pt;
-                  line-height: 1.1;
+                  line-height: 1.2;
                   -webkit-print-color-adjust: exact;
-                }
-                * {
-                  page-break-inside: avoid;
-                  break-inside: avoid;
                 }
                 .center {
                   text-align: center;
+                  font-weight: bold;
+                }
+                .left {
+                  text-align: left;
+                }
+                .bold {
+                  font-weight: bold;
+                }
+                .instruction { /* Added style for instruction */
+                  text-align: center;
+                  font-style: italic;
+                  margin-top: 10px;
+                  font-size: 8pt; /* Slightly smaller font */
                 }
               </style>
             </head>
             <body>
-              ${invoiceContent.split("\n").map((line, index) =>
-                `<div class="${index < 3 || line.toLowerCase().includes("total:") ? "center" : ""}">${line}</div>`
-              ).join("")}
+              ${lines
+                .map((line, index) => {
+                  if (index < 3) {
+                    return `<div class="center bold">${line}</div>`;
+                  } else if (index >= lastThreeIndex) {
+                    return `<div class="left bold">${line}</div>`;
+                  } else {
+                    return `<div class="left">${line}</div>`;
+                  }
+                })
+                .join("")}
+             
             </body>
           </html>
         `;
-      
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        if (isMobile) {
-          // ✅ Mobile Printing: Open in a new window (prevents iframe issues)
-          const printWindow = window.open('', '_blank');
-          if (!printWindow) {
-            alert("Failed to open print window.");
-            return;
-          }
-          printWindow.document.write(billHtml);
-          printWindow.document.close();
-          
-          setTimeout(() => {
-            printWindow.focus();
-            printWindow.print();
-            printWindow.close();
-          }, 500);
-        } else {
-          // ✅ Desktop Printing: Use iframe to print only the bill
-          const iframe = document.createElement("iframe");
-          iframe.style.cssText = `
-            position: fixed;
-            left: -9999px;
-            width: 76mm;
-            height: 0;
-            border: 0;
-            visibility: hidden;
-          `;
-          document.body.appendChild(iframe);
-      
-          const printDoc = iframe.contentWindow?.document;
-          if (!printDoc) {
-            document.body.removeChild(iframe);
-            alert("Failed to initialize print document.");
-            return;
-          }
-      
-          printDoc.open();
-          printDoc.write(billHtml);
-          printDoc.close();
-      
-          const printWindow = iframe.contentWindow;
-          if (!printWindow) {
-            document.body.removeChild(iframe);
-            return;
-          }
-      
-          printWindow.addEventListener("afterprint", () => {
-            document.body.removeChild(iframe);
-          });
-      
-          requestAnimationFrame(() => {
-            printWindow.focus();
-            try {
-              printWindow.print();
-            } catch (e) {
-              console.error("Print error:", e);
-              document.body.removeChild(iframe);
-              alert("Print failed. Please check your printer settings.");
-            }
-          });
+    
+        const printWindow = window.open("", "_blank");
+        if (!printWindow) {
+          alert("Failed to open print window.");
+          return;
         }
+    
+        printWindow.document.write(billHtml);
+        printWindow.document.close();
+    
+        // Delay to allow rendering, then just trigger print dialog, DO NOT CLOSE
+        setTimeout(() => {
+          printWindow.focus();
+          printWindow.print();
+          // printWindow.close(); <--- REMOVE this line
+        }, 500);
+    
       }, [items, totalAmount, generateInvoiceText]);
+
+   
+   
+      
+    //     if (!items?.length || totalAmount === 0) {
+    //       alert("Invoice is empty. Cannot print.");
+    //       return;
+    //     }
+      
+    //     const invoiceContent = generateInvoiceText();
+    //     if (!invoiceContent?.trim()) {
+    //       alert("Invoice content is empty. Cannot print.");
+    //       return;
+    //     }
+      
+    //     // Split invoice content into lines
+    //     const lines = invoiceContent.split("\n");
+      
+    //     // Calculate the index where the last 3 lines begin
+    //     const lastThreeIndex = Math.max(1, lines.length - 6); // Ensure it does not go negative
+      
+    //     const billHtml = `
+    //       <!DOCTYPE html>
+    //       <html>
+    //         <head>
+    //           <meta charset="UTF-8">
+    //           <title>Invoice</title>
+    //           <style>
+    //             @page {
+    //               size: 76mm;
+    //               margin: 0;
+    //             }
+    //             body {
+    //               width: 76mm;
+    //               margin: 0;
+    //               padding: 5px;
+    //               font-family: monospace;
+    //               font-size: 9pt;
+    //               line-height: 1.2;
+    //               -webkit-print-color-adjust: exact;
+    //             }
+    //             .center {
+    //               text-align: center;
+    //               font-weight: bold;
+    //             }
+    //             .left {
+    //               text-align: left;
+    //             }
+    //             .bold {
+    //               font-weight: bold;
+    //             }
+    //           </style>
+    //         </head>
+    //         <body>
+    //           ${lines
+    //             .map((line, index) => {
+    //               if (index < 3) {
+    //                 return `<div class="center bold">${line}</div>`; // First 3 lines centered & bold
+    //               } else if (index >= lastThreeIndex) {
+    //                 return `<div class="left bold">${line}</div>`; // Last 3 lines bold & left-aligned
+    //               } else {
+    //                 return `<div class="left">${line}</div>`; // Regular items left-aligned
+    //               }
+    //             })
+    //             .join("")}
+    //         </body>
+    //       </html>
+    //     `;
+      
+    //     // ✅ Works for both mobile & desktop
+    //     const printWindow = window.open("", "_blank");
+    //     if (!printWindow) {
+    //       alert("Failed to open print window.");
+    //       return;
+    //     }
+      
+    //     printWindow.document.write(billHtml);
+    //     printWindow.document.close();
+      
+    //     // Delay to allow proper rendering before printing
+    //     setTimeout(() => {
+    //       printWindow.focus();
+    //       printWindow.print();
+    //       printWindow.close();
+    //     }, 500);
+    //   }, [items, totalAmount, generateInvoiceText]);
+      
       
 
 
-    // const handlePrint = useCallback(() => {
+    
     //     "use strict";
       
     //     if (!items?.length || totalAmount === 0) {
