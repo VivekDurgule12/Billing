@@ -316,62 +316,63 @@ function App() {
           return;
         }
       
+        const billHtml = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="UTF-8">
+              <title>Invoice</title>
+              <style>
+                @page {
+                  size: 76mm;
+                  margin: 0;
+                  padding: 0;
+                }
+                body {
+                  width: 76mm;
+                  margin: 0;
+                  padding: 1mm 2mm;
+                  font-family: monospace;
+                  font-size: 9pt;
+                  line-height: 1.1;
+                  -webkit-print-color-adjust: exact;
+                }
+                * {
+                  page-break-inside: avoid;
+                  break-inside: avoid;
+                }
+                .center {
+                  text-align: center;
+                }
+              </style>
+            </head>
+            <body>
+              ${invoiceContent.split("\n").map((line, index) =>
+                `<div class="${index < 3 || line.toLowerCase().includes("total:") ? "center" : ""}">${line}</div>`
+              ).join("")}
+            </body>
+          </html>
+        `;
+      
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         if (isMobile) {
-          // Mobile printing using a new window
+          // ✅ Mobile Printing: Open in a new window (prevents iframe issues)
           const printWindow = window.open('', '_blank');
           if (!printWindow) {
             alert("Failed to open print window.");
             return;
           }
-      
-          printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <meta charset="UTF-8">
-                <title>Invoice</title>
-                <style>
-                  @page {
-                    size: 76mm;
-                    margin: 0;
-                    padding: 0;
-                  }
-                  body {
-                    width: 76mm;
-                    margin: 0;
-                    padding: 1mm 2mm;
-                    font-family: monospace;
-                    font-size: 9pt;
-                    line-height: 1.1;
-                    -webkit-print-color-adjust: exact;
-                  }
-                  * {
-                    page-break-inside: avoid;
-                    break-inside: avoid;
-                  }
-                  .center {
-                    text-align: center;
-                  }
-                </style>
-              </head>
-              <body>
-                ${invoiceContent.split('\n').map((line, index) => 
-                  `<div class="${index < 3 || line.toLowerCase().includes("total:") ? 'center' : ''}">${line}</div>`
-                ).join('')}
-              </body>
-            </html>
-          `);
-      
+          printWindow.document.write(billHtml);
           printWindow.document.close();
+          
           setTimeout(() => {
             printWindow.focus();
             printWindow.print();
             printWindow.close();
           }, 500);
         } else {
-          // Desktop printing using iframe
-          const iframe = document.createElement('iframe');
+          // ✅ Desktop Printing: Use iframe to print only the bill
+          const iframe = document.createElement("iframe");
           iframe.style.cssText = `
             position: fixed;
             left: -9999px;
@@ -390,43 +391,7 @@ function App() {
           }
       
           printDoc.open();
-          printDoc.write(`
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <meta charset="UTF-8">
-                <title>Invoice</title>
-                <style>
-                  @page {
-                    size: 76mm;
-                    margin: 0;
-                    padding: 0;
-                  }
-                  body {
-                    width: 76mm;
-                    margin: 0;
-                    padding: 1mm 2mm;
-                    font-family: monospace;
-                    font-size: 9pt;
-                    line-height: 1.1;
-                    -webkit-print-color-adjust: exact;
-                  }
-                  * {
-                    page-break-inside: avoid;
-                    break-inside: avoid;
-                  }
-                  .center {
-                    text-align: center;
-                  }
-                </style>
-              </head>
-              <body>
-                ${invoiceContent.split('\n').map((line, index) => 
-                  `<div class="${index < 3 || line.toLowerCase().includes("total:") ? 'center' : ''}">${line}</div>`
-                ).join('')}
-              </body>
-            </html>
-          `);
+          printDoc.write(billHtml);
           printDoc.close();
       
           const printWindow = iframe.contentWindow;
@@ -435,7 +400,7 @@ function App() {
             return;
           }
       
-          printWindow.addEventListener('afterprint', () => {
+          printWindow.addEventListener("afterprint", () => {
             document.body.removeChild(iframe);
           });
       
@@ -444,7 +409,7 @@ function App() {
             try {
               printWindow.print();
             } catch (e) {
-              console.error('Print error:', e);
+              console.error("Print error:", e);
               document.body.removeChild(iframe);
               alert("Print failed. Please check your printer settings.");
             }
