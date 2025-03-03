@@ -241,7 +241,7 @@ function App() {
         text += `Total: ₹${totalAmount.toFixed(2)}\n`;
         text += `Remaining: ₹${remainingAmount.toFixed(2)}\n`;
         text += `Total Bill: ₹${(remainingAmount + totalAmount).toFixed(2)}\n`;
-        text += "----------------------------------------\n";
+        text += "--------------------------------------\n";
         return text;
     };
 
