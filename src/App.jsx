@@ -430,12 +430,12 @@ function App() {
 
 
                 @page {
-  size: 40mm auto; /* Fixed width, dynamic height */
+  size: 57mm auto; /* Fixed width, dynamic height */
   margin: 0; /* No margin for full paper use */
 }
 
 body {
-  width: 40mm;
+  width: 57mm;
   margin: 0;
   padding: 5px;
   font-family: monospace;
