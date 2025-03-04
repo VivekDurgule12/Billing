@@ -299,8 +299,6 @@ function App() {
         }
     };
 
-    
-    // const handlePrint = useCallback(() => {
     //     "use strict";
     
     //     if (!items?.length || totalAmount === 0) {
@@ -425,47 +423,60 @@ function App() {
           <html>
             <head>
               <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Added viewport meta tag for responsiveness -->
               <title>${fileName}</title> <!-- Set title dynamically -->
               <style>
 
+                /* Styles for printing (76mm width) */
+                @media print {
+                  @page {
+                    size: 76mm;
+                    margin: 0;
+                  }
+                  body {
+                    width: 76mm;
+                    margin: 0;
+                    padding: 5px;
+                    font-family: monospace;
+                    font-size: 9pt;
+                    line-height: 1.2;
+                    -webkit-print-color-adjust: exact;
+                  }
+                }
 
-                @page {  
-              size: 76mm;  
-              margin: 0;  
-            }  
-            body {  
-              width: 76mm;  
-              margin: 0;  
-              padding: 5px;  
-              font-family: monospace;  
-              font-size: 9pt;  
-              line-height: 1.2;  
-              -webkit-print-color-adjust: exact;  
-            }  
-            .center {  
-              text-align: center;  
-              font-weight: bold;  
-            }  
-            .left {  
-              text-align: left;  
-            }  
-            .bold {  
-              font-weight: bold;  
-            }
-
-Make for responsive
-
-
-
-/* Prevents page breaks */
-* {
-  page-break-inside: avoid;
-  page-break-before: avoid;
-  page-break-after: avoid;
-}
+                /* Styles for screen display (responsive) */
+                @media screen {
+                  body {
+                    width: 95%; /* Adjust width for screen display */
+                    max-width: 500px; /* Maximum width for larger screens */
+                    margin: 20px auto; /* Center on screen with some margin */
+                    padding: 15px; /* Add padding for readability on screen */
+                    font-family: monospace;
+                    font-size: 14px; /* Slightly larger font for screen */
+                    line-height: 1.4; /* Adjusted line height for screen */
+                    -webkit-print-color-adjust: exact; /* Keep print color adjustment for consistency */
+                    box-sizing: border-box; /* Include padding and border in element's total width and height */
+                  }
+                }
 
 
+                .center {
+                  text-align: center;
+                  font-weight: bold;
+                }
+                .left {
+                  text-align: left;
+                }
+                .bold {
+                  font-weight: bold;
+                }
 
+                /* Prevents page breaks - applies to both print and screen */
+                * {
+                  page-break-inside: avoid;
+                  page-break-before: avoid;
+                  page-break-after: avoid;
+                }
 
               </style>
             </head>
@@ -503,169 +514,7 @@ Make for responsive
     
 
       
-      
-
-
-    
-    //     "use strict";
-      
-    //     if (!items?.length || totalAmount === 0) {
-    //       alert("Invoice is empty. Cannot print.");
-    //       return;
-    //     }
-      
-    //     const invoiceContent = generateInvoiceText();
-      
-    //     if (!invoiceContent?.trim()) {
-    //       alert("Invoice content is empty. Cannot print.");
-    //       return;
-    //     }
-      
-    //     const iframe = document.createElement('iframe');
-    //     iframe.style.cssText = `
-    //       position: fixed;
-    //       left: -9999px;
-    //       width: 76mm;
-    //       height: 0;
-    //       border: 0;
-    //       visibility: hidden;
-    //     `;
-    //     document.body.appendChild(iframe);
-      
-    //     const printDoc = iframe.contentWindow?.document;
-    //     if (!printDoc) {
-    //       document.body.removeChild(iframe);
-    //       alert("Failed to initialize print document.");
-    //       return;
-    //     }
-      
-    //     const lines = invoiceContent.split('\n');
-    //     let htmlContent = '';
-      
-    //     lines.forEach((line, index) => {
-    //       // Determine whether to center the line based on your logic
-    //       // Make the check case-insensitive
-    //       if (index === 0 || index === 1 || index === 2 ||line.toLowerCase().includes("total:")) {
-    //         htmlContent += `<div style="text-align: center;">${line}</div>`;
-    //       } else {
-    //         htmlContent += `<div>${line}</div>`;
-    //       }
-    //     });
-      
-    //     printDoc.open();
-    //     printDoc.write(`
-    //       <!DOCTYPE html>
-    //       <html>
-    //         <head>
-    //           <meta charset="UTF-8">
-    //           <title>Invoice</title>
-    //           <style>
-    //             @page {
-    //               size: 76mm;
-    //               margin: 0;
-    //               padding: 0;
-    //             }
-    //             body {
-    //               width: 76mm;
-    //               margin: 0;
-    //               padding: 1mm 2mm;
-    //               font-family: monospace;
-    //               font-size: 9pt;
-    //               line-height: 1.1;
-    //               -webkit-print-color-adjust: exact;
-    //             }
-    //             * {
-    //               page-break-inside: avoid;
-    //               break-inside: avoid;
-    //             }
-    //           </style>
-    //         </head>
-    //         <body>
-    //           ${htmlContent}
-    //         </body>
-    //       </html>
-    //     `);
-    //     printDoc.close();
-      
-    //     const printWindow = iframe.contentWindow;
-    //     if (!printWindow) {
-    //       document.body.removeChild(iframe);
-    //       return;
-    //     }
-      
-    //     printWindow.addEventListener('afterprint', () => {
-    //       document.body.removeChild(iframe);
-    //     });
-      
-    //     requestAnimationFrame(() => {
-    //       printWindow.focus();
-    //       try {
-    //         printWindow.print();
-    //       } catch (e) {
-    //         console.error('Print error:', e);
-    //         document.body.removeChild(iframe);
-    //         alert("Print failed. Please check your printer settings.");
-    //       }
-    //     });
-    //   }, [items, totalAmount, generateInvoiceText]);
-
-    
-    //     if (items.length === 0 || totalAmount === 0) {
-    //       alert("Invoice is empty. Cannot print.");
-    //       return;
-    //     }
-      
-    //     const printWindow = window.open('', '_blank');
-      
-    //     printWindow.document.write(`
-    //       <html>
-    //         <head>
-    //           <title>Invoice</title>
-    //           <style>
-    //             @page {
-    //               size: auto; /* Auto width & height for roll paper */
-    //               margin: 0; /* No margins for continuous printing */
-    //             }
-    //             body {
-    //               font-family: monospace;
-    //               font-size: 10pt;
-    //               white-space: pre-wrap;
-    //               width: auto; /* Auto width for any paper size */
-    //               height: auto; /* Auto height for dynamic content */
-    //               margin: 0;
-    //               padding: 5mm;
-    //             }
-    //             .invoice-content {
-    //               width: 100%; /* Take full width */
-    //               padding: 5mm;
-    //               text-align: left;
-    //               white-space: pre-wrap;
-    //             }
-    //             /* Prevents unwanted page breaks */
-    //             .invoice-content, body, html {
-    //               page-break-before: avoid;
-    //               page-break-after: avoid;
-    //               page-break-inside: avoid;
-    //             }
-    //           </style>
-    //         </head>
-    //         <body>
-    //           <div class="invoice-content">
-    //             ${generateInvoiceText()} <!-- Function that generates invoice content -->
-    //           </div>
-    //         </body>
-    //       </html>
-    //     `);
-      
-    //     printWindow.document.close();
-    //     printWindow.focus();
-      
-    //     setTimeout(() => {
-    //       printWindow.print();
-    //       printWindow.close();
-    //     }, 500);
-    //   }, [items, totalAmount, generateInvoiceTe
-      
+  
       const PrintButton = () => (
         <button
           onClick={handlePrint}
