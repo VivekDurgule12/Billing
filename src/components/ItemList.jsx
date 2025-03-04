@@ -122,7 +122,8 @@ const ItemList = ({
                   />
                 </svg>
               </button>
-              <span className="text-sm text-white">= ₹{(item.quantity * item.price).toFixed(2)}</span>
+              <span className="text-sm text-white">= ₹{(item.quantity * item.price).toFixed(2)}</span>   
+          
             </div>
           );
         })}
