@@ -277,7 +277,7 @@ function App() {
     text += `Total: ₹${totalAmount.toFixed(2)}\n`;
     text += `Remaining: ₹${remainingAmount.toFixed(2)}\n`;
     text += `Porterage: ₹${porterage.toFixed(2)}\n`; // Show porterage in invoice text
-    text += `Total Bill: ₹${(remainingAmount + totalAmount).toFixed(2)}\n`;
+    text += `Total Bill: ₹${(porterage + remainingAmount + totalAmount).toFixed(2)}\n`;
     text += "--------------------------------------\n";
     return text;
   };

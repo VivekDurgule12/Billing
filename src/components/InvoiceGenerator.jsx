@@ -89,9 +89,9 @@ const InvoiceGenerator = ({ customer, items, totalAmount, remainingAmount, porte
 
             <div className="mt-6">
                 <h3 className="text-xl font-semibold text-gray-300 mb-2">Summary</h3>
-                <p className="text-gray-400">Subtotal: ₹{totalAmount.toFixed(2)}</p>
-                <p className="text-gray-400">Previous Remaining: ₹{remainingAmount.toFixed(2)}</p>
-                 <p className="text-gray-400">Porterage Fee: ₹{porterage.toFixed(2)}</p>
+                <p className="text-gray-400  font-semibold text-white">Total: ₹{totalAmount.toFixed(2)}</p>
+                <p className="text-gray-400  font-semibold text-white">Previous Remaining: ₹{remainingAmount.toFixed(2)}</p>
+                 <p className="text-gray-400  font-semibold text-white">Porterage Fee: ₹{porterage.toFixed(2)}</p>
                 <p className="text-gray-400 font-semibold text-white">Total Bill: ₹{totalBill.toFixed(2)}</p>
             </div>
         </div>
