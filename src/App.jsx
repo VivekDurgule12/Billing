@@ -379,7 +379,7 @@ function App() {
 
                 @media print {
                   @page {
-                    size: 76mm;
+                  size: 76mm auto; /* Allow dynamic height */
                     margin: 0;
                   }
                   body {
