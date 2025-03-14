@@ -1,0 +1,281 @@
+/* styles.css - Properly Formatted and Organized */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.BillingInput {
+  background: rgba(107, 114, 128, 0.5);
+  border: 1px solid rgba(107, 114, 128, 0.5);
+  border-radius: 8px;
+  color: white;
+  padding: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.BillingInput:focus {
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.5);
+  border-color: rgb(20, 184, 166);
+  outline: none;
+}
+
+.BillingSelect {
+  background: rgba(107, 114, 128, 0.5);
+  border-radius: 8px;
+  color: white;
+  padding: 8px;
+}
+
+.BillingTextArea {
+  background: rgba(107, 114, 128, 0.5);
+  border: 1px solid rgba(107, 114, 128, 0.5);
+  border-radius: 8px;
+  color: white;
+  padding: 8px;
+  resize: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.BillingTextArea:focus {
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.5);
+  border-color: rgb(20, 184, 166);
+  outline: none;
+}
+
+
+.ButtonActions {
+  display: flex;
+  gap: 16px;
+}
+
+.ButtonsRow {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: center;
+}
+
+@media (min-width: 640px) {
+  .ButtonsRow {
+    flex-direction: row;
+    justify-content: center;
+  }
+}
+
+
+.CustomerInput {
+  background: rgba(107, 114, 128, 0.5);
+  border: 1px solid rgba(107, 114, 128, 0.5);
+  border-radius: 8px;
+  color: white;
+  padding: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.CustomerInput:focus {
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.5);
+  border-color: rgb(20, 184, 166);
+  outline: none;
+}
+
+
+.ErrorBox {
+  animation: slide-in 0.5s ease-out;
+  align-items: center;
+  backdrop-filter: blur(10px);
+  background: rgba(220, 38, 38, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  gap: 8px;
+  padding: 16px;
+  position: fixed;
+  right: 24px;
+  top: 24px;
+  z-index: 50;
+}
+
+.ErrorButton {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+
+.GenericButton {
+  align-items: center;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  font-weight: bold;
+  gap: 8px;
+  justify-content: center;
+  padding: 10px 25px;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.GenericButton:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+
+.InvoiceContainer {
+  backdrop-filter: blur(10px);
+  background: rgba(31, 41, 55, 0.8);
+  border: 1px solid rgba(20, 184, 166, 0.15);
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  max-width: 1200px;
+  padding: 32px;
+}
+
+.InvoiceContent {
+  -moz-column-gap: 40px;
+       column-gap: 40px;
+  gap: 40px;
+  row-gap: 40px;
+}
+
+.InvoiceHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+@media (min-width: 640px) {
+  .InvoiceHeader {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+
+.InvoiceTitle {
+  animation: fade-in 0.5s ease-out;
+  -webkit-background-clip: text;
+  background-clip: text;
+  background-image: linear-gradient(to right, rgb(134, 239, 172), rgb(59, 219, 228));
+  color: transparent;
+  font-weight: bold;
+  font-size: 32px;
+  letter-spacing: -0.025em;
+}
+
+@media (min-width: 640px) {
+  .InvoiceTitle {
+    font-size: 48px;
+  }
+}
+
+
+.ItemInput {
+  background: rgba(107, 114, 128, 0.3);
+  border: 1px solid rgba(107, 114, 128, 0.5);
+  border-radius: 8px;
+  color: white;
+  padding: 8px;
+}
+
+.ItemInput:focus {
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.5);
+  border-color: rgb(20, 184, 166);
+  outline: none;
+}
+
+
+.ItemRemoveButton {
+  background-color: rgb(220, 38, 38);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  padding: 8px 16px;
+  transition: background-color 0.2s;
+}
+
+.ItemRemoveButton:hover {
+  background-color: rgb(190, 18, 18);
+}
+
+
+.ItemTotal {
+  color: white;
+  font-size: 14px;
+}
+
+
+.LoginButton {
+  background-color: rgb(20, 184, 166);
+  border-radius: 8px;
+  border: none;
+  color: white;
+  font-weight: bold;
+  padding: 8px 16px;
+}
+
+.LoginButton:focus {
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.5);
+  outline: none;
+}
+
+.LoginButton:hover {
+  background-color: rgb(17, 164, 144);
+}
+
+
+.LoginInput {
+  background: rgba(107, 114, 128, 0.7);
+  border: 1px solid rgba(209, 213, 219, 1);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  color: white;
+  line-height: 24px;
+  padding: 12px;
+  width: 100%;
+}
+
+.LoginInput:focus {
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.5);
+  outline: none;
+}
+
+.ReceivableInput {
+  background: rgba(107, 114, 128, 0.5);
+  border: 1px solid rgba(107, 114, 128, 0.5);
+  border-radius: 8px;
+  color: white;
+  padding: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ReceivableInput:focus {
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.5);
+  border-color: rgb(20, 184, 166);
+  outline: none;
+}
