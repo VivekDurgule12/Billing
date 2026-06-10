@@ -115,90 +115,62 @@ export default function BillingModule() {
     setMessage('✅ Invoice generated and saved');
     setTimeout(() => setMessage(''), 3000);
   };
+const generateInvoiceText = () => {
+  let text = '';
 
-  const generateInvoiceText = () => {
-    let text = '|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
-';
-    text += '                         INVOICE
-';
-    text += '                    DURGULE BILLING STORE
-';
-    text += '|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+  text += '=================================================================\n';
+  text += '                         INVOICE\n';
+  text += '                    DURGULE BILLING STORE\n';
+  text += '=================================================================\n\n';
 
-';
-    text += `Customer: ${customerData.name}
-`;
-    text += `Mobile: ${customerData.mobile}
-`;
-    text += `Address: ${customerData.address}
-`;
-    text += `Date: ${new Date().toLocaleDateString()}
-`;
-    text += `Invoice #: ${storageManager.getInvoices().length + 1001}
+  text += `Customer: ${customerData.name}\n`;
+  text += `Mobile: ${customerData.mobile}\n`;
+  text += `Address: ${customerData.address}\n`;
+  text += `Date: ${new Date().toLocaleDateString()}\n`;
+  text += `Invoice #: ${storageManager.getInvoices().length + 1001}\n\n`;
 
-`;
-    text += '--------------------------------------
-';
-    text += 'ITEMS:
-';
-    text += '--------------------------------------
-';
-    
-    lineItems.forEach((item, index) => {
-      text += `${index + 1}. ${item.name}
-`;
-      text += `   Qty: ${item.qty} x Rate: ₹${item.rate.toFixed(2)} = ₹${item.amount.toFixed(2)}
-`;
-      text += `   Weight: ${(item.qty * item.weightPerUnit).toFixed(2)} ${item.unitType}
+  text += '--------------------------------------\n';
+  text += 'ITEMS\n';
+  text += '--------------------------------------\n';
 
-`;
-    });
+  lineItems.forEach((item, index) => {
+    text += `${index + 1}. ${item.name}\n`;
+    text += `   Qty: ${item.qty} x Rate: ₹${item.rate.toFixed(2)} = ₹${item.amount.toFixed(2)}\n`;
+    text += `   Weight: ${(item.qty * (item.weightPerUnit || 0)).toFixed(2)} ${item.unitType || 'KG'}\n\n`;
+  });
 
-    text += '--------------------------------------
-';
-    text += 'BILLING DETAILS:
-';
-    text += '--------------------------------------
-';
-    text += `Subtotal:          ₹${totals.subtotal.toFixed(2)}
-`;
-    text += `Porterage:         ₹${summary.porterage.toFixed(2)}
-`;
-    text += `Old Balance:       ₹${summary.oldBalance.toFixed(2)}
-`;
-    
-    if (summary.discountValue > 0) {
-      text += `Discount (${summary.discountType === 'percentage' ? summary.discountValue + '%' : '₹' + summary.discountValue}): -₹${totals.discount.toFixed(2)}
-`;
-    }
-    
-    text += `
-Total Bill:        ₹${totals.total.toFixed(2)}
-`;
-    text += `Received:          ₹${summary.receivedAmount.toFixed(2)}
-`;
-    text += `Payable:           ₹${totals.payable.toFixed(2)}
-`;
-    text += `
-Total Order Weight: ${totals.totalWeight.toFixed(2)} ${lineItems[0]?.unitType || 'KG'}
-`;
-    
-    if (summary.note) {
-      text += `
-Note: ${summary.note}
-`;
-    }
-    
-    text += '
---------------------------------------
-';
-    text += '     Thank you for your business!
-';
-    text += '--------------------------------------
-';
-    
-    return text;
-  };
+  text += '--------------------------------------\n';
+  text += 'BILLING DETAILS\n';
+  text += '--------------------------------------\n';
+
+  text += `Subtotal:          ₹${totals.subtotal.toFixed(2)}\n`;
+  text += `Porterage:         ₹${summary.porterage.toFixed(2)}\n`;
+  text += `Old Balance:       ₹${summary.oldBalance.toFixed(2)}\n`;
+
+  if (summary.discountValue > 0) {
+    text += `Discount (${summary.discountType === 'percentage'
+      ? summary.discountValue + '%'
+      : '₹' + summary.discountValue}): -₹${totals.discount.toFixed(2)}\n`;
+  }
+
+  text += '\n';
+  text += `Total Bill:        ₹${totals.total.toFixed(2)}\n`;
+  text += `Received:          ₹${summary.receivedAmount.toFixed(2)}\n`;
+  text += `Payable:           ₹${totals.payable.toFixed(2)}\n`;
+
+  text += '\n';
+  text += `Total Order Weight: ${totals.totalWeight.toFixed(2)} ${lineItems[0]?.unitType || 'KG'}\n`;
+
+  if (summary.note) {
+    text += `\nNote: ${summary.note}\n`;
+  }
+
+  text += '\n--------------------------------------\n';
+  text += 'Thank you for your business!\n';
+  text += '--------------------------------------\n';
+
+  return text;
+};
 
   const handlePrint = () => {
     if (!customerData.name || lineItems.length === 0) {
