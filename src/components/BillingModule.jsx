@@ -21,7 +21,11 @@ export default function BillingModule() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    setInventory(storageManager.getInventory());
+    const loadInventory = async () => {
+      setInventory(await storageManager.seedDefaultInventory());
+    };
+
+    loadInventory();
   }, []);
 
   const handleAddLineItem = () => {
@@ -33,10 +37,11 @@ export default function BillingModule() {
     
     const item = inventory.find(i => i.item === selectedItem);
     if (item) {
+      const newId = Date.now();
       setLineItems([
         ...lineItems,
         {
-          id: Date.now(),
+          id: newId,
           sn: item.sn,
           name: item.item,
           qty: 1,
@@ -47,6 +52,9 @@ export default function BillingModule() {
         },
       ]);
       setSelectedItem('');
+      setTimeout(() => {
+        document.querySelector(`[data-line-id="${newId}"][data-line-field="qty"]`)?.focus();
+      }, 0);
       setMessage('✅ Item added');
       setTimeout(() => setMessage(''), 2000);
     }
@@ -69,6 +77,35 @@ export default function BillingModule() {
     setLineItems(lineItems.filter(item => item.id !== id));
     setMessage('✅ Item removed');
     setTimeout(() => setMessage(''), 2000);
+  };
+
+  const handleBillingEnterMove = (e) => {
+    if (e.key !== 'Enter' || e.target.tagName === 'TEXTAREA') {
+      return;
+    }
+
+    const fields = Array.from(document.querySelectorAll('[data-billing-flow]'));
+    const currentIndex = fields.indexOf(e.target);
+    if (currentIndex === -1) {
+      return;
+    }
+
+    e.preventDefault();
+    const nextField = fields[currentIndex + 1];
+    if (nextField) {
+      nextField.focus();
+      nextField.select?.();
+    }
+  };
+
+  const handleItemSelectKeyDown = (e) => {
+    if (e.key === 'Enter' && selectedItem) {
+      e.preventDefault();
+      handleAddLineItem();
+      return;
+    }
+
+    handleBillingEnterMove(e);
   };
 
   const calculateTotals = () => {
@@ -281,23 +318,29 @@ const generateInvoiceText = () => {
             <div className="space-y-3">
               <input
                 type="text"
+                data-billing-flow
                 placeholder="Customer Name *"
                 value={customerData.name}
                 onChange={(e) => setCustomerData({...customerData, name: e.target.value})}
+                onKeyDown={handleBillingEnterMove}
                 className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               />
               <input
                 type="text"
+                data-billing-flow
                 placeholder="Mobile Number"
                 value={customerData.mobile}
                 onChange={(e) => setCustomerData({...customerData, mobile: e.target.value})}
+                onKeyDown={handleBillingEnterMove}
                 className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               />
               <input
                 type="text"
+                data-billing-flow
                 placeholder="Address"
                 value={customerData.address}
                 onChange={(e) => setCustomerData({...customerData, address: e.target.value})}
+                onKeyDown={handleBillingEnterMove}
                 className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               />
             </div>
@@ -308,8 +351,10 @@ const generateInvoiceText = () => {
             <h2 className="text-xl font-semibold text-teal-300 mb-4">📝 Add Items</h2>
             <div className="flex gap-2 mb-4">
               <select
+                data-billing-flow
                 value={selectedItem}
                 onChange={(e) => setSelectedItem(e.target.value)}
+                onKeyDown={handleItemSelectKeyDown}
                 className="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               >
                 <option value="">Select Product...</option>
@@ -348,8 +393,12 @@ const generateInvoiceText = () => {
                         <td className="p-2">
                           <input
                             type="number"
+                            data-billing-flow
+                            data-line-id={item.id}
+                            data-line-field="qty"
                             value={item.qty}
                             onChange={(e) => handleUpdateLineItem(item.id, 'qty', parseFloat(e.target.value) || 0)}
+                            onKeyDown={handleBillingEnterMove}
                             className="w-16 bg-gray-600 text-white p-1 rounded text-center"
                             min="1"
                           />
@@ -357,8 +406,12 @@ const generateInvoiceText = () => {
                         <td className="p-2">
                           <input
                             type="number"
+                            data-billing-flow
+                            data-line-id={item.id}
+                            data-line-field="rate"
                             value={item.rate}
                             onChange={(e) => handleUpdateLineItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
+                            onKeyDown={handleBillingEnterMove}
                             className="w-20 bg-gray-600 text-white p-1 rounded text-right"
                           />
                         </td>
@@ -413,8 +466,10 @@ const generateInvoiceText = () => {
             <label className="text-sm text-gray-400">Porterage (₹)</label>
             <input
               type="number"
+              data-billing-flow
               value={summary.porterage}
               onChange={(e) => setSummary({...summary, porterage: parseFloat(e.target.value) || 0})}
+              onKeyDown={handleBillingEnterMove}
               className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
             />
           </div>
@@ -423,8 +478,10 @@ const generateInvoiceText = () => {
             <label className="text-sm text-gray-400">Old Balance (₹)</label>
             <input
               type="number"
+              data-billing-flow
               value={summary.oldBalance}
               onChange={(e) => setSummary({...summary, oldBalance: parseFloat(e.target.value) || 0})}
+              onKeyDown={handleBillingEnterMove}
               className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
             />
           </div>
@@ -433,8 +490,10 @@ const generateInvoiceText = () => {
             <label className="text-sm text-gray-400">Discount</label>
             <div className="flex gap-2 mb-2">
               <select
+                data-billing-flow
                 value={summary.discountType}
                 onChange={(e) => setSummary({...summary, discountType: e.target.value})}
+                onKeyDown={handleBillingEnterMove}
                 className="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               >
                 <option value="fixed">Fixed (₹)</option>
@@ -443,8 +502,10 @@ const generateInvoiceText = () => {
             </div>
             <input
               type="number"
+              data-billing-flow
               value={summary.discountValue}
               onChange={(e) => setSummary({...summary, discountValue: parseFloat(e.target.value) || 0})}
+              onKeyDown={handleBillingEnterMove}
               className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               placeholder="0"
             />
@@ -454,8 +515,10 @@ const generateInvoiceText = () => {
             <label className="text-sm text-gray-400">Received Amount (₹)</label>
             <input
               type="number"
+              data-billing-flow
               value={summary.receivedAmount}
               onChange={(e) => setSummary({...summary, receivedAmount: parseFloat(e.target.value) || 0})}
+              onKeyDown={handleBillingEnterMove}
               className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
             />
           </div>

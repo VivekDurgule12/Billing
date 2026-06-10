@@ -22,10 +22,10 @@ export default function InventoryMaster() {
     loadInventory();
   }, []);
 
-  const loadInventory = () => {
-    const inventory = storageManager.getInventory();
+  const loadInventory = async () => {
+    const inventory = await storageManager.seedDefaultInventory();
     setItems(inventory);
-    setCategories(storageManager.getCategories());
+    setCategories(storageManager.getCategories(inventory));
   };
 
   const handleInputChange = (e) => {
@@ -36,7 +36,29 @@ export default function InventoryMaster() {
     }));
   };
 
-  const handleAddOrUpdate = (e) => {
+  const handleEnterMove = (e) => {
+    if (e.key !== 'Enter') {
+      return;
+    }
+
+    const fields = Array.from(e.currentTarget.querySelectorAll('[data-enter-next]'));
+    const currentIndex = fields.indexOf(e.target);
+    if (currentIndex === -1) {
+      return;
+    }
+
+    e.preventDefault();
+    const nextField = fields[currentIndex + 1];
+    if (nextField) {
+      nextField.focus();
+      nextField.select?.();
+      return;
+    }
+
+    e.currentTarget.requestSubmit();
+  };
+
+  const handleAddOrUpdate = async (e) => {
     e.preventDefault();
     
     if (!formData.item || !formData.type || !formData.category || 
@@ -48,11 +70,11 @@ export default function InventoryMaster() {
 
     try {
       if (editingId) {
-        storageManager.updateItem(editingId, formData);
+        await storageManager.updateItem(editingId, formData);
         setMessage('✅ Item updated successfully');
         setEditingId(null);
       } else {
-        storageManager.addItem(formData);
+        await storageManager.addItem(formData);
         setMessage('✅ Item added successfully');
       }
 
@@ -65,9 +87,12 @@ export default function InventoryMaster() {
         unitType: 'Piece',
         weightPerUnit: '',
       });
+      setTimeout(() => {
+        document.querySelector('[name="item"]')?.focus();
+      }, 0);
       
       setTimeout(() => setMessage(''), 3000);
-      loadInventory();
+      await loadInventory();
     } catch (error) {
       setMessage('❌ Error: ' + error.message);
       setTimeout(() => setMessage(''), 3000);
@@ -80,26 +105,12 @@ export default function InventoryMaster() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = (sn) => {
+  const handleDelete = async (sn) => {
     if (window.confirm('Are you sure you want to delete this item?')) {
-      storageManager.deleteItem(sn);
+      await storageManager.deleteItem(sn);
       setMessage('✅ Item deleted successfully');
       setTimeout(() => setMessage(''), 3000);
-      loadInventory();
-    }
-  };
-
-  const handleImport = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      storageManager.importInventory(file).then(() => {
-        setMessage('✅ Inventory imported successfully');
-        setTimeout(() => setMessage(''), 3000);
-        loadInventory();
-      }).catch((error) => {
-        setMessage('❌ Import failed: ' + error.message);
-        setTimeout(() => setMessage(''), 3000);
-      });
+      await loadInventory();
     }
   };
 
@@ -124,10 +135,11 @@ export default function InventoryMaster() {
         <h2 className="text-xl font-semibold text-teal-300 mb-4">
           {editingId ? '✏️ Edit Item' : '➕ Add New Item'}
         </h2>
-        <form onSubmit={handleAddOrUpdate} className="grid grid-cols-2 gap-4 md:grid-cols-3">
+        <form onSubmit={handleAddOrUpdate} onKeyDown={handleEnterMove} className="grid grid-cols-2 gap-4 md:grid-cols-3">
           <input
             type="text"
             name="item"
+            data-enter-next
             placeholder="Item Name *"
             value={formData.item}
             onChange={handleInputChange}
@@ -136,6 +148,7 @@ export default function InventoryMaster() {
           <input
             type="text"
             name="type"
+            data-enter-next
             placeholder="Type *"
             value={formData.type}
             onChange={handleInputChange}
@@ -144,6 +157,7 @@ export default function InventoryMaster() {
           <input
             type="text"
             name="category"
+            data-enter-next
             placeholder="Category *"
             value={formData.category}
             onChange={handleInputChange}
@@ -152,6 +166,7 @@ export default function InventoryMaster() {
           <input
             type="number"
             name="costPrice"
+            data-enter-next
             placeholder="Cost Price (₹) *"
             value={formData.costPrice}
             onChange={handleInputChange}
@@ -160,6 +175,7 @@ export default function InventoryMaster() {
           <input
             type="number"
             name="sellingPrice"
+            data-enter-next
             placeholder="Selling Price (₹) *"
             value={formData.sellingPrice}
             onChange={handleInputChange}
@@ -168,6 +184,7 @@ export default function InventoryMaster() {
           <input
             type="text"
             name="unitType"
+            data-enter-next
             placeholder="Unit Type (KG, Gram, etc.)"
             value={formData.unitType}
             onChange={handleInputChange}
@@ -176,6 +193,7 @@ export default function InventoryMaster() {
           <input
             type="number"
             name="weightPerUnit"
+            data-enter-next
             placeholder="Weight Per Unit"
             value={formData.weightPerUnit}
             onChange={handleInputChange}
@@ -229,21 +247,6 @@ export default function InventoryMaster() {
             <option key={cat} value={cat}>{cat}</option>
           ))}
         </select>
-        <button
-          onClick={() => storageManager.exportInventory()}
-          className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-all"
-        >
-          📥 Export JSON
-        </button>
-        <label className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-all cursor-pointer">
-          📤 Import JSON
-          <input
-            type="file"
-            accept=".json"
-            onChange={handleImport}
-            className="hidden"
-          />
-        </label>
       </div>
 
       {/* Items Table */}

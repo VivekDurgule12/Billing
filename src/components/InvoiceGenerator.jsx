@@ -73,7 +73,6 @@ const InvoiceGenerator = ({
   note,
   receivedAmount,
   payableAmount,
-  totalQuantity,
 }) => {
   return (
     <div className="bg-gray-700 p-6 rounded-xl shadow-md">

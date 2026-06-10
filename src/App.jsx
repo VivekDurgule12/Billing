@@ -90,7 +90,9 @@ export default function App() {
 
       {/* Footer */}
       <footer className="bg-gray-800 border-t border-gray-700 p-4 text-center text-gray-400 text-sm">
-        <p>© 2024 Durgule Billing System | 100% Local Storage | Offline Ready</p>
+        <p>
+  © {new Date().getFullYear()} Durgule Billing System | 100% Local Storage | Offline Ready
+</p>
       </footer>
     </div>
   );

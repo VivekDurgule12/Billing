@@ -4,7 +4,6 @@ const ItemList = ({
   items,
   removeItem,
   addItem,
-  handleKeyDown,
   handleBlur,
   handleChange,
 }) => {

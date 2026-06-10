@@ -83,7 +83,6 @@ const BillingSummary = ({
   setRemainingAmount,
   porterage,
   setPorterage,
-  totalBill,
   discountType,
   setDiscountType,
   discountValue,
@@ -129,8 +128,6 @@ const BillingSummary = ({
       setReceivedAmount(value);
     }
   };
-
-  const payableAmount = totalBill - (parseFloat(receivedAmount) || 0);
 
   return (
     <div className="bg-gray-700 p-6 rounded-xl shadow-md">
