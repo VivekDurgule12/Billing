@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { storageManager } from '../utils/storageManager';
+// import { storageManager } from '../utils/storageManager';
+import { defaultInventory } from '../data/defaultInventory';
 
 export default function InventoryMaster() {
   const [items, setItems] = useState([]);
@@ -18,15 +19,40 @@ export default function InventoryMaster() {
   const [categories, setCategories] = useState([]);
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    loadInventory();
-  }, []);
 
-  const loadInventory = async () => {
-    const inventory = await storageManager.seedDefaultInventory();
+  // const loadInventory = async () => {
+  //   const inventory = await storageManager.seedDefaultInventory();
+  //   setItems(inventory);
+  //   setCategories(storageManager.getCategories(inventory));
+  // };
+
+ const loadInventory = () => {
+  const savedData = localStorage.getItem('inventoryData');
+
+  if (savedData) {
+    const inventory = JSON.parse(savedData);
     setItems(inventory);
-    setCategories(storageManager.getCategories(inventory));
-  };
+  } else {
+    setItems(defaultInventory);
+    localStorage.setItem(
+      'inventoryData',
+      JSON.stringify(defaultInventory)
+    );
+  }
+};
+
+useEffect(() => {
+  loadInventory();
+}, []);
+
+useEffect(() => {
+  if (items.length > 0) {
+    localStorage.setItem(
+      'inventoryData',
+      JSON.stringify(items)
+    );
+  }
+}, [items]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -58,46 +84,79 @@ export default function InventoryMaster() {
     e.currentTarget.requestSubmit();
   };
 
+
   const handleAddOrUpdate = async (e) => {
-    e.preventDefault();
-    
-    if (!formData.item || !formData.type || !formData.category || 
-        !formData.costPrice || !formData.sellingPrice) {
-      setMessage('❌ Please fill all required fields');
-      setTimeout(() => setMessage(''), 3000);
-      return;
+  e.preventDefault();
+
+  if (
+    !formData.item ||
+    !formData.type ||
+    !formData.category ||
+    !formData.costPrice ||
+    !formData.sellingPrice
+  ) {
+    setMessage('❌ Please fill all required fields');
+    setTimeout(() => setMessage(''), 3000);
+    return;
+  }
+
+  try {
+    if (editingId) {
+      setItems(prev =>
+        prev.map(item =>
+          item.sn === editingId
+            ? {
+                ...item,
+                ...formData,
+                costPrice: Number(formData.costPrice),
+                sellingPrice: Number(formData.sellingPrice),
+                profit:
+                  Number(formData.sellingPrice) -
+                  Number(formData.costPrice),
+              }
+            : item
+        )
+      );
+
+      setMessage('✅ Item updated successfully');
+      setEditingId(null);
+    } else {
+      const newItem = {
+        sn: Math.max(...items.map(i => i.sn), 0) + 1,
+        ...formData,
+        costPrice: Number(formData.costPrice),
+        sellingPrice: Number(formData.sellingPrice),
+        profit:
+          Number(formData.sellingPrice) -
+          Number(formData.costPrice),
+      };
+
+      setItems(prev => [...prev, newItem]);
+
+      setMessage('✅ Item added successfully');
     }
 
-    try {
-      if (editingId) {
-        await storageManager.updateItem(editingId, formData);
-        setMessage('✅ Item updated successfully');
-        setEditingId(null);
-      } else {
-        await storageManager.addItem(formData);
-        setMessage('✅ Item added successfully');
-      }
+    setFormData({
+      item: '',
+      type: '',
+      category: '',
+      costPrice: '',
+      sellingPrice: '',
+      unitType: 'Piece',
+      weightPerUnit: '',
+    });
 
-      setFormData({
-        item: '',
-        type: '',
-        category: '',
-        costPrice: '',
-        sellingPrice: '',
-        unitType: 'Piece',
-        weightPerUnit: '',
-      });
-      setTimeout(() => {
-        document.querySelector('[name="item"]')?.focus();
-      }, 0);
-      
-      setTimeout(() => setMessage(''), 3000);
-      await loadInventory();
-    } catch (error) {
-      setMessage('❌ Error: ' + error.message);
-      setTimeout(() => setMessage(''), 3000);
-    }
-  };
+    setTimeout(() => {
+      document.querySelector('[name="item"]')?.focus();
+    }, 0);
+
+    setTimeout(() => setMessage(''), 3000);
+  } catch (error) {
+    setMessage('❌ Error: ' + error.message);
+    setTimeout(() => setMessage(''), 3000);
+  }
+};
+
 
   const handleEdit = (item) => {
     setFormData(item);
@@ -105,14 +164,14 @@ export default function InventoryMaster() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (sn) => {
-    if (window.confirm('Are you sure you want to delete this item?')) {
-      await storageManager.deleteItem(sn);
-      setMessage('✅ Item deleted successfully');
-      setTimeout(() => setMessage(''), 3000);
-      await loadInventory();
-    }
-  };
+ const handleDelete = async (sn) => {
+  if (window.confirm('Are you sure you want to delete this item?')) {
+    setItems(prev => prev.filter(item => item.sn !== sn));
+
+    setMessage('✅ Item deleted successfully');
+    setTimeout(() => setMessage(''), 3000);
+  }
+};
 
   const filteredItems = items.filter(item => {
     const matchesSearch = item.item.toLowerCase().includes(searchTerm.toLowerCase());
