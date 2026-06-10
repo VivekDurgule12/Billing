@@ -20,13 +20,28 @@ export default function BillingModule() {
   const [selectedItem, setSelectedItem] = useState('');
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    const loadInventory = async () => {
-      setInventory(await storageManager.seedDefaultInventory());
-    };
+  // useEffect(() => {
+  //   const loadInventory = async () => {
+  //     setInventory(await storageManager.seedDefaultInventory());
+  //   };
 
-    loadInventory();
-  }, []);
+  //   loadInventory();
+  // }, []);
+
+useEffect(() => {
+  const savedData = localStorage.getItem("inventoryData");
+
+  console.log("savedData:", savedData);
+
+  if (savedData) {
+    const inventory = JSON.parse(savedData);
+
+    console.log("Inventory Count:", inventory.length);
+    console.log("First Item:", inventory[0]);
+
+    setInventory(inventory);
+  }
+}, []); 
 
   const handleAddLineItem = () => {
     if (!selectedItem) {
