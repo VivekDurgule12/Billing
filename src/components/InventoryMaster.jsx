@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-// import { storageManager } from '../utils/storageManager';
 import { defaultInventory } from '../data/defaultInventory';
 
 export default function InventoryMaster() {
@@ -20,11 +19,6 @@ export default function InventoryMaster() {
   const [message, setMessage] = useState('');
 
 
-  // const loadInventory = async () => {
-  //   const inventory = await storageManager.seedDefaultInventory();
-  //   setItems(inventory);
-  //   setCategories(storageManager.getCategories(inventory));
-  // };
 
 const loadInventory = () => {
   console.log("defaultInventory", defaultInventory);

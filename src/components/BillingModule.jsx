@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { storageManager } from '../utils/storageManager';
+import { generateInvoicePDF } from "../utils/pdfGenerator";
+import InvoiceTemplate from "./InvoiceTemplate";
 
 export default function BillingModule() {
 
@@ -22,13 +24,6 @@ export default function BillingModule() {
   const [selectedItem, setSelectedItem] = useState('');
   const [message, setMessage] = useState('');
 
-  // useEffect(() => {
-  //   const loadInventory = async () => {
-  //     setInventory(await storageManager.seedDefaultInventory());
-  //   };
-
-  //   loadInventory();
-  // }, []);
 
 useEffect(() => {
   const savedData = localStorage.getItem("inventoryData");
@@ -44,6 +39,8 @@ useEffect(() => {
     setInventory(inventory);
   }
 }, []); 
+
+
 
   const handleAddLineItem = () => {
     setSelectedItem('');
@@ -76,27 +73,51 @@ useEffect(() => {
       }, 0);
       setMessage('✅ Item added');
       setTimeout(() => setMessage(''), 2000);
+      if (!item || item.sellingPrice <= 0) {
+  setMessage("❌ Product price is invalid");
+  setTimeout(() => setMessage(""), 2000);
+  return;
+}
     }
   };
 
-  const handleUpdateLineItem = (id, field, value) => {
-    setLineItems(lineItems.map(item => {
+
+
+ const handleUpdateLineItem = (id, field, value) => {
+  if (value <= 0) {
+    setMessage("❌ Value must be greater than 0");
+    setTimeout(() => setMessage(""), 2000);
+    return;
+  }
+
+  setLineItems(
+    lineItems.map((item) => {
       if (item.id === id) {
-        const updatedItem = { ...item, [field]: value };
-        if (field === 'qty' || field === 'rate') {
-          updatedItem.amount = updatedItem.qty * updatedItem.rate;
-        }
+        const updatedItem = {
+          ...item,
+          [field]: value
+        };
+
+        updatedItem.amount =
+          updatedItem.qty * updatedItem.rate;
+
         return updatedItem;
       }
+
       return item;
-    }));
-  };
+    })
+  );
+};
+
+
 
   const handleRemoveLineItem = (id) => {
     setLineItems(lineItems.filter(item => item.id !== id));
     setMessage('✅ Item removed');
     setTimeout(() => setMessage(''), 2000);
   };
+
+
 
   const handleBillingEnterMove = (e) => {
     if (e.key !== 'Enter' || e.target.tagName === 'TEXTAREA') {
@@ -117,6 +138,8 @@ useEffect(() => {
     }
   };
 
+
+
   const handleItemSelectKeyDown = (e) => {
     if (e.key === 'Enter' && selectedItem) {
       e.preventDefault();
@@ -127,105 +150,137 @@ useEffect(() => {
     handleBillingEnterMove(e);
   };
 
+
+
+  // const calculateTotals = () => {
+  //   const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
+  //   const discount = summary.discountType === 'percentage'
+  //     ? (subtotal * summary.discountValue) / 100
+  //     : summary.discountValue;
+  //   const afterDiscount = subtotal - discount;
+  //   const total = afterDiscount + summary.porterage + summary.oldBalance;
+  //   const payable = total - summary.receivedAmount;
+  //   const totalWeight = lineItems.reduce((sum, item) => 
+  //     sum + (item.qty * (item.weightPerUnit || 0)), 0);
+
+  //   return { subtotal, discount, afterDiscount, total, payable, totalWeight };
+  // };
+
+
   const calculateTotals = () => {
-    const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
-    const discount = summary.discountType === 'percentage'
+  const subtotal = lineItems.reduce(
+    (sum, item) => sum + item.amount,
+    0
+  );
+
+  const discount =
+    summary.discountType === "percentage"
       ? (subtotal * summary.discountValue) / 100
       : summary.discountValue;
-    const afterDiscount = subtotal - discount;
-    const total = afterDiscount + summary.porterage + summary.oldBalance;
-    const payable = total - summary.receivedAmount;
-    const totalWeight = lineItems.reduce((sum, item) => 
-      sum + (item.qty * (item.weightPerUnit || 0)), 0);
 
-    return { subtotal, discount, afterDiscount, total, payable, totalWeight };
+  const afterDiscount = subtotal - discount;
+
+  const totalWeight = lineItems.reduce(
+    (sum, item) =>
+      sum + (item.qty * (item.weightPerUnit || 0)),
+    0
+  );
+
+  // Porterage Formula
+  let porterage =
+    Math.round(
+      ((totalWeight / 30) * 7) * 100
+    ) / 100;
+
+  // Only apply porterage if greater than ₹15
+  if (porterage <= 14) {
+    porterage = 0;
+  }
+
+  const total =
+    afterDiscount +
+    porterage +
+    summary.oldBalance;
+
+  const payable =
+    total - summary.receivedAmount;
+
+  return {
+    subtotal,
+    discount,
+    afterDiscount,
+    total,
+    payable,
+    totalWeight,
+    porterage
   };
+};
+
 
   const totals = calculateTotals();
 
-  const handleGeneratePDF = () => {
-    if (!customerData.name || lineItems.length === 0) {
-      setMessage('❌ Please add customer and items before generating invoice');
-      setTimeout(() => setMessage(''), 3000);
-      return;
-    }
 
-    const invoiceText = generateInvoiceText();
-    const dataBlob = new Blob([invoiceText], { type: 'text/plain' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `invoice_${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+const handleGeneratePDF = async () => {
+
+  if (!customerData.name.trim()) {
+    setMessage("❌ Please enter customer name");
+    return;
+  }
+
+  if (lineItems.length === 0) {
+    setMessage("❌ Please add at least one item");
+    return;
+  }
+
+  const invalidItems = lineItems.some(
+    (item) =>
+      item.qty <= 0 ||
+      item.rate <= 0 ||
+      item.amount <= 0
+  );
+
+  if (invalidItems) {
+    setMessage(
+      "❌ All items must have Qty, Rate and Amount greater than 0"
+    );
+    return;
+  }
+
+  try {
+
+    await generateInvoicePDF({
+      customerData,
+      lineItems,
+      summary,
+      totals,
+      invoiceNumber:
+        storageManager.getInvoices().length + 1001
+    });
 
     storageManager.saveInvoice({
       customer: customerData,
       items: lineItems,
       summary,
-      totals,
+      totals
     });
 
-    setMessage('✅ Invoice generated and saved');
-    setTimeout(() => setMessage(''), 3000);
-  };
-const generateInvoiceText = () => {
-  let text = '';
+    setMessage("✅ PDF Generated");
 
-  text += '=================================================================\n';
-  text += '                         INVOICE\n';
-  text += '                    DURGULE BILLING STORE\n';
-  text += '=================================================================\n\n';
+    setTimeout(() => {
+      setMessage("");
+    }, 3000);
 
-  text += `Customer: ${customerData.name}\n`;
-  text += `Mobile: ${customerData.mobile}\n`;
-  text += `Address: ${customerData.address}\n`;
-  text += `Date: ${new Date().toLocaleDateString()}\n`;
-  text += `Invoice #: ${storageManager.getInvoices().length + 1001}\n\n`;
+  } catch (error) {
 
-  text += '--------------------------------------\n';
-  text += 'ITEMS\n';
-  text += '--------------------------------------\n';
+    console.error(error);
 
-  lineItems.forEach((item, index) => {
-    text += `${index + 1}. ${item.name}\n`;
-    text += `   Qty: ${item.qty} x Rate: ₹${item.rate.toFixed(2)} = ₹${item.amount.toFixed(2)}\n`;
-    text += `   Weight: ${(item.qty * (item.weightPerUnit || 0)).toFixed(2)} ${item.unitType || 'KG'}\n\n`;
-  });
+    setMessage("❌ PDF Generation Failed");
 
-  text += '--------------------------------------\n';
-  text += 'BILLING DETAILS\n';
-  text += '--------------------------------------\n';
+    setTimeout(() => {
+      setMessage("");
+    }, 3000);
 
-  text += `Subtotal:          ₹${totals.subtotal.toFixed(2)}\n`;
-  text += `Porterage:         ₹${summary.porterage.toFixed(2)}\n`;
-  text += `Old Balance:       ₹${summary.oldBalance.toFixed(2)}\n`;
-
-  if (summary.discountValue > 0) {
-    text += `Discount (${summary.discountType === 'percentage'
-      ? summary.discountValue + '%'
-      : '₹' + summary.discountValue}): -₹${totals.discount.toFixed(2)}\n`;
   }
-
-  text += '\n';
-  text += `Total Bill:        ₹${totals.total.toFixed(2)}\n`;
-  text += `Received:          ₹${summary.receivedAmount.toFixed(2)}\n`;
-  text += `Payable:           ₹${totals.payable.toFixed(2)}\n`;
-
-  text += '\n';
-  text += `Total Order Weight: ${totals.totalWeight.toFixed(2)} ${lineItems[0]?.unitType || 'KG'}\n`;
-
-  if (summary.note) {
-    text += `\nNote: ${summary.note}\n`;
-  }
-
-  text += '\n--------------------------------------\n';
-  text += 'Thank you for your business!\n';
-  text += '--------------------------------------\n';
-
-  return text;
 };
 
   const handlePrint = () => {
@@ -301,6 +356,8 @@ const generateInvoiceText = () => {
     printWindow.print();
   };
 
+
+
   const handleClearBill = () => {
     if (window.confirm('Clear all items and customer data?')) {
       setLineItems([]);
@@ -317,6 +374,8 @@ const generateInvoiceText = () => {
       setTimeout(() => setMessage(''), 2000);
     }
   };
+
+
 
   return (
 
@@ -642,6 +701,23 @@ const generateInvoiceText = () => {
           </div>
         </div>
       </div>
+      <div
+  style={{
+    position: "absolute",
+    left: "-9999px",
+    top: 0
+  }}
+>
+  <InvoiceTemplate
+    customerData={customerData}
+    lineItems={lineItems}
+    totals={totals}
+    summary={summary}
+    invoiceNumber={
+      storageManager.getInvoices().length + 1001
+    }
+  />
+</div>
    </div>
    
   );
