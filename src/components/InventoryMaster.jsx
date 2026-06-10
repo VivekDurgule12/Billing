@@ -26,14 +26,20 @@ export default function InventoryMaster() {
   //   setCategories(storageManager.getCategories(inventory));
   // };
 
- const loadInventory = () => {
+const loadInventory = () => {
+  console.log("defaultInventory", defaultInventory);
+  console.log("length", defaultInventory?.length);
+
   const savedData = localStorage.getItem('inventoryData');
 
   if (savedData) {
     const inventory = JSON.parse(savedData);
     setItems(inventory);
   } else {
+    console.log("Using default inventory");
+
     setItems(defaultInventory);
+
     localStorage.setItem(
       'inventoryData',
       JSON.stringify(defaultInventory)
