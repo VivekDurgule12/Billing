@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { storageManager } from '../utils/storageManager';
 
 export default function BillingModule() {
+
+  const [searchItem, setSearchItem] = useState('');
   const [lineItems, setLineItems] = useState([]);
   const [customerData, setCustomerData] = useState({
     name: '',
@@ -44,6 +46,8 @@ useEffect(() => {
 }, []); 
 
   const handleAddLineItem = () => {
+    setSelectedItem('');
+    setSearchItem('');
     if (!selectedItem) {
       setMessage('❌ Please select an item');
       setTimeout(() => setMessage(''), 3000);
@@ -315,6 +319,10 @@ const generateInvoiceText = () => {
   };
 
   return (
+
+
+
+    
     <div className="p-6 bg-gray-900 min-h-screen">
       <h1 className="text-3xl font-bold text-teal-300 mb-6">💳 Billing Module</h1>
 
@@ -362,32 +370,71 @@ const generateInvoiceText = () => {
           </div>
 
           {/* Line Items */}
-          <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-            <h2 className="text-xl font-semibold text-teal-300 mb-4">📝 Add Items</h2>
-            <div className="flex gap-2 mb-4">
-              <select
-                data-billing-flow
-                value={selectedItem}
-                onChange={(e) => setSelectedItem(e.target.value)}
-                onKeyDown={handleItemSelectKeyDown}
-                className="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
-              >
-                <option value="">Select Product...</option>
-                {inventory.map(item => (
-                  <option key={item.sn} value={item.item}>
-                    {item.item} (₹{item.sellingPrice})
-                  </option>
-                ))}
-              </select>
-              <button
-                onClick={handleAddLineItem}
-                className="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-6 rounded transition-all"
-              >
-                ➕ Add
-              </button>
-            </div>
 
-            {/* Items Table */}
+  
+      
+
+<div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+<h2 className="text-xl font-semibold text-teal-300 mb-4">📝 Add Items</h2>
+<div className="flex gap-2 mb-4">
+  <div className="relative flex-1">
+    <input
+      type="text"
+      data-billing-flow
+      value={searchItem}
+      onChange={(e) => {
+        setSearchItem(e.target.value);
+        setSelectedItem(e.target.value);
+      }}
+      placeholder="Search product..."
+      className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none"
+    />
+
+    {searchItem && (
+      <div className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-xl max-h-64 overflow-y-auto">
+        {inventory
+          .filter(item =>
+            item.item.toLowerCase().includes(searchItem.toLowerCase())
+          )
+          .slice(0, 15)
+          .map(item => (
+            <div
+              key={item.sn}
+              onClick={() => {
+                setSelectedItem(item.item);
+                setSearchItem(item.item);
+              }}
+              className="p-3 cursor-pointer hover:bg-teal-600/20 border-b border-gray-700 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <span className="font-medium text-white">
+                  {item.item}
+                </span>
+
+                <span className="text-teal-300 font-semibold">
+                  ₹{item.sellingPrice}
+                </span>
+              </div>
+
+              <div className="text-xs text-gray-400 mt-1">
+                {item.category || item.type}
+              </div>
+            </div>
+          ))}
+      </div>
+    )}
+  </div>
+
+  <button
+    onClick={handleAddLineItem}
+    className="bg-teal-600 hover:bg-teal-700 text-white font-bold px-6 py-2 rounded-lg whitespace-nowrap"
+  >
+    ➕ Add
+  </button>
+</div>
+
+
+  {/* Items Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-white text-sm">
                 <thead className="bg-gray-700">
@@ -466,7 +513,10 @@ const generateInvoiceText = () => {
           </div>
         </div>
 
-        {/* Sidebar - Summary */}
+
+
+
+ {/* Sidebar - Summary */}
         <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 h-fit sticky top-6 space-y-4">
           <h2 className="text-xl font-semibold text-teal-300 mb-4">💰 Billing Summary</h2>
 
@@ -592,6 +642,7 @@ const generateInvoiceText = () => {
           </div>
         </div>
       </div>
-    </div>
+   </div>
+   
   );
 }
