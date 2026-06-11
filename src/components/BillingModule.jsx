@@ -27,6 +27,7 @@ export default function BillingModule() {
   const addButtonRef = useRef(null);
 
 
+
   useEffect(() => {
     const savedData = localStorage.getItem("inventoryData");
 
@@ -141,6 +142,28 @@ export default function BillingModule() {
       setTimeout(() => setMessage(""), 2000);
       return;
     }
+    const existingIndex = lineItems.findIndex(
+      (line) => line.sn === item.sn
+    );
+
+    if (existingIndex !== -1) {
+
+      const allowDuplicate = window.confirm(
+        `${item.item.split("/")[0].trim()} already exists at Sr No ${existingIndex + 1}.\n\nAdd again?`
+      );
+
+      if (!allowDuplicate) {
+
+        setSearchItem("");
+        setSelectedItem("");
+
+        searchInputRef.current?.focus();
+
+        return;
+      }
+    }
+
+
 
     const newId = Date.now();
 
@@ -164,9 +187,18 @@ export default function BillingModule() {
     setMessage("✅ Item added");
     setTimeout(() => setMessage(""), 2000);
 
-   setTimeout(() => {
-  searchInputRef.current?.focus();
-}, 100);};
+    setTimeout(() => {
+      const qtyInputs = document.querySelectorAll(
+        '[data-line-field="qty"]'
+      );
+
+      const lastQty =
+        qtyInputs[qtyInputs.length - 1];
+
+      lastQty?.focus();
+      lastQty?.select();
+    }, 100);
+  }
 
 
   const handleUpdateLineItem = (id, field, value) => {
@@ -183,14 +215,18 @@ export default function BillingModule() {
           [field]: value
         };
 
-        const qty =
-          Number(updatedItem.qty) || 0;
+        const qty = Number(updatedItem.qty);
 
-        const rate =
-          Number(updatedItem.rate) || 0;
+        const rate = Number(updatedItem.rate);
+
+        updatedItem.qty =
+          Number.isFinite(qty) ? qty : 0;
+
+        updatedItem.rate =
+          Number.isFinite(rate) ? rate : 0;
 
         updatedItem.amount =
-          qty * rate;
+          updatedItem.qty * updatedItem.rate;
 
         return updatedItem;
       })
@@ -255,7 +291,10 @@ export default function BillingModule() {
 
   const calculateTotals = () => {
     const subtotal = lineItems.reduce(
-      (sum, item) => sum + item.amount,
+      (sum, item) => {
+        const amount = Number(item.amount);
+        return sum + (Number.isFinite(amount) ? amount : 0);
+      },
       0
     );
 
@@ -571,11 +610,18 @@ export default function BillingModule() {
                       );
                     });
 
-                    setSelectedItem(
-                      firstMatch
-                        ? firstMatch.item.split("/")[0].trim()
-                        : ""
-                    );
+                    if (firstMatch) {
+                      setSelectedItem(
+                        firstMatch.item.split("/")[0].trim()
+                      );
+
+                      setSelectedInventoryItem(firstMatch);
+                    } else {
+                      setSelectedItem("");
+                      setSelectedInventoryItem(null);
+                    }
+
+
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
@@ -617,8 +663,9 @@ export default function BillingModule() {
                         return (
                           <div
                             key={item.sn}
+
                             onClick={() => {
-                              setSelectedItem(marathiName);
+                              setSelectedItem(item.sn);
                               setSearchItem(marathiName);
                             }}
                             className="p-3 cursor-pointer hover:bg-teal-600/20 border-b border-gray-700 transition-colors"
@@ -641,6 +688,9 @@ export default function BillingModule() {
                       })}
                   </div>
                 )}
+
+
+
               </div>
 
               <button
@@ -699,6 +749,7 @@ export default function BillingModule() {
                                 );
                               }
                             }}
+
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();
@@ -746,7 +797,11 @@ export default function BillingModule() {
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();
-                                addButtonRef.current?.focus();
+
+                                setTimeout(() => {
+                                  searchInputRef.current?.focus();
+                                  searchInputRef.current?.select?.();
+                                }, 50);
                               }
                             }}
                             className="w-20 bg-gray-600 text-white p-1 rounded text-right"
@@ -754,7 +809,10 @@ export default function BillingModule() {
                         </td>
                         <td className="p-2 text-right font-semibold">₹{item.amount.toFixed(2)}</td>
                         <td className="p-2 text-right text-sm">
-                          {(item.qty * (item.weightPerUnit || 0)).toFixed(2)} {item.unitType}
+                          {(
+                            (Number(item.qty) || 0) *
+                            (Number(item.weightPerUnit) || 0)
+                          ).toFixed(2)}
                         </td>
                         <td className="p-2 text-center">
                           <button
