@@ -8,7 +8,6 @@ export default function BillingModule() {
   const searchInputRef = useRef(null);
   const [searchItem, setSearchItem] = useState('');
   const [lineItems, setLineItems] = useState([]);
-  const [selectedInventoryItem, setSelectedInventoryItem] = useState(null);
   const [customerData, setCustomerData] = useState({
     name: '',
     mobile: '',
@@ -200,6 +199,41 @@ export default function BillingModule() {
       lastQty?.select();
     }, 100);
   }
+
+
+  const addSpecificItem = (item) => {
+    const newId = Date.now();
+
+    setLineItems(prev => [
+      ...prev,
+      {
+        id: newId,
+        sn: item.sn,
+        name: item.item.split("/")[0].trim(),
+        qty: 1,
+        rate: item.sellingPrice,
+        amount: item.sellingPrice,
+        weightPerUnit: item.weightPerUnit,
+        unitType: item.unitType,
+      },
+    ]);
+
+    setSearchItem("");
+    setSelectedItem("");
+
+    setTimeout(() => {
+  const qtyInputs = document.querySelectorAll(
+    '[data-line-field="qty"]'
+  );
+
+  const lastInput =
+    qtyInputs[qtyInputs.length - 1];
+
+  lastInput?.focus();
+  lastInput?.select();
+}, 100);
+  };
+
 
 
   const handleUpdateLineItem = (id, field, value) => {
@@ -666,9 +700,9 @@ export default function BillingModule() {
                             key={item.sn}
 
                             onClick={() => {
-                              setSelectedItem(item.sn);
-                              setSearchItem(marathiName);
+                              addSpecificItem(item);
                             }}
+
                             className="p-3 cursor-pointer hover:bg-teal-600/20 border-b border-gray-700 transition-colors"
                           >
                             <div className="flex justify-between items-center">
@@ -708,7 +742,7 @@ export default function BillingModule() {
               <table className="w-full text-white text-sm">
                 <thead className="bg-gray-700">
                   <tr>
-                   <th className="p-2 text-center">Sr No</th>
+                    <th className="p-2 text-center">Sr No</th>
                     <th className="p-2 text-left">Item</th>
                     <th className="p-2 text-center">Qty</th>
                     <th className="p-2 text-right">Rate</th>
@@ -719,12 +753,12 @@ export default function BillingModule() {
                 </thead>
                 <tbody>
                   {lineItems.length > 0 ? (
-                lineItems.map((item, index) => (
-                  
+                    lineItems.map((item, index) => (
+
                       <tr key={item.id} className="border-t border-gray-700 hover:bg-gray-700">
                         <td className="p-2 text-center">
-  {index + 1}
-</td>
+                          {index + 1}
+                        </td>
                         <td className="p-2 font-semibold">{item.name}</td>
                         <td className="p-2">
                           <input
