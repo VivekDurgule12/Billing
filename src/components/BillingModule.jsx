@@ -707,6 +707,7 @@ export default function BillingModule() {
               <table className="w-full text-white text-sm">
                 <thead className="bg-gray-700">
                   <tr>
+                   <th className="p-2 text-center">Sr No</th>
                     <th className="p-2 text-left">Item</th>
                     <th className="p-2 text-center">Qty</th>
                     <th className="p-2 text-right">Rate</th>
@@ -717,8 +718,12 @@ export default function BillingModule() {
                 </thead>
                 <tbody>
                   {lineItems.length > 0 ? (
-                    lineItems.map(item => (
+                lineItems.map((item, index) => (
+                  
                       <tr key={item.id} className="border-t border-gray-700 hover:bg-gray-700">
+                        <td className="p-2 text-center">
+  {index + 1}
+</td>
                         <td className="p-2 font-semibold">{item.name}</td>
                         <td className="p-2">
                           <input
