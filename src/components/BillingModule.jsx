@@ -8,6 +8,7 @@ export default function BillingModule() {
   const searchInputRef = useRef(null);
   const [searchItem, setSearchItem] = useState('');
   const [lineItems, setLineItems] = useState([]);
+  const [selectedInventoryItem, setSelectedInventoryItem] = useState(null);
   const [customerData, setCustomerData] = useState({
     name: '',
     mobile: '',
@@ -831,7 +832,7 @@ export default function BillingModule() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="6" className="p-4 text-center text-gray-400">
+                      <td colSpan="7" className="p-4 text-center text-gray-400">
                         No items added. Select and add items above.
                       </td>
                     </tr>

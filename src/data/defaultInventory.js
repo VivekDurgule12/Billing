@@ -15,7 +15,7 @@ export const defaultInventory = [
   { sn: 14, item: 'कस्टमर राईस / customer rice', type: 'KG', category: 'तांदूळ', costPrice: 55, sellingPrice: 62 , weightPerUnit: 30},
   { sn: 15, item: 'इंद्रायणी / indrayani', type: 'KG', category: 'तांदूळ', costPrice: 72, sellingPrice: 78 , weightPerUnit: 30},
   { sn: 16, item: 'इंद्रायणी कणी / indrayani kani', type: 'KG', category: 'तांदूळ', costPrice: 45, sellingPrice: 52 , weightPerUnit: 30},
-  { sn: 19, item: 'मीठ / methi', type: 'KG', category: 'मसाले', costPrice: 24, sellingPrice: 28 , weightPerUnit: 25},
+  { sn: 19, item: 'मीठ / mith', type: 'KG', category: 'मसाले', costPrice: 24, sellingPrice: 28 , weightPerUnit: 25},
   { sn: 20, item: 'व्हील पावडर / wheel powder', type: 'KG', category: 'स्वच्छता', costPrice: 78, sellingPrice: 85 , weightPerUnit: 15},
   { sn: 21, item: 'बेसन / besan', type: 'KG', category: 'पीठ', costPrice: 98, sellingPrice: 105 , weightPerUnit: 10},
   { sn: 22, item: 'तूर डाळ / tur dal', type: 'KG', category: 'डाळी', costPrice: 148, sellingPrice: 155 , weightPerUnit: 1},
