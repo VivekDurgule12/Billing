@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { storageManager } from '../utils/storageManager';
 import { generateInvoicePDF } from "../utils/pdfGenerator";
 import InvoiceTemplate from "./InvoiceTemplate";
+import { useRef } from "react";
 
 export default function BillingModule() {
-
+  const searchInputRef = useRef(null);
   const [searchItem, setSearchItem] = useState('');
   const [lineItems, setLineItems] = useState([]);
   const [customerData, setCustomerData] = useState({
@@ -23,92 +24,181 @@ export default function BillingModule() {
   const [inventory, setInventory] = useState([]);
   const [selectedItem, setSelectedItem] = useState('');
   const [message, setMessage] = useState('');
+const addButtonRef = useRef(null);
 
 
-useEffect(() => {
-  const savedData = localStorage.getItem("inventoryData");
+  useEffect(() => {
+    const savedData = localStorage.getItem("inventoryData");
 
-  console.log("savedData:", savedData);
+    console.log("savedData:", savedData);
 
-  if (savedData) {
-    const inventory = JSON.parse(savedData);
+    if (savedData) {
+      const inventory = JSON.parse(savedData);
 
-    console.log("Inventory Count:", inventory.length);
-    console.log("First Item:", inventory[0]);
+      console.log("Inventory Count:", inventory.length);
+      console.log("First Item:", inventory[0]);
 
-    setInventory(inventory);
-  }
-}, []); 
+      setInventory(inventory);
+    }
+  }, []);
 
+
+  useEffect(() => {
+
+    const hasData =
+      customerData.name ||
+      customerData.mobile ||
+      customerData.address ||
+      lineItems.length > 0;
+
+    if (!hasData) return;
+
+    localStorage.setItem(
+      "currentBillingDraft",
+      JSON.stringify({
+        customerData,
+        lineItems,
+        summary
+      })
+    );
+
+  }, [
+    customerData,
+    lineItems,
+    summary
+  ]);
+
+  useEffect(() => {
+
+    const savedDraft =
+      localStorage.getItem(
+        "currentBillingDraft"
+      );
+
+    if (!savedDraft) return;
+
+    try {
+
+      const draft =
+        JSON.parse(savedDraft);
+
+      setCustomerData(
+        draft.customerData || {
+          name: "",
+          mobile: "",
+          address: ""
+        }
+      );
+
+      setLineItems(
+        draft.lineItems || []
+      );
+
+      setSummary(
+        draft.summary || {
+          porterage: 0,
+          oldBalance: 0,
+          discountType: "fixed",
+          discountValue: 0,
+          receivedAmount: 0,
+          note: ""
+        }
+      );
+
+    } catch (error) {
+      console.error(
+        "Draft restore failed",
+        error
+      );
+    }
+
+  }, []);
 
 
   const handleAddLineItem = () => {
-    setSelectedItem('');
-    setSearchItem('');
+
     if (!selectedItem) {
-      setMessage('❌ Please select an item');
-      setTimeout(() => setMessage(''), 3000);
+      setMessage("❌ Please select an item");
+      setTimeout(() => setMessage(""), 3000);
       return;
     }
-    
-    const item = inventory.find(i => i.item === selectedItem);
-    if (item) {
-      const newId = Date.now();
-      setLineItems([
-        ...lineItems,
-        {
-          id: newId,
-          sn: item.sn,
-          name: item.item,
-          qty: 1,
-          rate: item.sellingPrice,
-          amount: item.sellingPrice,
-          weightPerUnit: item.weightPerUnit,
-          unitType: item.unitType,
-        },
-      ]);
-      setSelectedItem('');
-      setTimeout(() => {
-        document.querySelector(`[data-line-id="${newId}"][data-line-field="qty"]`)?.focus();
-      }, 0);
-      setMessage('✅ Item added');
-      setTimeout(() => setMessage(''), 2000);
-      if (!item || item.sellingPrice <= 0) {
-  setMessage("❌ Product price is invalid");
-  setTimeout(() => setMessage(""), 2000);
-  return;
-}
+
+    const item = inventory.find(i => {
+      const marathiName =
+        i.item.split("/")[0].trim();
+
+      return marathiName === selectedItem;
+    });
+
+    if (!item) {
+      setMessage("❌ Item not found");
+      setTimeout(() => setMessage(""), 2000);
+      return;
     }
+
+    if (item.sellingPrice <= 0) {
+      setMessage("❌ Product price is invalid");
+      setTimeout(() => setMessage(""), 2000);
+      return;
+    }
+
+    const newId = Date.now();
+
+    setLineItems(prev => [
+      ...prev,
+      {
+        id: newId,
+        sn: item.sn,
+        name: item.item.split("/")[0].trim(),
+        qty: 1,
+        rate: item.sellingPrice,
+        amount: item.sellingPrice,
+        weightPerUnit: item.weightPerUnit,
+        unitType: item.unitType,
+      },
+    ]);
+
+    setSelectedItem("");
+    setSearchItem("");
+
+    setMessage("✅ Item added");
+    setTimeout(() => setMessage(""), 2000);
+
+    setTimeout(() => {
+      document
+        .querySelector(
+          `[data-line-id="${newId}"][data-line-field="qty"]`
+        )
+        ?.focus();
+    }, 100);
   };
 
 
+  const handleUpdateLineItem = (id, field, value) => {
+    if (value <= 0) {
+      setMessage("❌ Value must be greater than 0");
+      setTimeout(() => setMessage(""), 2000);
+      return;
+    }
 
- const handleUpdateLineItem = (id, field, value) => {
-  if (value <= 0) {
-    setMessage("❌ Value must be greater than 0");
-    setTimeout(() => setMessage(""), 2000);
-    return;
-  }
+    setLineItems(
+      lineItems.map((item) => {
+        if (item.id === id) {
+          const updatedItem = {
+            ...item,
+            [field]: value
+          };
 
-  setLineItems(
-    lineItems.map((item) => {
-      if (item.id === id) {
-        const updatedItem = {
-          ...item,
-          [field]: value
-        };
+          updatedItem.amount =
+            updatedItem.qty * updatedItem.rate;
 
-        updatedItem.amount =
-          updatedItem.qty * updatedItem.rate;
+          return updatedItem;
+        }
 
-        return updatedItem;
-      }
-
-      return item;
-    })
-  );
-};
-
+        return item;
+      })
+    );
+  };
 
 
   const handleRemoveLineItem = (id) => {
@@ -168,120 +258,120 @@ useEffect(() => {
 
 
   const calculateTotals = () => {
-  const subtotal = lineItems.reduce(
-    (sum, item) => sum + item.amount,
-    0
-  );
+    const subtotal = lineItems.reduce(
+      (sum, item) => sum + item.amount,
+      0
+    );
 
-  const discount =
-    summary.discountType === "percentage"
-      ? (subtotal * summary.discountValue) / 100
-      : summary.discountValue;
+    const discount =
+      summary.discountType === "percentage"
+        ? (subtotal * summary.discountValue) / 100
+        : summary.discountValue;
 
-  const afterDiscount = subtotal - discount;
+    const afterDiscount = subtotal - discount;
 
-  const totalWeight = lineItems.reduce(
-    (sum, item) =>
-      sum + (item.qty * (item.weightPerUnit || 0)),
-    0
-  );
+    const totalWeight = lineItems.reduce(
+      (sum, item) =>
+        sum + (item.qty * (item.weightPerUnit || 0)),
+      0
+    );
 
-  // Porterage Formula
-  let porterage =
-    Math.round(
-      ((totalWeight / 30) * 7) * 100
-    ) / 100;
+    // Porterage Formula
+    let porterage =
+      Math.round(
+        ((totalWeight / 30) * 7) * 100
+      ) / 100;
 
-  // Only apply porterage if greater than ₹15
-  if (porterage <= 14) {
-    porterage = 0;
-  }
+    // Only apply porterage if greater than ₹15
+    if (porterage <= 14) {
+      porterage = 0;
+    }
 
-  const total =
-    afterDiscount +
-    porterage +
-    summary.oldBalance;
+    const total =
+      afterDiscount +
+      porterage +
+      summary.oldBalance;
 
-  const payable =
-    total - summary.receivedAmount;
+    const payable =
+      total - summary.receivedAmount;
 
-  return {
-    subtotal,
-    discount,
-    afterDiscount,
-    total,
-    payable,
-    totalWeight,
-    porterage
+    return {
+      subtotal,
+      discount,
+      afterDiscount,
+      total,
+      payable,
+      totalWeight,
+      porterage
+    };
   };
-};
 
 
   const totals = calculateTotals();
 
 
-const handleGeneratePDF = async () => {
+  const handleGeneratePDF = async () => {
 
-  if (!customerData.name.trim()) {
-    setMessage("❌ Please enter customer name");
-    return;
-  }
+    if (!customerData.name.trim()) {
+      setMessage("❌ Please enter customer name");
+      return;
+    }
 
-  if (lineItems.length === 0) {
-    setMessage("❌ Please add at least one item");
-    return;
-  }
+    if (lineItems.length === 0) {
+      setMessage("❌ Please add at least one item");
+      return;
+    }
 
-  const invalidItems = lineItems.some(
-    (item) =>
-      item.qty <= 0 ||
-      item.rate <= 0 ||
-      item.amount <= 0
-  );
-
-  if (invalidItems) {
-    setMessage(
-      "❌ All items must have Qty, Rate and Amount greater than 0"
+    const invalidItems = lineItems.some(
+      (item) =>
+        item.qty <= 0 ||
+        item.rate <= 0 ||
+        item.amount <= 0
     );
-    return;
-  }
 
-  try {
+    if (invalidItems) {
+      setMessage(
+        "❌ All items must have Qty, Rate and Amount greater than 0"
+      );
+      return;
+    }
 
-    await generateInvoicePDF({
-      customerData,
-      lineItems,
-      summary,
-      totals,
-      invoiceNumber:
-        storageManager.getInvoices().length + 1001
-    });
+    try {
 
-    storageManager.saveInvoice({
-      customer: customerData,
-      items: lineItems,
-      summary,
-      totals
-    });
+      await generateInvoicePDF({
+        customerData,
+        lineItems,
+        summary,
+        totals,
+        invoiceNumber:
+          storageManager.getInvoices().length + 1001
+      });
 
-    setMessage("✅ PDF Generated");
+      storageManager.saveInvoice({
+        customer: customerData,
+        items: lineItems,
+        summary,
+        totals
+      });
 
-    setTimeout(() => {
-      setMessage("");
-    }, 3000);
+      setMessage("✅ PDF Generated");
 
-  } catch (error) {
+      setTimeout(() => {
+        setMessage("");
+      }, 3000);
 
-    console.error(error);
+    } catch (error) {
 
-    setMessage("❌ PDF Generation Failed");
+      console.error(error);
 
-    setTimeout(() => {
-      setMessage("");
-    }, 3000);
+      setMessage("❌ PDF Generation Failed");
 
-  }
-};
+      setTimeout(() => {
+        setMessage("");
+      }, 3000);
+
+    }
+  };
 
   const handlePrint = () => {
     if (!customerData.name || lineItems.length === 0) {
@@ -359,19 +449,35 @@ const handleGeneratePDF = async () => {
 
 
   const handleClearBill = () => {
-    if (window.confirm('Clear all items and customer data?')) {
+    if (window.confirm("Clear all items and customer data?")) {
+
       setLineItems([]);
-      setCustomerData({ name: '', mobile: '', address: '' });
+
+      setCustomerData({
+        name: "",
+        mobile: "",
+        address: ""
+      });
+
       setSummary({
         porterage: 0,
         oldBalance: 0,
-        discountType: 'fixed',
+        discountType: "fixed",
         discountValue: 0,
         receivedAmount: 0,
-        note: '',
+        note: ""
       });
-      setMessage('✅ Bill cleared');
-      setTimeout(() => setMessage(''), 2000);
+
+      // Remove autosaved draft
+      localStorage.removeItem(
+        "currentBillingDraft"
+      );
+
+      setMessage("✅ Bill cleared");
+
+      setTimeout(() => {
+        setMessage("");
+      }, 2000);
     }
   };
 
@@ -381,7 +487,7 @@ const handleGeneratePDF = async () => {
 
 
 
-    
+
     <div className="p-6 bg-gray-900 min-h-screen">
       <h1 className="text-3xl font-bold text-teal-300 mb-6">💳 Billing Module</h1>
 
@@ -399,29 +505,32 @@ const handleGeneratePDF = async () => {
             <h2 className="text-xl font-semibold text-teal-300 mb-4">👤 Customer Details</h2>
             <div className="space-y-3">
               <input
+               
                 type="text"
                 data-billing-flow
                 placeholder="Customer Name *"
                 value={customerData.name}
-                onChange={(e) => setCustomerData({...customerData, name: e.target.value})}
+                onChange={(e) => setCustomerData({ ...customerData, name: e.target.value })}
                 onKeyDown={handleBillingEnterMove}
                 className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               />
               <input
+               
                 type="text"
                 data-billing-flow
                 placeholder="Mobile Number"
                 value={customerData.mobile}
-                onChange={(e) => setCustomerData({...customerData, mobile: e.target.value})}
+                onChange={(e) => setCustomerData({ ...customerData, mobile: e.target.value })}
                 onKeyDown={handleBillingEnterMove}
                 className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               />
               <input
+                
                 type="text"
                 data-billing-flow
                 placeholder="Address"
                 value={customerData.address}
-                onChange={(e) => setCustomerData({...customerData, address: e.target.value})}
+                onChange={(e) => setCustomerData({ ...customerData, address: e.target.value })}
                 onKeyDown={handleBillingEnterMove}
                 className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               />
@@ -430,70 +539,124 @@ const handleGeneratePDF = async () => {
 
           {/* Line Items */}
 
-  
-      
 
-<div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-<h2 className="text-xl font-semibold text-teal-300 mb-4">📝 Add Items</h2>
-<div className="flex gap-2 mb-4">
-  <div className="relative flex-1">
-    <input
-      type="text"
-      data-billing-flow
-      value={searchItem}
-      onChange={(e) => {
-        setSearchItem(e.target.value);
-        setSelectedItem(e.target.value);
-      }}
-      placeholder="Search product..."
-      className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none"
-    />
 
-    {searchItem && (
-      <div className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-xl max-h-64 overflow-y-auto">
-        {inventory
-          .filter(item =>
-            item.item.toLowerCase().includes(searchItem.toLowerCase())
-          )
-          .slice(0, 15)
-          .map(item => (
-            <div
-              key={item.sn}
-              onClick={() => {
-                setSelectedItem(item.item);
-                setSearchItem(item.item);
-              }}
-              className="p-3 cursor-pointer hover:bg-teal-600/20 border-b border-gray-700 transition-colors"
-            >
-              <div className="flex justify-between items-center">
-                <span className="font-medium text-white">
-                  {item.item}
-                </span>
 
-                <span className="text-teal-300 font-semibold">
-                  ₹{item.sellingPrice}
-                </span>
+          <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
+            <h2 className="text-xl font-semibold text-teal-300 mb-4">📝 Add Items</h2>
+            <div className="flex gap-2 mb-4">
+              <div className="relative flex-1">
+
+
+                <input
+  ref={searchInputRef}
+  type="text"
+  data-billing-flow
+  value={searchItem}
+  onChange={(e) => {
+    const value = e.target.value;
+
+    setSearchItem(value);
+
+    const firstMatch = inventory.find(item => {
+      const marathi =
+        item.item.split("/")[0]
+        .trim()
+        .toLowerCase();
+
+      const english =
+        item.item.split("/")[1]
+          ?.trim()
+          .toLowerCase() || "";
+
+      return (
+        marathi.includes(value.toLowerCase()) ||
+        english.includes(value.toLowerCase())
+      );
+    });
+
+    setSelectedItem(
+      firstMatch
+        ? firstMatch.item.split("/")[0].trim()
+        : ""
+    );
+  }}
+  onKeyDown={(e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddLineItem();
+    }
+  }}
+  placeholder="Search product..."
+  className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-teal-500"
+/>
+
+
+
+
+
+                {searchItem.trim() !== "" && (
+                  <div className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-xl max-h-64 overflow-y-auto">
+
+                    {inventory
+                      .filter((item) => {
+                        const search = searchItem.toLowerCase().trim();
+
+                        const marathiName =
+                          item.item.split("/")[0].trim().toLowerCase();
+
+                        const englishName =
+                          item.item.split("/")[1]?.trim().toLowerCase() || "";
+
+                        return (
+                          marathiName.includes(search) ||
+                          englishName.includes(search)
+                        );
+                      })
+                      .slice(0, 15)
+                      .map((item) => {
+                        const marathiName =
+                          item.item.split("/")[0].trim();
+
+                        return (
+                          <div
+                            key={item.sn}
+                            onClick={() => {
+                              setSelectedItem(marathiName);
+                              setSearchItem(marathiName);
+                            }}
+                            className="p-3 cursor-pointer hover:bg-teal-600/20 border-b border-gray-700 transition-colors"
+                          >
+                            <div className="flex justify-between items-center">
+                              <span className="font-medium text-white">
+                                {marathiName}
+                              </span>
+
+                              <span className="text-teal-300 font-semibold">
+                                ₹{item.sellingPrice}
+                              </span>
+                            </div>
+
+                            <div className="text-xs text-gray-400 mt-1">
+                              {item.category || item.type}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
               </div>
 
-              <div className="text-xs text-gray-400 mt-1">
-                {item.category || item.type}
-              </div>
+             <button
+  ref={addButtonRef}
+  onClick={handleAddLineItem}
+>
+  ➕ Add
+</button>
             </div>
-          ))}
-      </div>
-    )}
-  </div>
-
-  <button
-    onClick={handleAddLineItem}
-    className="bg-teal-600 hover:bg-teal-700 text-white font-bold px-6 py-2 rounded-lg whitespace-nowrap"
-  >
-    ➕ Add
-  </button>
-</div>
 
 
-  {/* Items Table */}
+            {/* Items Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-white text-sm">
                 <thead className="bg-gray-700">
@@ -513,26 +676,43 @@ const handleGeneratePDF = async () => {
                         <td className="p-2 font-semibold">{item.name}</td>
                         <td className="p-2">
                           <input
+                            
                             type="number"
                             data-billing-flow
                             data-line-id={item.id}
                             data-line-field="qty"
                             value={item.qty}
                             onChange={(e) => handleUpdateLineItem(item.id, 'qty', parseFloat(e.target.value) || 0)}
-                            onKeyDown={handleBillingEnterMove}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+
+                                document
+                                  .querySelector(
+                                    `[data-line-id="${item.id}"][data-line-field="rate"]`
+                                  )
+                                  ?.focus();
+                              }
+                            }}
                             className="w-16 bg-gray-600 text-white p-1 rounded text-center"
                             min="1"
                           />
                         </td>
                         <td className="p-2">
                           <input
+                          
                             type="number"
                             data-billing-flow
                             data-line-id={item.id}
                             data-line-field="rate"
                             value={item.rate}
                             onChange={(e) => handleUpdateLineItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
-                            onKeyDown={handleBillingEnterMove}
+                            onKeyDown={(e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    addButtonRef.current?.focus();
+  }
+}}
                             className="w-20 bg-gray-600 text-white p-1 rounded text-right"
                           />
                         </td>
@@ -541,12 +721,14 @@ const handleGeneratePDF = async () => {
                           {(item.qty * (item.weightPerUnit || 0)).toFixed(2)} {item.unitType}
                         </td>
                         <td className="p-2 text-center">
-                          <button
-                            onClick={() => handleRemoveLineItem(item.id)}
-                            className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
-                          >
-                            Remove
-                          </button>
+                          <td className="p-2 text-center">
+  <button
+    onClick={() => handleRemoveLineItem(item.id)}
+    className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
+  >
+    Remove
+  </button>
+</td>
                         </td>
                       </tr>
                     ))
@@ -575,7 +757,7 @@ const handleGeneratePDF = async () => {
 
 
 
- {/* Sidebar - Summary */}
+        {/* Sidebar - Summary */}
         <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 h-fit sticky top-6 space-y-4">
           <h2 className="text-xl font-semibold text-teal-300 mb-4">💰 Billing Summary</h2>
 
@@ -589,10 +771,11 @@ const handleGeneratePDF = async () => {
           <div>
             <label className="text-sm text-gray-400">Porterage (₹)</label>
             <input
+             
               type="number"
               data-billing-flow
               value={summary.porterage}
-              onChange={(e) => setSummary({...summary, porterage: parseFloat(e.target.value) || 0})}
+              onChange={(e) => setSummary({ ...summary, porterage: parseFloat(e.target.value) || 0 })}
               onKeyDown={handleBillingEnterMove}
               className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
             />
@@ -601,10 +784,11 @@ const handleGeneratePDF = async () => {
           <div>
             <label className="text-sm text-gray-400">Old Balance (₹)</label>
             <input
+              
               type="number"
               data-billing-flow
               value={summary.oldBalance}
-              onChange={(e) => setSummary({...summary, oldBalance: parseFloat(e.target.value) || 0})}
+              onChange={(e) => setSummary({ ...summary, oldBalance: parseFloat(e.target.value) || 0 })}
               onKeyDown={handleBillingEnterMove}
               className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
             />
@@ -616,7 +800,7 @@ const handleGeneratePDF = async () => {
               <select
                 data-billing-flow
                 value={summary.discountType}
-                onChange={(e) => setSummary({...summary, discountType: e.target.value})}
+                onChange={(e) => setSummary({ ...summary, discountType: e.target.value })}
                 onKeyDown={handleBillingEnterMove}
                 className="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               >
@@ -625,10 +809,11 @@ const handleGeneratePDF = async () => {
               </select>
             </div>
             <input
+             
               type="number"
               data-billing-flow
               value={summary.discountValue}
-              onChange={(e) => setSummary({...summary, discountValue: parseFloat(e.target.value) || 0})}
+              onChange={(e) => setSummary({ ...summary, discountValue: parseFloat(e.target.value) || 0 })}
               onKeyDown={handleBillingEnterMove}
               className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               placeholder="0"
@@ -638,10 +823,11 @@ const handleGeneratePDF = async () => {
           <div>
             <label className="text-sm text-gray-400">Received Amount (₹)</label>
             <input
+              
               type="number"
               data-billing-flow
               value={summary.receivedAmount}
-              onChange={(e) => setSummary({...summary, receivedAmount: parseFloat(e.target.value) || 0})}
+              onChange={(e) => setSummary({ ...summary, receivedAmount: parseFloat(e.target.value) || 0 })}
               onKeyDown={handleBillingEnterMove}
               className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
             />
@@ -672,7 +858,7 @@ const handleGeneratePDF = async () => {
             <label className="text-sm text-gray-400">Note</label>
             <textarea
               value={summary.note}
-              onChange={(e) => setSummary({...summary, note: e.target.value})}
+              onChange={(e) => setSummary({ ...summary, note: e.target.value })}
               placeholder="Add a note..."
               className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               rows="2"
@@ -702,23 +888,22 @@ const handleGeneratePDF = async () => {
         </div>
       </div>
       <div
-  style={{
-    position: "absolute",
-    left: "-9999px",
-    top: 0
-  }}
->
-  <InvoiceTemplate
-    customerData={customerData}
-    lineItems={lineItems}
-    totals={totals}
-    summary={summary}
-    invoiceNumber={
-      storageManager.getInvoices().length + 1001
-    }
-  />
-</div>
-   </div>
-   
+        style={{
+          position: "absolute",
+          left: "-9999px",
+          top: 0
+        }}
+      >
+        <InvoiceTemplate
+          customerData={customerData}
+          lineItems={lineItems}
+          totals={totals}
+          summary={summary}
+          invoiceNumber={
+            storageManager.getInvoices().length + 1001
+          }
+        />
+      </div>
+    </div>
   );
 }

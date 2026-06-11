@@ -198,7 +198,6 @@ export default function InvoiceTemplate({
                 style={{
                   padding: "6px",
                   borderBottom: "1px solid #aaa",
-                  fontWeight: "500",
                    fontWeight: "bold",
                     fontSize: "18px"
                 }}
