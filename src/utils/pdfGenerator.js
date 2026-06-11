@@ -14,36 +14,97 @@ export const generateInvoicePDF = async ({
     return;
   }
 
-  const canvas = await html2canvas(invoice, {
-    scale: 3
-  });
+  try {
 
-  const imgData =
-    canvas.toDataURL("image/png");
+    const canvas = await html2canvas(
+      invoice,
+      {
+        scale: 2,
+        useCORS: true,
+        logging: false
+      }
+    );
 
-  const pdf = new jsPDF({
-    orientation: "portrait",
-    unit: "mm",
-    format: "a5"
-  });
+    const imgData =
+      canvas.toDataURL("image/png");
 
-  const width = 148;
-  const height =
-    (canvas.height * width) / canvas.width;
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "mm",
+      format: "a4"
+    });
 
-  pdf.addImage(
-    imgData,
-    "PNG",
-    0,
-    0,
-    width,
-    height
-  );
+    const pageWidth =
+      pdf.internal.pageSize.getWidth();
 
-  const fileName =
-    `${customerData.name.replace(/\s+/g, "_")}_` +
-    `${totals.total.toFixed(0)}_` +
-    `${new Date().toISOString().split("T")[0]}.pdf`;
-console.log("Saving PDF:", fileName);
-  pdf.save(fileName);
+    const pageHeight =
+      pdf.internal.pageSize.getHeight();
+
+    const imgWidth =
+      pageWidth;
+
+    const imgHeight =
+      (canvas.height * imgWidth) /
+      canvas.width;
+
+    let heightLeft =
+      imgHeight;
+
+    let position = 0;
+
+    // First Page
+    pdf.addImage(
+      imgData,
+      "PNG",
+      0,
+      position,
+      imgWidth,
+      imgHeight
+    );
+
+    heightLeft -= pageHeight;
+
+    // Additional Pages
+    while (heightLeft > 0) {
+
+      position =
+        heightLeft - imgHeight;
+
+      pdf.addPage();
+
+      pdf.addImage(
+        imgData,
+        "PNG",
+        0,
+        position,
+        imgWidth,
+        imgHeight
+      );
+
+      heightLeft -= pageHeight;
+    }
+
+    const fileName =
+      `${customerData.name
+        .replace(/\s+/g, "_")}_${
+        totals.total.toFixed(0)
+      }_${
+        new Date()
+          .toISOString()
+          .split("T")[0]
+      }.pdf`;
+
+    pdf.save(fileName);
+
+  } catch (error) {
+
+    console.error(
+      "PDF Generation Error:",
+      error
+    );
+
+    alert(
+      "Failed to generate PDF"
+    );
+  }
 };

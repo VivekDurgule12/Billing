@@ -24,7 +24,7 @@ export default function BillingModule() {
   const [inventory, setInventory] = useState([]);
   const [selectedItem, setSelectedItem] = useState('');
   const [message, setMessage] = useState('');
-const addButtonRef = useRef(null);
+  const addButtonRef = useRef(null);
 
 
   useEffect(() => {
@@ -505,7 +505,7 @@ const addButtonRef = useRef(null);
             <h2 className="text-xl font-semibold text-teal-300 mb-4">👤 Customer Details</h2>
             <div className="space-y-3">
               <input
-               
+
                 type="text"
                 data-billing-flow
                 placeholder="Customer Name *"
@@ -515,7 +515,7 @@ const addButtonRef = useRef(null);
                 className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               />
               <input
-               
+
                 type="text"
                 data-billing-flow
                 placeholder="Mobile Number"
@@ -525,7 +525,7 @@ const addButtonRef = useRef(null);
                 className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               />
               <input
-                
+
                 type="text"
                 data-billing-flow
                 placeholder="Address"
@@ -549,47 +549,47 @@ const addButtonRef = useRef(null);
 
 
                 <input
-  ref={searchInputRef}
-  type="text"
-  data-billing-flow
-  value={searchItem}
-  onChange={(e) => {
-    const value = e.target.value;
+                  ref={searchInputRef}
+                  type="text"
+                  data-billing-flow
+                  value={searchItem}
+                  onChange={(e) => {
+                    const value = e.target.value;
 
-    setSearchItem(value);
+                    setSearchItem(value);
 
-    const firstMatch = inventory.find(item => {
-      const marathi =
-        item.item.split("/")[0]
-        .trim()
-        .toLowerCase();
+                    const firstMatch = inventory.find(item => {
+                      const marathi =
+                        item.item.split("/")[0]
+                          .trim()
+                          .toLowerCase();
 
-      const english =
-        item.item.split("/")[1]
-          ?.trim()
-          .toLowerCase() || "";
+                      const english =
+                        item.item.split("/")[1]
+                          ?.trim()
+                          .toLowerCase() || "";
 
-      return (
-        marathi.includes(value.toLowerCase()) ||
-        english.includes(value.toLowerCase())
-      );
-    });
+                      return (
+                        marathi.includes(value.toLowerCase()) ||
+                        english.includes(value.toLowerCase())
+                      );
+                    });
 
-    setSelectedItem(
-      firstMatch
-        ? firstMatch.item.split("/")[0].trim()
-        : ""
-    );
-  }}
-  onKeyDown={(e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddLineItem();
-    }
-  }}
-  placeholder="Search product..."
-  className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-teal-500"
-/>
+                    setSelectedItem(
+                      firstMatch
+                        ? firstMatch.item.split("/")[0].trim()
+                        : ""
+                    );
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddLineItem();
+                    }
+                  }}
+                  placeholder="Search product..."
+                  className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-teal-500"
+                />
 
 
 
@@ -647,12 +647,12 @@ const addButtonRef = useRef(null);
                 )}
               </div>
 
-             <button
-  ref={addButtonRef}
-  onClick={handleAddLineItem}
->
-  ➕ Add
-</button>
+              <button
+                ref={addButtonRef}
+                onClick={handleAddLineItem}
+              >
+                ➕ Add
+              </button>
             </div>
 
 
@@ -676,7 +676,7 @@ const addButtonRef = useRef(null);
                         <td className="p-2 font-semibold">{item.name}</td>
                         <td className="p-2">
                           <input
-                            
+
                             type="number"
                             data-billing-flow
                             data-line-id={item.id}
@@ -700,7 +700,7 @@ const addButtonRef = useRef(null);
                         </td>
                         <td className="p-2">
                           <input
-                          
+
                             type="number"
                             data-billing-flow
                             data-line-id={item.id}
@@ -708,11 +708,11 @@ const addButtonRef = useRef(null);
                             value={item.rate}
                             onChange={(e) => handleUpdateLineItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
                             onKeyDown={(e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    addButtonRef.current?.focus();
-  }
-}}
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addButtonRef.current?.focus();
+                              }
+                            }}
                             className="w-20 bg-gray-600 text-white p-1 rounded text-right"
                           />
                         </td>
@@ -722,13 +722,13 @@ const addButtonRef = useRef(null);
                         </td>
                         <td className="p-2 text-center">
                           <td className="p-2 text-center">
-  <button
-    onClick={() => handleRemoveLineItem(item.id)}
-    className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
-  >
-    Remove
-  </button>
-</td>
+                            <button
+                              onClick={() => handleRemoveLineItem(item.id)}
+                              className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
+                            >
+                              Remove
+                            </button>
+                          </td>
                         </td>
                       </tr>
                     ))
@@ -771,7 +771,7 @@ const addButtonRef = useRef(null);
           <div>
             <label className="text-sm text-gray-400">Porterage (₹)</label>
             <input
-             
+
               type="number"
               data-billing-flow
               value={summary.porterage}
@@ -784,7 +784,7 @@ const addButtonRef = useRef(null);
           <div>
             <label className="text-sm text-gray-400">Old Balance (₹)</label>
             <input
-              
+
               type="number"
               data-billing-flow
               value={summary.oldBalance}
@@ -809,7 +809,7 @@ const addButtonRef = useRef(null);
               </select>
             </div>
             <input
-             
+
               type="number"
               data-billing-flow
               value={summary.discountValue}
@@ -823,7 +823,7 @@ const addButtonRef = useRef(null);
           <div>
             <label className="text-sm text-gray-400">Received Amount (₹)</label>
             <input
-              
+
               type="number"
               data-billing-flow
               value={summary.receivedAmount}
