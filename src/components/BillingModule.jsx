@@ -164,42 +164,38 @@ export default function BillingModule() {
     setMessage("✅ Item added");
     setTimeout(() => setMessage(""), 2000);
 
-    setTimeout(() => {
-      document
-        .querySelector(
-          `[data-line-id="${newId}"][data-line-field="qty"]`
-        )
-        ?.focus();
-    }, 100);
-  };
+   setTimeout(() => {
+  searchInputRef.current?.focus();
+}, 100);};
 
 
   const handleUpdateLineItem = (id, field, value) => {
-    if (value <= 0) {
-      setMessage("❌ Value must be greater than 0");
-      setTimeout(() => setMessage(""), 2000);
-      return;
-    }
 
-    setLineItems(
-      lineItems.map((item) => {
-        if (item.id === id) {
-          const updatedItem = {
-            ...item,
-            [field]: value
-          };
+    setLineItems(prev =>
+      prev.map(item => {
 
-          updatedItem.amount =
-            updatedItem.qty * updatedItem.rate;
-
-          return updatedItem;
+        if (item.id !== id) {
+          return item;
         }
 
-        return item;
+        const updatedItem = {
+          ...item,
+          [field]: value
+        };
+
+        const qty =
+          Number(updatedItem.qty) || 0;
+
+        const rate =
+          Number(updatedItem.rate) || 0;
+
+        updatedItem.amount =
+          qty * rate;
+
+        return updatedItem;
       })
     );
   };
-
 
   const handleRemoveLineItem = (id) => {
     setLineItems(lineItems.filter(item => item.id !== id));
@@ -682,7 +678,27 @@ export default function BillingModule() {
                             data-line-id={item.id}
                             data-line-field="qty"
                             value={item.qty}
-                            onChange={(e) => handleUpdateLineItem(item.id, 'qty', parseFloat(e.target.value) || 0)}
+                            onChange={(e) =>
+                              handleUpdateLineItem(
+                                item.id,
+                                "qty",
+                                e.target.value === ""
+                                  ? ""
+                                  : Number(e.target.value)
+                              )
+                            }
+                            onBlur={(e) => {
+                              if (
+                                e.target.value === "" ||
+                                Number(e.target.value) <= 0
+                              ) {
+                                handleUpdateLineItem(
+                                  item.id,
+                                  "qty",
+                                  1
+                                );
+                              }
+                            }}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();
@@ -706,7 +722,27 @@ export default function BillingModule() {
                             data-line-id={item.id}
                             data-line-field="rate"
                             value={item.rate}
-                            onChange={(e) => handleUpdateLineItem(item.id, 'rate', parseFloat(e.target.value) || 0)}
+                            onChange={(e) =>
+                              handleUpdateLineItem(
+                                item.id,
+                                "rate",
+                                e.target.value === ""
+                                  ? ""
+                                  : Number(e.target.value)
+                              )
+                            }
+                            onBlur={(e) => {
+                              if (
+                                e.target.value === "" ||
+                                Number(e.target.value) <= 0
+                              ) {
+                                handleUpdateLineItem(
+                                  item.id,
+                                  "rate",
+                                  1
+                                );
+                              }
+                            }}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();
@@ -721,14 +757,12 @@ export default function BillingModule() {
                           {(item.qty * (item.weightPerUnit || 0)).toFixed(2)} {item.unitType}
                         </td>
                         <td className="p-2 text-center">
-                          <td className="p-2 text-center">
-                            <button
-                              onClick={() => handleRemoveLineItem(item.id)}
-                              className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
-                            >
-                              Remove
-                            </button>
-                          </td>
+                          <button
+                            onClick={() => handleRemoveLineItem(item.id)}
+                            className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
+                          >
+                            Remove
+                          </button>
                         </td>
                       </tr>
                     ))
