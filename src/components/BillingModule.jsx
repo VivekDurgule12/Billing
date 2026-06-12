@@ -415,11 +415,11 @@ Thank You
     // Porterage Formula
     let porterage =
       Math.round(
-        ((totalWeight / 30) * 7) * 100
+        ((totalWeight / 30) * 10) * 100
       ) / 100;
 
     // Only apply porterage if greater than ₹15
-    if (porterage <= 14) {
+    if (porterage <= 20) {
       porterage = 0;
     }
 
