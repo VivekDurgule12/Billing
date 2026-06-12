@@ -117,31 +117,38 @@ export default function BillingModule() {
 
 
 
-const handleWhatsAppBillShare = () => {
+  const handleWhatsAppBillShare = async () => {
 
-  if (!customerData.mobile) {
-    alert("Customer mobile number required");
-    return;
-  }
 
-  const currentDate = new Date().toLocaleDateString(
-    "en-IN",
-    {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
+    const success =
+    await handleGeneratePDF();
+
+  if (!success) return;
+
+
+    if (!customerData.mobile) {
+      alert("Customer mobile number required");
+      return;
     }
-  );
 
-  let itemsText = "";
+    const currentDate = new Date().toLocaleDateString(
+      "en-IN",
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }
+    );
 
-  lineItems.forEach((item, index) => {
-    itemsText +=
-      `*${index + 1}. ${item.name}*\n` +
-      `Qty: ${item.qty} × ₹${item.rate} = ₹${item.amount}\n\n`;
-  });
+    let itemsText = "";
 
-  const message = `
+    lineItems.forEach((item, index) => {
+      itemsText +=
+        `*${index + 1}. ${item.name}*\n` +
+        `Qty: ${item.qty} × ₹${item.rate} = ₹${item.amount}\n\n`;
+    });
+
+    const message = `
 *DURGULE TRADERS*
 ━━━━━━━━━━━━━━
 
@@ -165,14 +172,14 @@ ${itemsText}
 Thank You
 `;
 
-  const phone =
-    customerData.mobile.replace(/\D/g, "");
+    const phone =
+      customerData.mobile.replace(/\D/g, "");
 
-  window.open(
-    `https://wa.me/91${phone}?text=${encodeURIComponent(message)}`,
-    "_blank"
-  );
-};
+    window.open(
+      `https://wa.me/91${phone}?text=${encodeURIComponent(message)}`,
+      "_blank"
+    );
+  };
 
 
   const handleAddLineItem = () => {
@@ -281,16 +288,16 @@ Thank You
     setSelectedItem("");
 
     setTimeout(() => {
-  const qtyInputs = document.querySelectorAll(
-    '[data-line-field="qty"]'
-  );
+      const qtyInputs = document.querySelectorAll(
+        '[data-line-field="qty"]'
+      );
 
-  const lastInput =
-    qtyInputs[qtyInputs.length - 1];
+      const lastInput =
+        qtyInputs[qtyInputs.length - 1];
 
-  lastInput?.focus();
-  lastInput?.select();
-}, 100);
+      lastInput?.focus();
+      lastInput?.select();
+    }, 100);
   };
 
 
@@ -439,69 +446,73 @@ Thank You
   const totals = calculateTotals();
 
 
-  const handleGeneratePDF = async () => {
+const handleGeneratePDF = async () => {
 
-    if (!customerData.name.trim()) {
-      setMessage("❌ Please enter customer name");
-      return;
-    }
+  if (!customerData.name.trim()) {
+    setMessage("❌ Please enter customer name");
+    return false;
+  }
 
-    if (lineItems.length === 0) {
-      setMessage("❌ Please add at least one item");
-      return;
-    }
+  if (lineItems.length === 0) {
+    setMessage("❌ Please add at least one item");
+    return false;
+  }
 
-    const invalidItems = lineItems.some(
-      (item) =>
-        item.qty <= 0 ||
-        item.rate <= 0 ||
-        item.amount <= 0
+  const invalidItems = lineItems.some(
+    (item) =>
+      item.qty <= 0 ||
+      item.rate <= 0 ||
+      item.amount <= 0
+  );
+
+  if (invalidItems) {
+    setMessage(
+      "❌ All items must have Qty, Rate and Amount greater than 0"
     );
+    return false;
+  }
 
-    if (invalidItems) {
-      setMessage(
-        "❌ All items must have Qty, Rate and Amount greater than 0"
-      );
-      return;
-    }
+  try {
 
-    try {
+   await generateInvoicePDF({
+  customerData,
+  lineItems,
+  totals,
+  summary,
+  invoiceNumber:
+    storageManager.getInvoices().length + 1001
+});
 
-      await generateInvoicePDF({
-        customerData,
-        lineItems,
-        summary,
-        totals,
-        invoiceNumber:
-          storageManager.getInvoices().length + 1001
-      });
+    storageManager.saveInvoice({
+      customer: customerData,
+      items: lineItems,
+      summary,
+      totals
+    });
 
-      storageManager.saveInvoice({
-        customer: customerData,
-        items: lineItems,
-        summary,
-        totals
-      });
+    setMessage("✅ PDF Generated");
 
-      setMessage("✅ PDF Generated");
+    setTimeout(() => {
+      setMessage("");
+    }, 3000);
 
-      setTimeout(() => {
-        setMessage("");
-      }, 3000);
+    return true;
 
-    } catch (error) {
+  } catch (error) {
 
-      console.error(error);
+    console.error(error);
 
-      setMessage("❌ PDF Generation Failed");
+    setMessage("❌ PDF Generation Failed");
 
-      setTimeout(() => {
-        setMessage("");
-      }, 3000);
+    setTimeout(() => {
+      setMessage("");
+    }, 3000);
 
-    }
-  };
+    return false;
+  }
+};
 
+  
   const handlePrint = () => {
     if (!customerData.name || lineItems.length === 0) {
       setMessage('❌ Please add customer and items before printing');
@@ -575,7 +586,15 @@ Thank You
     printWindow.print();
   };
 
+const handlePrintWithPDF = async () => {
 
+  const success =
+    await handleGeneratePDF();
+
+  if (!success) return;
+
+  handlePrint();
+};
 
   const handleClearBill = () => {
     if (window.confirm("Clear all items and customer data?")) {
@@ -938,7 +957,7 @@ Thank You
             {lineItems.length > 0 && (
               <div className="mt-4 p-3 bg-gray-700 rounded">
                 <p className="text-teal-300 font-semibold">
-                   Total Order Weight: {totals.totalWeight.toFixed(2)} {lineItems[0]?.unitType || 'KG'}
+                  Total Order Weight: {totals.totalWeight.toFixed(2)} {lineItems[0]?.unitType || 'KG'}
                 </p>
               </div>
             )}
@@ -1064,13 +1083,13 @@ Thank You
               Download Invoice
             </button>
             <button
-  onClick={handleWhatsAppBillShare}
-  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded"
->
-  Share on WhatsApp
-</button>
+              onClick={handleWhatsAppBillShare}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded"
+            >
+              Share on WhatsApp
+            </button>
             <button
-              onClick={handlePrint}
+              onClick={handlePrintWithPDF}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition-all"
             >
               Print
@@ -1082,7 +1101,9 @@ Thank You
               Clear Bill
             </button>
           </div>
+
         </div>
+
       </div>
       <div
         style={{
