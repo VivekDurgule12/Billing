@@ -116,6 +116,65 @@ export default function BillingModule() {
   }, []);
 
 
+
+const handleWhatsAppBillShare = () => {
+
+  if (!customerData.mobile) {
+    alert("Customer mobile number required");
+    return;
+  }
+
+  const currentDate = new Date().toLocaleDateString(
+    "en-IN",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }
+  );
+
+  let itemsText = "";
+
+  lineItems.forEach((item, index) => {
+    itemsText +=
+      `*${index + 1}. ${item.name}*\n` +
+      `Qty: ${item.qty} × ₹${item.rate} = ₹${item.amount}\n\n`;
+  });
+
+  const message = `
+*DURGULE TRADERS*
+━━━━━━━━━━━━━━
+
+*Date:* ${currentDate}
+*Customer:* ${customerData.name}
+
+━━━━━━━━━━━━━━
+
+${itemsText}
+
+━━━━━━━━━━━━━━
+
+*Total Weight:* ${totals.totalWeight.toFixed(2)}
+
+*Subtotal:* ₹${totals.subtotal.toFixed(2)}
+*Discount:* ₹${totals.discount.toFixed(2)}
+*Grand Total:* ₹${totals.total.toFixed(2)}
+
+━━━━━━━━━━━━━━
+
+Thank You
+`;
+
+  const phone =
+    customerData.mobile.replace(/\D/g, "");
+
+  window.open(
+    `https://wa.me/91${phone}?text=${encodeURIComponent(message)}`,
+    "_blank"
+  );
+};
+
+
   const handleAddLineItem = () => {
 
     if (!selectedItem) {
@@ -559,7 +618,7 @@ export default function BillingModule() {
 
 
     <div className="p-6 bg-gray-900 min-h-screen">
-      <h1 className="text-3xl font-bold text-teal-300 mb-6">💳 Billing Module</h1>
+      <h1 className="text-3xl font-bold text-teal-300 mb-6">Billing Module</h1>
 
       {message && (
         <div className="fixed top-4 right-4 bg-gray-800 border-l-4 border-teal-500 p-4 rounded shadow-lg z-50">
@@ -572,7 +631,7 @@ export default function BillingModule() {
         <div className="lg:col-span-2 space-y-6">
           {/* Customer Form */}
           <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-            <h2 className="text-xl font-semibold text-teal-300 mb-4">👤 Customer Details</h2>
+            <h2 className="text-xl font-semibold text-teal-300 mb-4">Customer Details</h2>
             <div className="space-y-3">
               <input
 
@@ -613,7 +672,7 @@ export default function BillingModule() {
 
 
           <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-            <h2 className="text-xl font-semibold text-teal-300 mb-4">📝 Add Items</h2>
+            <h2 className="text-xl font-semibold text-teal-300 mb-4">Add Items</h2>
             <div className="flex gap-2 mb-4">
               <div className="relative flex-1">
 
@@ -732,7 +791,7 @@ export default function BillingModule() {
                 ref={addButtonRef}
                 onClick={handleAddLineItem}
               >
-                ➕ Add
+                Add
               </button>
             </div>
 
@@ -879,7 +938,7 @@ export default function BillingModule() {
             {lineItems.length > 0 && (
               <div className="mt-4 p-3 bg-gray-700 rounded">
                 <p className="text-teal-300 font-semibold">
-                  ⚖️ Total Order Weight: {totals.totalWeight.toFixed(2)} {lineItems[0]?.unitType || 'KG'}
+                   Total Order Weight: {totals.totalWeight.toFixed(2)} {lineItems[0]?.unitType || 'KG'}
                 </p>
               </div>
             )}
@@ -891,7 +950,7 @@ export default function BillingModule() {
 
         {/* Sidebar - Summary */}
         <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 h-fit sticky top-6 space-y-4">
-          <h2 className="text-xl font-semibold text-teal-300 mb-4">💰 Billing Summary</h2>
+          <h2 className="text-xl font-semibold text-teal-300 mb-4">Billing Summary</h2>
 
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -1002,19 +1061,25 @@ export default function BillingModule() {
               onClick={handleGeneratePDF}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded transition-all"
             >
-              📥 Download Invoice
+              Download Invoice
             </button>
+            <button
+  onClick={handleWhatsAppBillShare}
+  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded"
+>
+  Share on WhatsApp
+</button>
             <button
               onClick={handlePrint}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition-all"
             >
-              🖨️ Print
+              Print
             </button>
             <button
               onClick={handleClearBill}
               className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 rounded transition-all"
             >
-              🗑️ Clear Bill
+              Clear Bill
             </button>
           </div>
         </div>
