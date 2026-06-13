@@ -27,6 +27,20 @@ export default function BillingModule() {
   const addButtonRef = useRef(null);
 
 
+  const [selectedInventoryItem, setSelectedInventoryItem] =
+    useState(null);
+
+  const [showAddItemModal, setShowAddItemModal] =
+    useState(false);
+
+  const [newItemData, setNewItemData] = useState({
+    item: "",
+    category: "",
+    sellingPrice: "",
+    unitType: "KG",
+    weightPerUnit: ""
+  });
+
 
   useEffect(() => {
     const savedData = localStorage.getItem("inventoryData");
@@ -121,9 +135,9 @@ export default function BillingModule() {
 
 
     const success =
-    await handleGeneratePDF();
+      await handleGeneratePDF();
 
-  if (!success) return;
+    if (!success) return;
 
 
     if (!customerData.mobile) {
@@ -180,6 +194,85 @@ Thank You
       "_blank"
     );
   };
+
+
+
+
+  const handleCreateInventoryItem = () => {
+    if (
+      !newItemData.item ||
+      !newItemData.category ||
+      !newItemData.sellingPrice
+    ) {
+      alert("Please fill all required fields");
+      return;
+    }
+    const inventoryData =
+      JSON.parse(
+        localStorage.getItem(
+          "inventoryData"
+        )
+      ) || [];
+
+    const newItem = {
+      sn:
+        Math.max(
+          ...inventoryData.map(
+            i => i.sn
+          ),
+          0
+        ) + 1,
+
+      item:
+        `${newItemData.item}/${newItemData.item}`,
+
+      type: "Custom",
+
+      category:
+        newItemData.category,
+
+      costPrice: 0,
+
+      sellingPrice:
+        Number(
+          newItemData.sellingPrice
+        ),
+
+      profit:
+        Number(
+          newItemData.sellingPrice
+        ),
+
+      unitType:
+        newItemData.unitType,
+
+      weightPerUnit:
+        Number(
+          newItemData.weightPerUnit
+        )
+
+    };
+
+    const updatedInventory = [
+      ...inventoryData,
+      newItem
+    ];
+
+    localStorage.setItem(
+      "inventoryData",
+      JSON.stringify(
+        updatedInventory
+      )
+    );
+
+    setInventory(updatedInventory);
+
+    addSpecificItem(newItem);
+
+    setShowAddItemModal(false);
+  };
+
+
 
 
   const handleAddLineItem = () => {
@@ -446,73 +539,73 @@ Thank You
   const totals = calculateTotals();
 
 
-const handleGeneratePDF = async () => {
+  const handleGeneratePDF = async () => {
 
-  if (!customerData.name.trim()) {
-    setMessage("❌ Please enter customer name");
-    return false;
-  }
+    if (!customerData.name.trim()) {
+      setMessage("❌ Please enter customer name");
+      return false;
+    }
 
-  if (lineItems.length === 0) {
-    setMessage("❌ Please add at least one item");
-    return false;
-  }
+    if (lineItems.length === 0) {
+      setMessage("❌ Please add at least one item");
+      return false;
+    }
 
-  const invalidItems = lineItems.some(
-    (item) =>
-      item.qty <= 0 ||
-      item.rate <= 0 ||
-      item.amount <= 0
-  );
-
-  if (invalidItems) {
-    setMessage(
-      "❌ All items must have Qty, Rate and Amount greater than 0"
+    const invalidItems = lineItems.some(
+      (item) =>
+        item.qty <= 0 ||
+        item.rate <= 0 ||
+        item.amount <= 0
     );
-    return false;
-  }
 
-  try {
+    if (invalidItems) {
+      setMessage(
+        "❌ All items must have Qty, Rate and Amount greater than 0"
+      );
+      return false;
+    }
 
-   await generateInvoicePDF({
-  customerData,
-  lineItems,
-  totals,
-  summary,
-  invoiceNumber:
-    storageManager.getInvoices().length + 1001
-});
+    try {
 
-    storageManager.saveInvoice({
-      customer: customerData,
-      items: lineItems,
-      summary,
-      totals
-    });
+      await generateInvoicePDF({
+        customerData,
+        lineItems,
+        totals,
+        summary,
+        invoiceNumber:
+          storageManager.getInvoices().length + 1001
+      });
 
-    setMessage("✅ PDF Generated");
+      storageManager.saveInvoice({
+        customer: customerData,
+        items: lineItems,
+        summary,
+        totals
+      });
 
-    setTimeout(() => {
-      setMessage("");
-    }, 3000);
+      setMessage("✅ PDF Generated");
 
-    return true;
+      setTimeout(() => {
+        setMessage("");
+      }, 3000);
 
-  } catch (error) {
+      return true;
 
-    console.error(error);
+    } catch (error) {
 
-    setMessage("❌ PDF Generation Failed");
+      console.error(error);
 
-    setTimeout(() => {
-      setMessage("");
-    }, 3000);
+      setMessage("❌ PDF Generation Failed");
 
-    return false;
-  }
-};
+      setTimeout(() => {
+        setMessage("");
+      }, 3000);
 
-  
+      return false;
+    }
+  };
+
+
   const handlePrint = () => {
     if (!customerData.name || lineItems.length === 0) {
       setMessage('❌ Please add customer and items before printing');
@@ -586,15 +679,15 @@ const handleGeneratePDF = async () => {
     printWindow.print();
   };
 
-const handlePrintWithPDF = async () => {
+  const handlePrintWithPDF = async () => {
 
-  const success =
-    await handleGeneratePDF();
+    const success =
+      await handleGeneratePDF();
 
-  if (!success) return;
+    if (!success) return;
 
-  handlePrint();
-};
+    handlePrint();
+  };
 
   const handleClearBill = () => {
     if (window.confirm("Clear all items and customer data?")) {
@@ -628,6 +721,8 @@ const handlePrintWithPDF = async () => {
       }, 2000);
     }
   };
+
+
 
 
 
@@ -801,6 +896,45 @@ const handlePrintWithPDF = async () => {
                       })}
                   </div>
                 )}
+
+                {
+                  searchItem.trim() !== "" &&
+                  inventory.filter(item => {
+                    const search = searchItem.toLowerCase().trim();
+
+                    const marathiName =
+                      item.item.split("/")[0]
+                        .trim()
+                        .toLowerCase();
+
+                    const englishName =
+                      item.item.split("/")[1]
+                        ?.trim()
+                        .toLowerCase() || "";
+
+                    return (
+                      marathiName.includes(search) ||
+                      englishName.includes(search)
+                    );
+                  }).length === 0 && (
+
+                    <div className="mt-2">
+                      <button
+                        onClick={() => {
+                          setNewItemData(prev => ({
+                            ...prev,
+                            item: searchItem
+                          }));
+
+                          setShowAddItemModal(true);
+                        }}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
+                      >
+                        + Add New Item
+                      </button>
+                    </div>
+                  )
+                }
 
 
 
@@ -1122,6 +1256,125 @@ const handlePrintWithPDF = async () => {
           }
         />
       </div>
+
+      {
+        showAddItemModal && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+
+            <div className="bg-gray-800 border border-gray-700 rounded-xl w-full max-w-md p-6 shadow-2xl">
+
+              <div className="flex justify-between items-center mb-5">
+                <h2 className="text-xl font-bold text-teal-300">
+                  Add New Product
+                </h2>
+
+                <button
+                  onClick={() =>
+                    setShowAddItemModal(false)
+                  }
+                  className="text-gray-400 hover:text-white text-xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="space-y-3">
+
+                <input
+                  type="text"
+                  placeholder="Product Name"
+                  value={newItemData.item}
+                  onChange={(e) =>
+                    setNewItemData({
+                      ...newItemData,
+                      item: e.target.value
+                    })
+                  }
+                  className="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:border-teal-500 outline-none"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Category"
+                  value={newItemData.category}
+                  onChange={(e) =>
+                    setNewItemData({
+                      ...newItemData,
+                      category: e.target.value
+                    })
+                  }
+                  className="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:border-teal-500 outline-none"
+                />
+
+                <input
+                  type="number"
+                  placeholder="Selling Price"
+                  value={newItemData.sellingPrice}
+                  onChange={(e) =>
+                    setNewItemData({
+                      ...newItemData,
+                      sellingPrice: e.target.value
+                    })
+                  }
+                  className="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:border-teal-500 outline-none"
+                />
+
+                <input
+                  type="number"
+                  placeholder="Weight Per Unit"
+                  value={newItemData.weightPerUnit}
+                  onChange={(e) =>
+                    setNewItemData({
+                      ...newItemData,
+                      weightPerUnit: e.target.value
+                    })
+                  }
+                  className="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:border-teal-500 outline-none"
+                />
+
+                <select
+                  value={newItemData.unitType}
+                  onChange={(e) =>
+                    setNewItemData({
+                      ...newItemData,
+                      unitType: e.target.value
+                    })
+                  }
+                  className="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:border-teal-500 outline-none"
+                >
+                  <option value="KG">KG</option>
+                  <option value="Gram">Gram</option>
+                  <option value="Piece">Piece</option>
+                  <option value="Box">Box</option>
+                </select>
+
+              </div>
+
+              <div className="flex gap-3 mt-6">
+
+                <button
+                  onClick={() =>
+                    setShowAddItemModal(false)
+                  }
+                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded font-semibold"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleCreateInventoryItem}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 rounded font-semibold"
+                >
+                  Save Item
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+        )
+      }
     </div>
   );
 }

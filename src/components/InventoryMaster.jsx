@@ -20,6 +20,7 @@ export default function InventoryMaster() {
 
 
 
+
 const loadInventory = () => {
   console.log("defaultInventory", defaultInventory);
   console.log("length", defaultInventory?.length);
@@ -40,6 +41,25 @@ const loadInventory = () => {
     );
   }
 };
+
+
+useEffect(() => {
+
+  const uniqueCategories =
+    [
+      ...new Set(
+        items.map(
+          item => item.category
+        )
+      )
+    ];
+
+  setCategories(
+    uniqueCategories
+  );
+
+}, [items]);
+
 
 useEffect(() => {
   loadInventory();
