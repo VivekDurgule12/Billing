@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import InventoryMaster from './components/InventoryMaster';
 import BillingModule from './components/BillingModule';
+import OrdersModule from './components/OrdersModule';
+import BillHistory from './components/BillHistory';
+
+
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -48,30 +52,50 @@ export default function App() {
       {/* Navigation */}
       <nav className="bg-gray-800 border-b-2 border-teal-600 p-4 flex justify-between items-center sticky top-0 z-40">
         <h1 className="text-2xl font-bold text-teal-300">
-        Durgule Billing System
+          Durgule Billing System
         </h1>
         <div className="flex items-center gap-4">
           <div className="space-x-2">
             <button
               onClick={() => setCurrentPage('billing')}
-              className={`px-4 py-2 rounded font-semibold transition-all ${
-                currentPage === 'billing'
-                  ? 'bg-teal-600 text-white shadow-lg'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
+              className={`px-4 py-2 rounded font-semibold transition-all ${currentPage === 'billing'
+                ? 'bg-teal-600 text-white shadow-lg'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
             >
               Billing
             </button>
             <button
               onClick={() => setCurrentPage('inventory')}
-              className={`px-4 py-2 rounded font-semibold transition-all ${
-                currentPage === 'inventory'
-                  ? 'bg-teal-600 text-white shadow-lg'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
+              className={`px-4 py-2 rounded font-semibold transition-all ${currentPage === 'inventory'
+                ? 'bg-teal-600 text-white shadow-lg'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
             >
               Inventory
             </button>
+<button
+  onClick={() => setCurrentPage('history')}
+  className={`px-4 py-2 rounded font-semibold transition-all ${
+    currentPage === 'history'
+      ? 'bg-teal-600 text-white shadow-lg'
+      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+  }`}
+>
+  Bill History
+</button>
+
+            <button
+              onClick={() => setCurrentPage('orders')}
+              className={`px-4 py-2 rounded font-semibold transition-all ${currentPage === 'orders'
+                  ? 'bg-teal-600 text-white shadow-lg'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+            >
+              Orders
+            </button>
+
+
           </div>
           <button
             onClick={handleLogout}
@@ -82,17 +106,31 @@ export default function App() {
         </div>
       </nav>
 
-      {/* Content */}
-      <div>
-        {currentPage === 'billing' && <BillingModule />}
-        {currentPage === 'inventory' && <InventoryMaster />}
-      </div>
+  {currentPage === 'billing' && (
+  <BillingModule
+    setCurrentPage={setCurrentPage}
+  />
+)}
+
+{currentPage === 'inventory' && (
+  <InventoryMaster />
+)}
+
+{currentPage === 'orders' && (
+  <OrdersModule />
+)}
+
+{currentPage === 'history' && (
+  <BillHistory
+    setCurrentPage={setCurrentPage}
+  />
+)}
 
       {/* Footer */}
       <footer className="bg-gray-800 border-t border-gray-700 p-4 text-center text-gray-400 text-sm">
         <p>
-  © {new Date().getFullYear()} Durgule Billing System | 100% Local Storage | Offline Ready
-</p>
+          © {new Date().getFullYear()} Durgule Billing System | 100% Local Storage | Offline Ready
+        </p>
       </footer>
     </div>
   );

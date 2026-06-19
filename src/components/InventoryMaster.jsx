@@ -22,8 +22,7 @@ export default function InventoryMaster() {
 
 
 const loadInventory = () => {
-  console.log("defaultInventory", defaultInventory);
-  console.log("length", defaultInventory?.length);
+ 
 
   const savedData = localStorage.getItem('inventoryData');
 

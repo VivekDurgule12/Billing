@@ -3,15 +3,22 @@ import { storageManager } from '../utils/storageManager';
 import { generateInvoicePDF } from "../utils/pdfGenerator";
 import InvoiceTemplate from "./InvoiceTemplate";
 import { useRef } from "react";
+import { orderStorage }
+  from "../utils/orderStorage";
+import { billHistoryStorage }
+  from "../utils/billHistoryStorage";
 
 export default function BillingModule() {
   const searchInputRef = useRef(null);
   const [searchItem, setSearchItem] = useState('');
   const [lineItems, setLineItems] = useState([]);
+
   const [customerData, setCustomerData] = useState({
-    name: '',
-    mobile: '',
-    address: '',
+    name: "",
+    mobile: "",
+    address: "",
+    customerType: "walkin",
+    orderId: null
   });
   const [summary, setSummary] = useState({
     porterage: 0,
@@ -42,16 +49,16 @@ export default function BillingModule() {
   });
 
 
+
   useEffect(() => {
     const savedData = localStorage.getItem("inventoryData");
 
-    console.log("savedData:", savedData);
+
 
     if (savedData) {
       const inventory = JSON.parse(savedData);
 
-      console.log("Inventory Count:", inventory.length);
-      console.log("First Item:", inventory[0]);
+
 
       setInventory(inventory);
     }
@@ -83,51 +90,296 @@ export default function BillingModule() {
     summary
   ]);
 
+
   useEffect(() => {
 
-    const savedDraft =
+    const editingBill = JSON.parse(
       localStorage.getItem(
-        "currentBillingDraft"
-      );
+        "editingBill"
+      )
+    );
 
-    if (!savedDraft) return;
+    if (!editingBill) return;
 
-    try {
+    console.log(
+      "LOADING EDIT BILL",
+      editingBill
+    );
 
-      const draft =
-        JSON.parse(savedDraft);
+    setCustomerData(
+      editingBill.customer
+    );
 
-      setCustomerData(
-        draft.customerData || {
-          name: "",
-          mobile: "",
-          address: ""
-        }
-      );
-
-      setLineItems(
-        draft.lineItems || []
-      );
-
-      setSummary(
-        draft.summary || {
-          porterage: 0,
-          oldBalance: 0,
-          discountType: "fixed",
-          discountValue: 0,
-          receivedAmount: 0,
-          note: ""
-        }
-      );
-
-    } catch (error) {
-      console.error(
-        "Draft restore failed",
-        error
-      );
-    }
+    setLineItems(
+      editingBill.items || []
+    );
 
   }, []);
+
+
+
+
+
+
+
+
+
+  const handleSaveBill = () => {
+
+    const editingBill = JSON.parse(
+      localStorage.getItem(
+        "editingBill"
+      )
+    );
+
+    if (
+      customerData.customerType === "order"
+    ) {
+
+      const order =
+        orderStorage
+          .getOrders()
+          .find(
+            o =>
+              o.id ===
+              customerData.orderId
+          );
+
+      const alreadyExists =
+        order?.bills?.find(
+          bill =>
+            bill.customer?.mobile ===
+            customerData.mobile
+        );
+
+      if (
+        alreadyExists &&
+        !editingBill
+      ) {
+
+        alert(
+          "Customer already has a bill in this trip. Please edit existing bill."
+        );
+
+        return;
+      }
+    }
+
+    console.log(
+      "CUSTOMER DATA",
+      customerData
+    );
+
+    console.log(
+      "SAVE BILL CLICKED AT",
+      new Date().toISOString()
+    );
+
+    console.log(
+      "LINE ITEMS BEFORE SAVE",
+      lineItems
+    );
+
+
+
+    console.log(
+      "EDITING BILL",
+      editingBill
+    );
+    console.log(
+      "CUSTOMER DATA BEFORE SAVE",
+      customerData
+    );
+
+    console.log(
+      "CUSTOMER TYPE",
+      customerData.customerType
+    );
+
+    console.log(
+      "ORDER ID",
+      customerData.orderId
+    );
+
+    const billData = {
+      id: editingBill
+        ? editingBill.id
+        : Date.now(),
+
+      customer: customerData,
+
+      items: lineItems,
+
+      totals,
+
+      createdAt: editingBill
+        ? editingBill.createdAt
+        : new Date().toISOString(),
+
+      billDateTime:
+        editingBill?.billDateTime ||
+        new Date().toISOString()
+    };
+
+
+
+
+
+    if (editingBill) {
+      console.log(
+        "ADDING EDITED BILL TO ORDER",
+        billData
+      );
+
+      const bills = JSON.parse(
+        localStorage.getItem(
+          "billHistoryData"
+        ) || "[]"
+      );
+
+      const updatedBills =
+        bills.map(bill =>
+          bill.id === editingBill.id
+            ? billData
+            : bill
+        );
+
+      localStorage.setItem(
+        "billHistoryData",
+        JSON.stringify(updatedBills)
+      );
+
+      if (
+        customerData.customerType === "order" &&
+        customerData.orderId
+      ) {
+
+        const orders = JSON.parse(
+          localStorage.getItem(
+            "orderBatchesData"
+          ) || "[]"
+        );
+
+        window.dispatchEvent(
+          new Event("storage")
+        );
+
+       const updatedOrders =
+  orders.map(order => {
+
+    if (
+      order.id !== customerData.orderId
+    ) {
+      return order;
+    }
+
+    const billExists =
+      order.bills.some(
+        bill =>
+          bill.id === billData.id
+      );
+
+    console.log(
+      "BILL EXISTS",
+      billExists
+    );
+
+    let updatedOrderBills;
+
+    if (billExists) {
+
+      updatedOrderBills =
+        order.bills.map(bill =>
+          bill.id === billData.id
+            ? billData
+            : bill
+        );
+
+    } else {
+
+      updatedOrderBills = [
+        ...order.bills,
+        billData
+      ];
+
+    }
+
+    return {
+      ...order,
+      bills: updatedOrderBills,
+      billCount:
+        updatedOrderBills.length,
+      customerCount:
+        new Set(
+          updatedOrderBills.map(
+            b =>
+              (b.customer?.mobile || "")
+                .replace(/\D/g, "")
+                .replace(/^0+/, "")
+          )
+        ).size,
+      totalWeight:
+        updatedOrderBills.reduce(
+          (sum, b) =>
+            sum +
+            (b.totals?.totalWeight || 0),
+          0
+        )
+    };
+
+  });
+
+localStorage.setItem(
+  "orderBatchesData",
+  JSON.stringify(updatedOrders)
+);
+
+window.dispatchEvent(
+  new Event("storage")
+);}
+      
+
+      localStorage.removeItem(
+        "editingBill"
+      );
+
+      alert(
+        "Bill Updated Successfully"
+      );
+
+    } else {
+
+      if (
+        customerData.customerType === "order" &&
+        customerData.orderId
+      ) {
+        console.log(
+          "ADDING BILL TO ORDER",
+          customerData.orderId
+        );
+
+        console.log(
+          "BILL DATA",
+          billData
+        );
+        console.log(
+          "ADDING TO ORDER",
+          billData.id
+        );
+        orderStorage.addBillToOrder(
+          customerData.orderId,
+          billData
+        );
+      }
+      billHistoryStorage.addBill(
+        billData
+      );
+
+      alert(
+        "Bill Saved Successfully"
+      );
+    }
+  };
 
 
 
@@ -583,6 +835,8 @@ Thank You
         totals
       });
 
+
+
       setMessage("✅ PDF Generated");
 
       setTimeout(() => {
@@ -777,6 +1031,70 @@ Thank You
                 onKeyDown={handleBillingEnterMove}
                 className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               />
+              <div>
+                <label className="text-sm text-gray-400">
+                  Customer Type
+                </label>
+
+
+                <select
+                  value={customerData.customerType}
+                  onChange={(e) =>
+                    setCustomerData({
+                      ...customerData,
+                      customerType: e.target.value
+                    })
+                  }
+                  className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
+                >
+                  <option value="walkin">
+                    Walk-in Customer
+                  </option>
+
+                  <option value="order">
+                    Order Customer
+                  </option>
+                </select>
+              </div>
+
+              {customerData.customerType === "order" && (
+                <div className="mt-3">
+                  <label className="text-sm text-gray-400">
+                    Select Order
+                  </label>
+
+                  <select
+                    value={customerData.orderId || ""}
+                    onChange={(e) =>
+                      setCustomerData({
+                        ...customerData,
+                        orderId: Number(e.target.value)
+                      })
+                    }
+                    className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600"
+                  >
+                    <option value="">
+                      Select Order
+                    </option>
+
+                    {(JSON.parse(
+                      localStorage.getItem(
+                        "orderBatchesData"
+                      ) || "[]"
+                    )).map(order => (
+                      <option
+                        key={order.id}
+                        value={order.id}
+                      >
+                        {order.orderName} - {order.deliveryDate}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+
+
             </div>
           </div>
 
@@ -1210,6 +1528,14 @@ Thank You
           </div>
 
           <div className="space-y-2 pt-4">
+
+            <button
+              type="button"
+              onClick={handleSaveBill}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition-all"
+            >
+              Save Bill
+            </button>
             <button
               onClick={handleGeneratePDF}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded transition-all"
