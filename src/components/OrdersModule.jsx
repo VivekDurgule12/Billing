@@ -13,6 +13,8 @@ import {
     orderStorage
 } from "../utils/orderStorage";
 
+import { generateOrderPDF }
+from "../utils/generateOrderPDF";
 
 
 
@@ -177,6 +179,10 @@ const customers =
 order.bills.map(
 bill => bill.customer?.name
 );
+
+
+console.log(order.bills[0])
+
 
 const itemMap = {};
 

@@ -1,13 +1,16 @@
 import React from "react";
 
 export default function InvoiceTemplate({
-  customerData,
-  lineItems,
-  totals,
-  summary,
+   customerData = {},
+  lineItems = [],
+  totals = {},
+  summary = {},
   invoiceNumber,
+  totalItems,
+  showSummary = true,
+  startIndex = 0
 }) {
-  const porterage = totals.porterage || 0;
+  const porterage = totals?.porterage || 0;
 
   return (
     <div
@@ -113,9 +116,14 @@ export default function InvoiceTemplate({
           }}
         >
           Total Weight ={" "}
-          {totals.totalWeight.toFixed(2)}
+          {Number(
+  totals?.totalWeight || 0
+).toFixed(2)}
           {" | "}
-          Total Items = {lineItems.length}
+    Total Items = {
+  totalItems ||
+  lineItems.length
+}
         </div>
 
         {/* Items Table */}
@@ -170,7 +178,7 @@ export default function InvoiceTemplate({
                       "1px solid #aaa",
                   }}
                 >
-                  {index + 1}
+               {startIndex + index + 1}
                 </td>
 
                 <td
@@ -221,7 +229,12 @@ export default function InvoiceTemplate({
           </tbody>
         </table>
 
+
+
+
         {/* Summary */}
+        {showSummary && (
+
         <table
           style={{
             width: "40%",
@@ -236,7 +249,9 @@ export default function InvoiceTemplate({
               </td>
 
               <td align="right">
-                ₹{totals.subtotal.toFixed(2)}
+                ₹{Number(
+  totals?.subtotal || 0
+).toFixed(2)}
               </td>
             </tr>
 
@@ -259,12 +274,14 @@ export default function InvoiceTemplate({
                 </td>
 
                 <td align="right">
-                  ₹{totals.discount.toFixed(2)}
+                  ₹{Number(
+  totals?.discount || 0
+).toFixed(2)}
                 </td>
               </tr>
             )}
 
-            {summary.receivedAmount > 0 && (
+        {summary?.receivedAmount > 0 && (
               <tr>
                 <td align="right">
                   <strong>RECEIVED</strong>
@@ -272,9 +289,9 @@ export default function InvoiceTemplate({
 
                 <td align="right">
                   ₹
-                  {summary.receivedAmount.toFixed(
-                    2
-                  )}
+                {Number(
+  summary?.receivedAmount || 0
+).toFixed(2)}
                 </td>
               </tr>
             )}
@@ -287,30 +304,38 @@ export default function InvoiceTemplate({
                   </td>
 
                   <td align="right">
-                    ₹{totals.payable.toFixed(2)}
+                    ₹{Number(
+  totals?.payable || 0
+).toFixed(2)}
                   </td>
                 </tr>
               )}
           </tbody>
         </table>
+)}
+
+
+
 
         {/* Grand Total */}
         <div
           style={{
-            marginTop: "12px",
-            borderTop: "3px solid #222",
-            borderBottom: "3px solid #222",
-            padding: "10px 0",
-            display: "flex",
-            justifyContent: "space-between",
-            fontWeight: "bold",
-            fontSize: "20px",
+           marginTop: "12px",
+      borderTop: "3px solid #222",
+      borderBottom: "3px solid #222",
+      padding: "10px 0",
+      display: "flex",
+      justifyContent: "space-between",
+      fontWeight: "bold",
+      fontSize: "20px",
           }}
         >
           <span>GRAND TOTAL</span>
 
           <span>
-            ₹{totals.total.toFixed(2)}
+            ₹{Number(
+  totals?.total || 0
+).toFixed(2)}
           </span>
         </div>
 

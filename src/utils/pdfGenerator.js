@@ -6,9 +6,11 @@ export const generateInvoicePDF = async ({
   totals,
   invoiceNumber,
 }) => {
-  const invoice = document.getElementById(
-    "invoice-template"
-  );
+
+  const invoice =
+    document.getElementById(
+      "invoice-template"
+    );
 
   if (!invoice) {
     alert("Invoice template not found");
@@ -16,12 +18,18 @@ export const generateInvoicePDF = async ({
   }
 
   try {
-    const canvas = await html2canvas(invoice, {
-      scale: 1.5,
-      useCORS: true,
-      logging: false,
-      backgroundColor: "#ffffff",
-    });
+
+    const canvas =
+      await html2canvas(
+        invoice,
+        {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor:
+            "#ffffff",
+        }
+      );
 
     const pdf = new jsPDF({
       orientation: "portrait",
@@ -30,42 +38,60 @@ export const generateInvoicePDF = async ({
       compress: true,
     });
 
-    const pdfWidth =
+    const pageWidth =
       pdf.internal.pageSize.getWidth();
 
-    const pdfHeight =
+    const pageHeight =
       pdf.internal.pageSize.getHeight();
 
-    const margin = 10;
+    const margin = 5;
 
-    const usableWidth =
-      pdfWidth - margin * 2;
+    const footerHeight = 10;
+
+    const imgWidth =
+      pageWidth - margin * 2;
 
     const pageCanvasHeight =
       Math.floor(
-        (canvas.width *
-          (pdfHeight - margin * 2)) /
-          usableWidth
-      ) - 40;
-
-    let renderedHeight = 0;
-    let pageNumber = 0;
-
-    while (
-      renderedHeight < canvas.height
-    ) {
-      const pageCanvas =
-        document.createElement("canvas");
-
-      pageCanvas.width = canvas.width;
-
-      pageCanvas.height = Math.min(
-        pageCanvasHeight,
-        canvas.height - renderedHeight
+        (
+          canvas.width *
+          (
+            pageHeight -
+            margin * 2 -
+            footerHeight
+          )
+        ) /
+        imgWidth
       );
 
+    let renderedHeight = 0;
+
+    let pageNumber = 1;
+
+    while (
+      renderedHeight <
+      canvas.height
+    ) {
+
+      const pageCanvas =
+        document.createElement(
+          "canvas"
+        );
+
+      pageCanvas.width =
+        canvas.width;
+
+      pageCanvas.height =
+        Math.min(
+          pageCanvasHeight,
+          canvas.height -
+            renderedHeight
+        );
+
       const ctx =
-        pageCanvas.getContext("2d");
+        pageCanvas.getContext(
+          "2d"
+        );
 
       ctx.drawImage(
         canvas,
@@ -82,16 +108,20 @@ export const generateInvoicePDF = async ({
       const pageImg =
         pageCanvas.toDataURL(
           "image/jpeg",
-          0.7
+          0.95
         );
 
-      if (pageNumber > 0) {
+      if (
+        pageNumber > 1
+      ) {
         pdf.addPage();
       }
 
-      const imgHeight =
-        (pageCanvas.height *
-          usableWidth) /
+      const pageImgHeight =
+        (
+          pageCanvas.height *
+          imgWidth
+        ) /
         pageCanvas.width;
 
       pdf.addImage(
@@ -99,10 +129,8 @@ export const generateInvoicePDF = async ({
         "JPEG",
         margin,
         margin,
-        usableWidth,
-        imgHeight,
-        undefined,
-        "FAST"
+        imgWidth,
+        pageImgHeight
       );
 
       // Footer
@@ -111,22 +139,23 @@ export const generateInvoicePDF = async ({
       pdf.text(
         `INV-${invoiceNumber}`,
         10,
-        pdfHeight - 5
+        pageHeight - 5
       );
 
       pdf.text(
-        `Page ${pageNumber + 1}`,
-        pdfWidth / 2,
-        pdfHeight - 5,
+        `Page ${pageNumber}`,
+        pageWidth / 2,
+        pageHeight - 5,
         {
-          align: "center",
+          align: "center"
         }
       );
 
       pdf.text(
-        new Date().toLocaleDateString(),
-        pdfWidth - 25,
-        pdfHeight - 5
+        new Date()
+          .toLocaleDateString(),
+        pageWidth - 25,
+        pageHeight - 5
       );
 
       renderedHeight +=
@@ -141,7 +170,9 @@ export const generateInvoicePDF = async ({
         ?.replace(/\s+/g, "_") ||
       "Invoice"
     }_${
-      Math.round(totals?.total || 0)
+      Math.round(
+        totals?.total || 0
+      )
     }_${
       new Date()
         .toISOString()
@@ -149,7 +180,9 @@ export const generateInvoicePDF = async ({
     }.pdf`;
 
     pdf.save(fileName);
+
   } catch (error) {
+
     console.error(
       "PDF Generation Error:",
       error
