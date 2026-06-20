@@ -209,6 +209,9 @@ export default function OrderDetails({
                 Amount
               </th>
               <th className="p-3">
+  Profit
+</th>
+              <th className="p-3">
                 Date & Time
               </th>
 
@@ -231,7 +234,7 @@ export default function OrderDetails({
                 >
 
                   <td className="p-3">
-                      {index + 1}
+                    {index + 1}
                   </td>
 
                   <td className="p-3">
@@ -249,6 +252,9 @@ export default function OrderDetails({
                   <td className="p-3">
                     ₹{bill.totals?.total || 0}
                   </td>
+                  <td className="p-3 text-green-400">
+  ₹{bill.totals?.totalProfit || 0}
+</td>
 
 
                   <td className="p-3">
@@ -394,7 +400,12 @@ export default function OrderDetails({
               key={`${bill.id}-${pageIndex}`}
               className="order-invoice"
               style={{
-                marginBottom: "20px"
+                marginBottom: "20px",
+                width: "100%",
+                maxWidth: "none",
+                margin: 0,
+                padding: "8px",
+                boxSizing: "border-box",
               }}
             >
               <InvoiceTemplate

@@ -1,136 +1,121 @@
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
-export const generateOrderPDF = async (
-orderName
-) => {
+export const generateOrderPDF = async (orderName) => {
+  const invoices =
+    document.querySelectorAll(".order-invoice");
 
-const invoices =
-document.querySelectorAll(
-".order-invoice"
-);
+  if (!invoices.length) {
+    alert("No invoices found");
+    return;
+  }
 
-if (!invoices.length) {
-alert("No invoices found");
-return;
-}
+  const pdf = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a5",
+    compress: true,
+  });
 
-const pdf = new jsPDF({
-orientation: "portrait",
-unit: "mm",
-format: "a4"
-});
+  const pageWidth =
+    pdf.internal.pageSize.getWidth();
 
-const pageWidth =
-pdf.internal.pageSize.getWidth();
+  const pageHeight =
+    pdf.internal.pageSize.getHeight();
 
-const pageHeight =
-pdf.internal.pageSize.getHeight();
+  const margin = 2;
 
-const margin = 5;
+  const printableWidth =
+    pageWidth - margin * 2;
 
-let firstPage = true;
+  const printableHeight =
+    pageHeight - margin * 2;
 
-for (
-let invoiceIndex = 0;
-invoiceIndex < invoices.length;
-invoiceIndex++
-) {
+  let firstPage = true;
 
- 
-if (!firstPage) {
-  pdf.addPage();
-}
-
-firstPage = false;
-
-const canvas =
-  await html2canvas(
-    invoices[invoiceIndex],
-    {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#ffffff"
-    }
-  );
-
-const imgData =
-  canvas.toDataURL(
-    "image/jpeg",
-    0.95
-  );
-
-const imgWidth =
-  pageWidth - margin * 2;
-
-const imgHeight =
-  (canvas.height * imgWidth) /
-  canvas.width;
-
-const printableHeight =
-  pageHeight - margin * 2;
-
-if (
-  imgHeight <= printableHeight
-) {
-
-  pdf.addImage(
-    imgData,
-    "JPEG",
-    margin,
-    margin,
-    imgWidth,
-    imgHeight
-  );
-
-} else {
-
-  let heightLeft =
-    imgHeight;
-
-  let position =
-    margin;
-
-  pdf.addImage(
-    imgData,
-    "JPEG",
-    margin,
-    position,
-    imgWidth,
-    imgHeight
-  );
-
-  heightLeft -=
-    printableHeight;
-
-  while (
-    heightLeft > 0
-  ) {
-
-    pdf.addPage();
-
-    position =
-      -(imgHeight - heightLeft) +
-      margin;
-
-    pdf.addImage(
-      imgData,
-      "JPEG",
-      margin,
-      position,
-      imgWidth,
-      imgHeight
+  for (const invoice of invoices) {
+    const canvas = await html2canvas(
+      invoice,
+      {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      }
     );
 
-    heightLeft -=
-      printableHeight;
+    const imgData = canvas.toDataURL(
+      "image/jpeg",
+      0.95
+    );
+
+    const imgWidth = printableWidth;
+
+    const imgHeight =
+      (canvas.height * imgWidth) /
+      canvas.width;
+
+    const x =
+      (pageWidth - imgWidth) / 2;
+
+    if (!firstPage) {
+      pdf.addPage();
+    }
+
+    firstPage = false;
+
+    // Single page invoice
+    if (imgHeight <= printableHeight) {
+      pdf.addImage(
+        imgData,
+        "JPEG",
+        x,
+        margin,
+        imgWidth,
+        imgHeight
+      );
+    } else {
+      let remainingHeight =
+        imgHeight;
+
+      let yPosition = margin;
+
+      pdf.addImage(
+        imgData,
+        "JPEG",
+        x,
+        yPosition,
+        imgWidth,
+        imgHeight
+      );
+
+      remainingHeight -=
+        printableHeight;
+
+      while (
+        remainingHeight > 0
+      ) {
+        pdf.addPage();
+
+        yPosition =
+          -(imgHeight -
+            remainingHeight) +
+          margin;
+
+        pdf.addImage(
+          imgData,
+          "JPEG",
+          x,
+          yPosition,
+          imgWidth,
+          imgHeight
+        );
+
+        remainingHeight -=
+          printableHeight;
+      }
+    }
   }
-}
- 
 
-}
-
-pdf.save(
-`${orderName}.pdf`
-);
+  pdf.save(`${orderName}.pdf`);
 };

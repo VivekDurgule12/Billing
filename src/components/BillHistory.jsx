@@ -116,6 +116,7 @@ export default function BillHistory({
                                 <th>Qty</th>
                                 <th>Rate</th>
                                 <th>Amount</th>
+                                <th>Profit</th>
                             </tr>
                         </thead>
 
@@ -209,6 +210,9 @@ export default function BillHistory({
                                     <p className="text-gray-400">
                                         {bill.totals?.totalWeight || 0} Kg
                                     </p>
+                                    <td className="text-green-400">
+  ₹{bill.totals?.totalProfit || 0}
+</td>
 
                                 </div>
 

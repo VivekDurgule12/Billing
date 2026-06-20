@@ -16,13 +16,11 @@ export default function InvoiceTemplate({
     <div
       id="invoice-template"
       style={{
-        width: "720px",
-        background: "#fff",
-        color: "#000",
-        padding: "18px",
-        fontFamily: "Arial, sans-serif",
-        fontSize: "16px",
-        boxSizing: "border-box",
+        width: "100%",
+    maxWidth: "none",
+    margin: 0,
+    padding: "8px",
+    boxSizing: "border-box",
       }}
     >
       {/* HEADER */}

@@ -33,6 +33,14 @@ const loadOrders = () => {
 };
 
 
+const getOrderProfit = (order) => {
+  return (order.bills || []).reduce(
+    (sum, bill) =>
+      sum + (bill.totals?.totalProfit || 0),
+    0
+  );
+};
+
 
 useEffect(() => {
 
@@ -386,7 +394,7 @@ link.click();
 
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4 mt-4">
+                          <div className="grid grid-cols-4 gap-4 mt-4">
 
                                 <div className="bg-gray-700 p-3 rounded">
 
@@ -427,6 +435,17 @@ link.click();
                                     </p>
 
                                 </div>
+                                <div className="bg-gray-700 p-3 rounded">
+
+  <p className="text-gray-400 text-sm">
+    Profit
+  </p>
+
+  <p className="text-green-400 text-lg font-bold">
+    ₹{getOrderProfit(order).toFixed(2)}
+  </p>
+
+</div>
 
                             </div>
 

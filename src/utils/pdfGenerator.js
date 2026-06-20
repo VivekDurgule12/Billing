@@ -34,7 +34,7 @@ export const generateInvoicePDF = async ({
     const pdf = new jsPDF({
       orientation: "portrait",
       unit: "mm",
-      format: "a4",
+      format: "a5",
       compress: true,
     });
 

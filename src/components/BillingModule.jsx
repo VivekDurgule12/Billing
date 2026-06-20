@@ -64,6 +64,42 @@ export default function BillingModule() {
     }
   }, []);
 
+useEffect(() => {
+  const draft =
+    localStorage.getItem(
+      "currentBillingDraft"
+    );
+
+  if (!draft) return;
+
+  const parsed =
+    JSON.parse(draft);
+
+  setCustomerData(
+    parsed.customerData || {
+      name: "",
+      mobile: "",
+      address: "",
+      customerType: "walkin",
+      orderId: null
+    }
+  );
+
+  setLineItems(
+    parsed.lineItems || []
+  );
+
+  setSummary(
+    parsed.summary || {
+      porterage: 0,
+      oldBalance: 0,
+      discountType: "fixed",
+      discountValue: 0,
+      receivedAmount: 0,
+      note: ""
+    }
+  );
+}, []);
 
   useEffect(() => {
 
@@ -201,6 +237,17 @@ export default function BillingModule() {
       customerData.orderId
     );
 
+    const totalProfit = lineItems.reduce(
+  (sum, item) =>
+    sum +
+    (
+      (item.rate || 0) -
+      (item.costPrice || 0)
+    ) *
+    (item.qty || 0),
+  0
+);
+
     const billData = {
       id: editingBill
         ? editingBill.id
@@ -210,7 +257,10 @@ export default function BillingModule() {
 
       items: lineItems,
 
-      totals,
+   totals: {
+  ...totals,
+  totalProfit
+},
 
       createdAt: editingBill
         ? editingBill.createdAt
@@ -374,6 +424,9 @@ window.dispatchEvent(
       billHistoryStorage.addBill(
         billData
       );
+      localStorage.removeItem(
+  "currentBillingDraft"
+);
 
       alert(
         "Bill Saved Successfully"
@@ -575,6 +628,11 @@ Thank You
     }
 
 
+const totalProfit = bills.reduce(
+  (sum, bill) =>
+    sum + (bill.totals?.totalProfit || 0),
+  0
+);
 
     const newId = Date.now();
 
@@ -586,6 +644,7 @@ Thank You
         name: item.item.split("/")[0].trim(),
         qty: 1,
         rate: item.sellingPrice,
+          costPrice: item.costPrice,
         amount: item.sellingPrice,
         weightPerUnit: item.weightPerUnit,
         unitType: item.unitType,
@@ -787,6 +846,16 @@ Thank You
     };
   };
 
+  const totalProfit = lineItems.reduce(
+  (sum, item) =>
+    sum +
+    (
+      (Number(item.rate) || 0) -
+      (Number(item.costPrice) || 0)
+    ) *
+    (Number(item.qty) || 0),
+  0
+);
 
   const totals = calculateTotals();
 
@@ -1514,6 +1583,11 @@ Thank You
               <span>Payable:</span>
               <span>₹{Math.max(0, totals.payable).toFixed(2)}</span>
             </div>
+<div className="flex justify-between text-sm font-semibold text-green-400">
+  <span>Profit:</span>
+  <span>₹{totalProfit.toFixed(2)}</span>
+</div>
+
           </div>
 
           <div>
