@@ -64,42 +64,42 @@ export default function BillingModule() {
     }
   }, []);
 
-useEffect(() => {
-  const draft =
-    localStorage.getItem(
-      "currentBillingDraft"
+  useEffect(() => {
+    const draft =
+      localStorage.getItem(
+        "currentBillingDraft"
+      );
+
+    if (!draft) return;
+
+    const parsed =
+      JSON.parse(draft);
+
+    setCustomerData(
+      parsed.customerData || {
+        name: "",
+        mobile: "",
+        address: "",
+        customerType: "walkin",
+        orderId: null
+      }
     );
 
-  if (!draft) return;
+    setLineItems(
+      parsed.lineItems || []
+    );
 
-  const parsed =
-    JSON.parse(draft);
-
-  setCustomerData(
-    parsed.customerData || {
-      name: "",
-      mobile: "",
-      address: "",
-      customerType: "walkin",
-      orderId: null
-    }
-  );
-
-  setLineItems(
-    parsed.lineItems || []
-  );
-
-  setSummary(
-    parsed.summary || {
-      porterage: 0,
-      oldBalance: 0,
-      discountType: "fixed",
-      discountValue: 0,
-      receivedAmount: 0,
-      note: ""
-    }
-  );
-}, []);
+    setSummary(
+      parsed.summary || {
+        porterage: 0,
+        oldBalance: 0,
+        discountType: "fixed",
+        discountValue: 0,
+        receivedAmount: 0,
+        note: ""
+      }
+    );
+  }, []);
 
   useEffect(() => {
 
@@ -238,15 +238,15 @@ useEffect(() => {
     );
 
     const totalProfit = lineItems.reduce(
-  (sum, item) =>
-    sum +
-    (
-      (item.rate || 0) -
-      (item.costPrice || 0)
-    ) *
-    (item.qty || 0),
-  0
-);
+      (sum, item) =>
+        sum +
+        (
+          (item.rate || 0) -
+          (item.costPrice || 0)
+        ) *
+        (item.qty || 0),
+      0
+    );
 
     const billData = {
       id: editingBill
@@ -257,10 +257,10 @@ useEffect(() => {
 
       items: lineItems,
 
-   totals: {
-  ...totals,
-  totalProfit
-},
+      totals: {
+        ...totals,
+        totalProfit
+      },
 
       createdAt: editingBill
         ? editingBill.createdAt
@@ -314,80 +314,81 @@ useEffect(() => {
           new Event("storage")
         );
 
-       const updatedOrders =
-  orders.map(order => {
+        const updatedOrders =
+          orders.map(order => {
 
-    if (
-      order.id !== customerData.orderId
-    ) {
-      return order;
-    }
+            if (
+              order.id !== customerData.orderId
+            ) {
+              return order;
+            }
 
-    const billExists =
-      order.bills.some(
-        bill =>
-          bill.id === billData.id
-      );
+            const billExists =
+              order.bills.some(
+                bill =>
+                  bill.id === billData.id
+              );
 
-    console.log(
-      "BILL EXISTS",
-      billExists
-    );
+            console.log(
+              "BILL EXISTS",
+              billExists
+            );
 
-    let updatedOrderBills;
+            let updatedOrderBills;
 
-    if (billExists) {
+            if (billExists) {
 
-      updatedOrderBills =
-        order.bills.map(bill =>
-          bill.id === billData.id
-            ? billData
-            : bill
+              updatedOrderBills =
+                order.bills.map(bill =>
+                  bill.id === billData.id
+                    ? billData
+                    : bill
+                );
+
+            } else {
+
+              updatedOrderBills = [
+                ...order.bills,
+                billData
+              ];
+
+            }
+
+            return {
+              ...order,
+              bills: updatedOrderBills,
+              billCount:
+                updatedOrderBills.length,
+              customerCount:
+                new Set(
+                  updatedOrderBills.map(
+                    b =>
+                      (b.customer?.mobile || "")
+                        .replace(/\D/g, "")
+                        .replace(/^0+/, "")
+                  )
+                ).size,
+              totalWeight:
+                updatedOrderBills.reduce(
+                  (sum, b) =>
+                    sum +
+                    (b.totals?.totalWeight || 0),
+                  0
+                )
+            };
+
+          });
+
+        localStorage.setItem(
+          "orderBatchesData",
+          JSON.stringify(updatedOrders)
         );
 
-    } else {
+        window.dispatchEvent(
+          new Event("storage")
+        );
+      }
 
-      updatedOrderBills = [
-        ...order.bills,
-        billData
-      ];
-
-    }
-
-    return {
-      ...order,
-      bills: updatedOrderBills,
-      billCount:
-        updatedOrderBills.length,
-      customerCount:
-        new Set(
-          updatedOrderBills.map(
-            b =>
-              (b.customer?.mobile || "")
-                .replace(/\D/g, "")
-                .replace(/^0+/, "")
-          )
-        ).size,
-      totalWeight:
-        updatedOrderBills.reduce(
-          (sum, b) =>
-            sum +
-            (b.totals?.totalWeight || 0),
-          0
-        )
-    };
-
-  });
-
-localStorage.setItem(
-  "orderBatchesData",
-  JSON.stringify(updatedOrders)
-);
-
-window.dispatchEvent(
-  new Event("storage")
-);}
-      
 
       localStorage.removeItem(
         "editingBill"
@@ -425,8 +426,8 @@ window.dispatchEvent(
         billData
       );
       localStorage.removeItem(
-  "currentBillingDraft"
-);
+        "currentBillingDraft"
+      );
 
       alert(
         "Bill Saved Successfully"
@@ -628,11 +629,7 @@ Thank You
     }
 
 
-const totalProfit = bills.reduce(
-  (sum, bill) =>
-    sum + (bill.totals?.totalProfit || 0),
-  0
-);
+ 
 
     const newId = Date.now();
 
@@ -644,7 +641,7 @@ const totalProfit = bills.reduce(
         name: item.item.split("/")[0].trim(),
         qty: 1,
         rate: item.sellingPrice,
-          costPrice: item.costPrice,
+        costPrice: item.costPrice,
         amount: item.sellingPrice,
         weightPerUnit: item.weightPerUnit,
         unitType: item.unitType,
@@ -673,6 +670,7 @@ const totalProfit = bills.reduce(
 
   const addSpecificItem = (item) => {
     const newId = Date.now();
+    console.log("ITEM ADDED", item);
 
     setLineItems(prev => [
       ...prev,
@@ -682,6 +680,7 @@ const totalProfit = bills.reduce(
         name: item.item.split("/")[0].trim(),
         qty: 1,
         rate: item.sellingPrice,
+        costPrice: item.costPrice || 0,
         amount: item.sellingPrice,
         weightPerUnit: item.weightPerUnit,
         unitType: item.unitType,
@@ -847,16 +846,16 @@ const totalProfit = bills.reduce(
   };
 
   const totalProfit = lineItems.reduce(
-  (sum, item) =>
-    sum +
-    (
-      (Number(item.rate) || 0) -
-      (Number(item.costPrice) || 0)
-    ) *
-    (Number(item.qty) || 0),
-  0
-);
-
+    (sum, item) =>
+      sum +
+      (
+        (Number(item.rate) || 0) -
+        (Number(item.costPrice) || 0)
+      ) *
+      (Number(item.qty) || 0),
+    0
+  );
+  
   const totals = calculateTotals();
 
 
@@ -1221,7 +1220,27 @@ const totalProfit = bills.reduce(
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
-                      handleAddLineItem();
+
+                      const firstMatch = inventory.find(item => {
+                        const marathi =
+                          item.item.split("/")[0]
+                            .trim()
+                            .toLowerCase();
+
+                        const english =
+                          item.item.split("/")[1]
+                            ?.trim()
+                            .toLowerCase() || "";
+
+                        return (
+                          marathi.includes(searchItem.toLowerCase()) ||
+                          english.includes(searchItem.toLowerCase())
+                        );
+                      });
+
+                      if (firstMatch) {
+                        addSpecificItem(firstMatch);
+                      }
                     }
                   }}
                   placeholder="Search product..."
@@ -1583,10 +1602,10 @@ const totalProfit = bills.reduce(
               <span>Payable:</span>
               <span>₹{Math.max(0, totals.payable).toFixed(2)}</span>
             </div>
-<div className="flex justify-between text-sm font-semibold text-green-400">
-  <span>Profit:</span>
-  <span>₹{totalProfit.toFixed(2)}</span>
-</div>
+            <div className="flex justify-between text-sm font-semibold text-green-400">
+              <span>Profit:</span>
+              <span>₹{totalProfit.toFixed(2)}</span>
+            </div>
 
           </div>
 
