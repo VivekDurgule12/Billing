@@ -13,7 +13,9 @@ export default function BillHistory({
         loadBills();
     }, []);
 
-   
+   const inventory = JSON.parse(
+  localStorage.getItem("inventoryData")
+) || [];
 
  const loadBills = () => {
 
@@ -28,6 +30,44 @@ export default function BillHistory({
     setBills(sortedBills);
 };
 
+
+const totalItems =
+  selectedBill?.items?.length || 0;
+
+const totalQty =
+  selectedBill?.items?.reduce(
+    (sum, item) =>
+      sum + (item.qty || 0),
+    0
+  ) || 0;
+
+const totalAmount =
+  selectedBill?.items?.reduce(
+    (sum, item) =>
+      sum + (item.amount || 0),
+    0
+  ) || 0;
+
+const totalCost =
+  selectedBill?.items?.reduce(
+    (sum, item) =>
+      sum +
+      ((item.costPrice || 0) *
+        (item.qty || 0)),
+    0
+  ) || 0;
+
+const totalProfit =
+  selectedBill?.items?.reduce(
+    (sum, item) =>
+      sum +
+      (((item.rate || 0) -
+        (item.costPrice || 0)) *
+        (item.qty || 0)),
+    0
+  ) || 0;
+
+
     const handleDelete = (id) => {
 
         const confirmDelete =
@@ -41,10 +81,111 @@ export default function BillHistory({
 
         loadBills();
     };
+    
+  const togglePacked = itemIndex => {
+
+  const updatedBill = {
+    ...selectedBill
+  };
+
+  updatedBill.items[itemIndex].packed =
+    !updatedBill.items[itemIndex].packed;
+
+  const allBills =
+    billHistoryStorage.getBills();
+
+  const updatedBills =
+    allBills.map(b =>
+      b.id === updatedBill.id
+        ? updatedBill
+        : b
+    );
+
+  localStorage.setItem(
+    "billHistoryData",
+    JSON.stringify(updatedBills)
+  );
+
+  setSelectedBill({
+    ...updatedBill
+  });
+};
+
+const toggleLoaded = itemIndex => {
+
+    if (
+  !selectedBill.items[itemIndex]
+    ?.packed
+) {
+  alert(
+    "Pack item first"
+  );
+  return;
+}
+  const updatedBill = {
+    ...selectedBill
+  };
+
+  updatedBill.items[itemIndex].loaded =
+    !updatedBill.items[itemIndex].loaded;
+
+  const allBills =
+    billHistoryStorage.getBills();
+
+  const updatedBills =
+    allBills.map(b =>
+      b.id === updatedBill.id
+        ? updatedBill
+        : b
+    );
+
+  localStorage.setItem(
+    "billHistoryData",
+    JSON.stringify(updatedBills)
+  );
+
+  setSelectedBill({
+    ...updatedBill
+  });
+};
+
+const packedCount =
+  selectedBill?.items?.filter(
+    item => item.packed
+  ).length || 0;
+
+const loadedCount =
+  selectedBill?.items?.filter(
+    item => item.loaded
+  ).length || 0;
+
+const totalItemCount =
+  selectedBill?.items?.length || 0;
+
+const packingPercentage =
+  totalItemCount > 0
+    ? Math.round(
+        (packedCount /
+          totalItemCount) *
+          100
+      )
+    : 0;
+
+const loadingPercentage =
+  totalItemCount > 0
+    ? Math.round(
+        (loadedCount /
+          totalItemCount) *
+          100
+      )
+    : 0;
+
+
+
 
     if (selectedBill && !editMode) {
         return (
-            <div className="p-6 bg-gray-900 min-h-screen">
+            <div className="p-3 sm:p-6 bg-gray-900 min-h-screen">
 
                 <button
                     onClick={() => setSelectedBill(null)}
@@ -57,7 +198,7 @@ export default function BillHistory({
                     Bill Details
                 </h1>
 
-                <div className="bg-gray-800 p-4 rounded">
+                <div className="bg-gray-800 p-3 sm:p-4 rounded">
 
                     <p className="text-white">
                         Customer:
@@ -76,6 +217,239 @@ export default function BillHistory({
                         ₹{selectedBill.totals?.total}
                     </p>
 
+<div className="mt-4">
+
+  <div className="mb-3">
+
+    <div className="flex justify-between text-sm text-white mb-1">
+      <span>
+        Packing Progress
+      </span>
+
+      <span>
+        {packingPercentage}%
+      </span>
+    </div>
+
+    <div className="w-full bg-gray-700 rounded h-4">
+
+      <div
+        className="bg-green-500 h-4 rounded"
+        style={{
+          width: `${packingPercentage}%`
+        }}
+      />
+
+    </div>
+
+    <p className="text-xs text-gray-300 mt-1">
+      {packedCount} / {totalItemCount} Packed
+    </p>
+
+  </div>
+
+  <div>
+
+    <div className="flex justify-between text-sm text-white mb-1">
+      <span>
+        Loading Progress
+      </span>
+
+      <span>
+        {loadingPercentage}%
+      </span>
+    </div>
+
+    <div className="w-full bg-gray-700 rounded h-4">
+
+      <div
+        className="bg-blue-500 h-4 rounded"
+        style={{
+          width: `${loadingPercentage}%`
+        }}
+      />
+
+    </div>
+
+    <p className="text-xs text-gray-300 mt-1">
+      {loadedCount} / {totalItemCount} Loaded
+    </p>
+
+  </div>
+
+</div>
+
+<div className="overflow-x-auto mt-4">
+  <table className="min-w-[700px] w-full border border-gray-600 text-white text-center text-sm">
+  <thead className="bg-gray-700">
+   <tr>
+  <th className="border border-gray-600 p-2">
+    Packed
+  </th>
+
+  <th className="border border-gray-600 p-2">
+    Loaded
+  </th>
+
+  <th className="border border-gray-600 p-2">
+    Sr No
+  </th>
+
+  <th className="border border-gray-600 p-2">
+    Item Name
+  </th>
+
+  <th className="border border-gray-600 p-2">
+    Qty
+  </th>
+
+  <th className="border border-gray-600 p-2">
+    Rate
+  </th>
+
+  <th className="border border-gray-600 p-2">
+    Amount
+  </th>
+
+  <th className="border border-gray-600 p-2">
+    Cost
+  </th>
+
+  <th className="border border-gray-600 p-2">
+    Profit
+  </th>
+</tr>
+  </thead>
+
+  <tbody>
+    {selectedBill.items?.map(
+      (item, index) => {
+
+
+        const inventoryItem =
+  inventory.find(
+    inv => inv.sn === item.sn
+  );
+
+const actualCostPrice =
+  inventoryItem?.costPrice || 0;
+
+const itemProfit =
+  (
+    (item.rate || 0) -
+    actualCostPrice
+  ) *
+  (item.qty || 0);
+
+const totalCost =
+  actualCostPrice *
+  (item.qty || 0);
+
+
+        console.log(
+  "SELECTED BILL ITEMS",
+  selectedBill.items
+);
+
+       
+
+        return (
+          <tr
+            key={index}
+            className="border border-gray-600 hover:bg-gray-700"
+          >
+           <td className="border border-gray-600 p-2 text-center">
+  <input
+    type="checkbox"
+    checked={item.packed || false}
+    onChange={() =>
+      togglePacked(index)
+    }
+  />
+</td>
+
+<input
+  type="checkbox"
+  checked={item.loaded || false}
+  disabled={!item.packed}
+  onChange={() =>
+    toggleLoaded(index)
+  }
+  className={
+    !item.packed
+      ? "cursor-not-allowed opacity-50"
+      : ""
+  }
+/>
+            <td className="border border-gray-600 p-2">
+              {index + 1}
+            </td>
+
+            <td className="border border-gray-600 p-2 text-left">
+              {item.name}
+            </td>
+
+            <td className="border border-gray-600 p-2">
+              {item.qty}
+            </td>
+
+            <td className="border border-gray-600 p-2">
+              ₹{item.rate}
+            </td>
+
+            <td className="border border-gray-600 p-2">
+              ₹{item.amount}
+            </td>
+
+            <td className="border border-gray-600 p-2">
+            ₹{totalCost}
+            </td>
+
+            <td className="border border-gray-600 p-2 text-green-400 font-semibold">
+              ₹{itemProfit}
+            </td>
+           
+          </tr>
+          
+          
+        );
+      }
+    )}
+
+     <tr className="bg-gray-700 font-bold text-xs sm:text-sm">
+  <td
+    colSpan="2"
+    className="border border-gray-600 p-2"
+  >
+    TOTAL
+  </td>
+
+  <td className="border border-gray-600 p-2">
+    {totalQty}
+  </td>
+
+  <td className="border border-gray-600 p-2">
+    {totalItems} Items
+  </td>
+
+  <td className="border border-gray-600 p-2 text-teal-300">
+    ₹{totalAmount}
+  </td>
+
+  <td className="border border-gray-600 p-2 text-yellow-300">
+    ₹{totalCost}
+  </td>
+
+  <td className="border border-gray-600 p-2 text-green-400">
+    ₹{totalProfit}
+  </td>
+</tr>
+  </tbody>
+</table>
+</div>
+
+
+
                 </div>
 
             </div>
@@ -86,7 +460,7 @@ export default function BillHistory({
     if (selectedBill && editMode) {
 
         return (
-            <div className="p-6 bg-gray-900 min-h-screen">
+            <div className="p-3 sm:p-6 bg-gray-900 min-h-screen">
 
                 <button
                     onClick={() => {
@@ -128,7 +502,7 @@ export default function BillHistory({
                                     <tr key={index}>
 
                                         <td>
-                                            {item.item}
+                                            {item.name}
                                         </td>
 
                                         <td>
@@ -158,9 +532,9 @@ export default function BillHistory({
         );
     }
     return (
-        <div className="p-6 bg-gray-900 min-h-screen">
+        <div className="p-3 sm:p-6 bg-gray-900 min-h-screen">
 
-            <h1 className="text-3xl font-bold text-teal-300 mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-teal-300 mb-6">
                 Bill History
             </h1>
 
@@ -183,7 +557,7 @@ export default function BillHistory({
                             className="bg-gray-800 border border-gray-700 rounded-lg p-5"
                         >
 
-                            <div className="flex justify-between">
+                            <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
 
                                 <div>
 
@@ -199,6 +573,13 @@ export default function BillHistory({
                                         {bill.customer?.mobile}
                                     </p>
 
+                                    <p className="text-gray-400 text-sm">
+                                                    {new Date(
+                                                        bill.billDateTime ||
+                                                        bill.createdAt
+                                                    ).toLocaleString("en-IN")}
+                                                    </p>
+
                                 </div>
 
                                 <div className="text-right">
@@ -210,32 +591,48 @@ export default function BillHistory({
                                     <p className="text-gray-400">
                                         {bill.totals?.totalWeight || 0} Kg
                                     </p>
-                                    <td className="text-green-400">
-  ₹{bill.totals?.totalProfit || 0}
-</td>
+                                    <p className="text-green-400">
+                                Profit: ₹{bill.totals?.totalProfit || 0}
+                                </p>
 
                                 </div>
 
                             </div>
 
-                            <div className="flex gap-2 mt-4">
+                            <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                               <button
+  onClick={() => {
+    console.log("VIEW CLICKED");
+    console.log(bill);
 
-                                <button
-                                    onClick={() => {
-                                        setSelectedBill(bill);
-                                        setEditMode(false);
-                                    }}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                                >
-                                    View
-                                </button>
+    setSelectedBill(bill);
+    setEditMode(false);
+  }}
+  className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+  View
+</button>
 
                                 <button
   onClick={() => {
 
+    console.log(
+      "EDIT CLICKED",
+      bill.id,
+      bill.customer?.name
+    );
+
     localStorage.setItem(
       "editingBill",
       JSON.stringify(bill)
+    );
+
+    console.log(
+      "SAVED",
+      JSON.parse(
+        localStorage.getItem(
+          "editingBill"
+        )
+      )
     );
 
     setCurrentPage(

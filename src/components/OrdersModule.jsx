@@ -33,6 +33,10 @@ export default function OrdersModule() {
   };
 
 
+
+  
+
+
   const getOrderProfit = (order) => {
     return (order.bills || []).reduce(
       (sum, bill) =>
@@ -79,6 +83,8 @@ export default function OrdersModule() {
     const updatedOrders =
       orders.map(order => {
 
+
+        
         if (order.id !== orderId) {
           return order;
         }
@@ -316,9 +322,9 @@ link.download =
 
     <div className="p-6 bg-gray-900 min-h-screen">
 
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
 
-        <h1 className="text-3xl font-bold text-teal-300">
+        <h1 className="text-2xl sm:text-3xl font-bold text-teal-300">
           Orders
         </h1>
 
@@ -326,7 +332,7 @@ link.download =
           onClick={() =>
             setShowModal(true)
           }
-          className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded"
+          className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded"
         >
           + Create Order
         </button>
@@ -352,14 +358,67 @@ link.download =
 
         <div className="space-y-4">
 
-          {orders.map(order => (
+          {orders.map(
+            order => {
+
+                  const totalBills =
+                    order.bills?.length || 0;
+
+                  const packedBills =
+                    order.bills?.filter(
+                      bill =>
+                        bill.items?.every(
+                          item => item.packed
+                        )
+                    ).length || 0;
+
+                  const loadedBills =
+                    order.bills?.filter(
+                      bill =>
+                        bill.items?.every(
+                          item => item.loaded
+                        )
+                    ).length || 0;
+
+                  let status = "Not Started";
+
+                  if (
+                    packedBills > 0 &&
+                    packedBills < totalBills
+                  ) {
+                    status = "Packing";
+                  }
+
+                  if (
+                    packedBills === totalBills &&
+                    loadedBills === 0 &&
+                    totalBills > 0
+                  ) {
+                    status = "Ready To Load";
+                  }
+
+                  if (
+                    loadedBills > 0 &&
+                    loadedBills < totalBills
+                  ) {
+                    status = "Loading";
+                  }
+
+                  if (
+                    loadedBills === totalBills &&
+                    totalBills > 0
+                  ) {
+                    status = "Completed";
+                  }
+
+  return (
 
             <div
               key={order.id}
               className="bg-gray-800 border border-gray-700 rounded-lg p-5"
             >
 
-              <div className="flex justify-between">
+              <div className="flex flex-col sm:flex-row sm:justify-between gap-3">
 
                 <div>
 
@@ -381,24 +440,31 @@ link.download =
 
                 <div>
 
-                  <span
-                    className="
-                bg-yellow-600
-                text-white
-                px-3
-                py-1
-                rounded-full
-                text-sm
-              "
-                  >
-                    {order.status}
-                  </span>
+             <span
+  className={`
+    px-3 py-1 rounded-full text-sm font-bold
+    ${
+      status === "Completed"
+        ? "bg-green-600"
+        : status === "Loading"
+        ? "bg-blue-600"
+        : status === "Ready To Load"
+        ? "bg-yellow-600"
+        : status === "Packing"
+        ? "bg-orange-600"
+        : "bg-red-600"
+    }
+    text-white
+  `}
+>
+  {status}
+</span>
 
                 </div>
 
               </div>
 
-              <div className="grid grid-cols-4 gap-4 mt-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
 
                 <div className="bg-gray-700 p-3 rounded">
 
@@ -453,8 +519,7 @@ link.download =
 
               </div>
 
-              <div className="flex gap-2 mt-5">
-
+              <div className="flex flex-col sm:flex-row gap-2 mt-5">
                 <button
                   onClick={() => {
                     console.log("OPEN CLICKED");
@@ -511,26 +576,27 @@ rounded
 
               </div>
 
-            </div>
+                        </div>
 
-          ))}
-
-        </div>
-
-      )}
-
-      <CreateOrderModal
-        isOpen={showModal}
-        onClose={() =>
-          setShowModal(false)
-        }
-        onCreate={
-          handleCreateOrder
-        }
-      />
-
-    </div>
+          );
+        })}
 
 
-  );
+<CreateOrderModal
+  isOpen={showModal}
+  onClose={() =>
+    setShowModal(false)
+  }
+  onCreate={
+    handleCreateOrder
+  }
+/>
+
+</div>
+
+)}
+
+</div>
+
+);
 }

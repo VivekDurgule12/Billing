@@ -64,42 +64,57 @@ export default function BillingModule() {
     }
   }, []);
 
-  useEffect(() => {
-    const draft =
-      localStorage.getItem(
-        "currentBillingDraft"
-      );
 
-    if (!draft) return;
+useEffect(() => {
 
-    const parsed =
-      JSON.parse(draft);
+  const editingBill = JSON.parse(
+    localStorage.getItem(
+      "editingBill"
+    )
+  );
+
+  if (editingBill) {
+
+    console.log(
+      "LOADING EDIT BILL",
+      editingBill.customer?.name
+    );
 
     setCustomerData(
-      parsed.customerData || {
-        name: "",
-        mobile: "",
-        address: "",
-        customerType: "walkin",
-        orderId: null
-      }
+      editingBill.customer
     );
 
     setLineItems(
-      parsed.lineItems || []
+      editingBill.items || []
     );
 
-    setSummary(
-      parsed.summary || {
-        porterage: 0,
-        oldBalance: 0,
-        discountType: "fixed",
-        discountValue: 0,
-        receivedAmount: 0,
-        note: ""
-      }
+    return;
+  }
+
+  const draft =
+    localStorage.getItem(
+      "currentBillingDraft"
     );
-  }, []);
+
+  if (!draft) return;
+
+  const parsed =
+    JSON.parse(draft);
+
+  setCustomerData(
+    parsed.customerData
+  );
+
+  setLineItems(
+    parsed.lineItems || []
+  );
+
+  setSummary(
+    parsed.summary || {}
+  );
+
+}, []);
+
 
   useEffect(() => {
 
@@ -127,15 +142,15 @@ export default function BillingModule() {
   ]);
 
 
-  useEffect(() => {
+useEffect(() => {
 
-    const editingBill = JSON.parse(
-      localStorage.getItem(
-        "editingBill"
-      )
-    );
+  const editingBill = JSON.parse(
+    localStorage.getItem(
+      "editingBill"
+    )
+  );
 
-    if (!editingBill) return;
+  if (editingBill) {
 
     console.log(
       "LOADING EDIT BILL",
@@ -150,10 +165,32 @@ export default function BillingModule() {
       editingBill.items || []
     );
 
-  }, []);
+    return;
+  }
 
+  const draft =
+    localStorage.getItem(
+      "currentBillingDraft"
+    );
 
+  if (!draft) return;
 
+  const parsed =
+    JSON.parse(draft);
+
+  setCustomerData(
+    parsed.customerData
+  );
+
+  setLineItems(
+    parsed.lineItems || []
+  );
+
+  setSummary(
+    parsed.summary || {}
+  );
+
+}, []);
 
 
 
@@ -255,7 +292,11 @@ export default function BillingModule() {
 
       customer: customerData,
 
-      items: lineItems,
+     items: lineItems.map(item => ({
+  ...item,
+  packed: item.packed || false,
+  loaded: item.loaded || false
+})),
 
       totals: {
         ...totals,
@@ -393,6 +434,8 @@ export default function BillingModule() {
       localStorage.removeItem(
         "editingBill"
       );
+
+ 
 
       alert(
         "Bill Updated Successfully"
@@ -629,7 +672,7 @@ Thank You
     }
 
 
- 
+
 
     const newId = Date.now();
 
@@ -855,7 +898,7 @@ Thank You
       (Number(item.qty) || 0),
     0
   );
-  
+
   const totals = calculateTotals();
 
 
@@ -1218,43 +1261,43 @@ Thank You
 
                   }}
 
-       onKeyDown={(e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
 
-    if (!searchItem.trim()) {
-      setMessage("❌ Please search and select an item");
-      setTimeout(() => setMessage(""), 2000);
-      return;
-    }
+                      if (!searchItem.trim()) {
+                        setMessage("❌ Please search and select an item");
+                        setTimeout(() => setMessage(""), 2000);
+                        return;
+                      }
 
-    const search = searchItem.trim().toLowerCase();
+                      const search = searchItem.trim().toLowerCase();
 
-    const firstMatch = inventory.find(item => {
-      const marathi =
-        item.item.split("/")[0]
-          .trim()
-          .toLowerCase();
+                      const firstMatch = inventory.find(item => {
+                        const marathi =
+                          item.item.split("/")[0]
+                            .trim()
+                            .toLowerCase();
 
-      const english =
-        item.item.split("/")[1]
-          ?.trim()
-          .toLowerCase() || "";
+                        const english =
+                          item.item.split("/")[1]
+                            ?.trim()
+                            .toLowerCase() || "";
 
-      return (
-        marathi.includes(search) ||
-        english.includes(search)
-      );
-    });
+                        return (
+                          marathi.includes(search) ||
+                          english.includes(search)
+                        );
+                      });
 
-    if (firstMatch) {
-      addSpecificItem(firstMatch);
-    } else {
-      setMessage("Item not found");
-      setTimeout(() => setMessage(""), 2000);
-    }
-  }
-}}
+                      if (firstMatch) {
+                        addSpecificItem(firstMatch);
+                      } else {
+                        setMessage("Item not found");
+                        setTimeout(() => setMessage(""), 2000);
+                      }
+                    }
+                  }}
 
 
                   placeholder="Search product..."

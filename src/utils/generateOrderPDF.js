@@ -83,10 +83,36 @@ export const generateOrderPDF = async (
 
       let yPosition = margin;
 
+ console.log("imgWidth =", imgWidth);
+console.log("imgHeight =", imgHeight);
+console.log("x =", x);
+console.log("canvas.width =", canvas.width);
+console.log("canvas.height =", canvas.height);
+
+if (
+  isNaN(imgWidth) ||
+  isNaN(imgHeight) ||
+  isNaN(x) ||
+  !isFinite(imgWidth) ||
+  !isFinite(imgHeight) ||
+  !isFinite(x)
+) {
+  console.error("INVALID VALUES", {
+    imgWidth,
+    imgHeight,
+    x,
+    canvasWidth: canvas.width,
+    canvasHeight: canvas.height
+  });
+
+  return;
+}
+
       pdf.addImage(
         imgData,
         "JPEG",
         x,
+    
         yPosition,
         imgWidth,
         imgHeight
