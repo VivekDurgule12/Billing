@@ -663,10 +663,10 @@ const itemProfit =
       }
     )}
 
-     <tr className="bg-gray-700 font-bold text-xs sm:text-sm">
+<tr className="bg-gray-700 font-bold text-xs sm:text-sm">
   <td
-    colSpan="2"
-    className="border border-gray-600 p-2"
+    colSpan="4"
+    className="border border-gray-600 p-2 text-center"
   >
     TOTAL
   </td>
@@ -676,7 +676,7 @@ const itemProfit =
   </td>
 
   <td className="border border-gray-600 p-2">
-    {totalItems} Items
+    -
   </td>
 
   <td className="border border-gray-600 p-2 text-teal-300">
@@ -691,6 +691,8 @@ const itemProfit =
     ₹{totalProfit}
   </td>
 </tr>
+
+
   </tbody>
 </table>
 </div>
