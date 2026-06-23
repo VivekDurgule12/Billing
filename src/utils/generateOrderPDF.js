@@ -1,7 +1,10 @@
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 
-export const generateOrderPDF = async (orderName) => {
+export const generateOrderPDF = async (
+  orderName,
+  deliveryDate
+) => {
   const invoices =
     document.querySelectorAll(".order-invoice");
 
@@ -117,5 +120,11 @@ export const generateOrderPDF = async (orderName) => {
     }
   }
 
-  pdf.save(`${orderName}.pdf`);
-};
+const formattedDate =
+  new Date(deliveryDate)
+    .toLocaleDateString("en-GB")
+    .replace(/\//g, "-");
+
+pdf.save(
+  `${orderName}_${formattedDate}.pdf`
+);}

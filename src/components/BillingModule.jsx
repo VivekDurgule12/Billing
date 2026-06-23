@@ -1217,32 +1217,46 @@ Thank You
 
 
                   }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
 
-                      const firstMatch = inventory.find(item => {
-                        const marathi =
-                          item.item.split("/")[0]
-                            .trim()
-                            .toLowerCase();
+       onKeyDown={(e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
 
-                        const english =
-                          item.item.split("/")[1]
-                            ?.trim()
-                            .toLowerCase() || "";
+    if (!searchItem.trim()) {
+      setMessage("❌ Please search and select an item");
+      setTimeout(() => setMessage(""), 2000);
+      return;
+    }
 
-                        return (
-                          marathi.includes(searchItem.toLowerCase()) ||
-                          english.includes(searchItem.toLowerCase())
-                        );
-                      });
+    const search = searchItem.trim().toLowerCase();
 
-                      if (firstMatch) {
-                        addSpecificItem(firstMatch);
-                      }
-                    }
-                  }}
+    const firstMatch = inventory.find(item => {
+      const marathi =
+        item.item.split("/")[0]
+          .trim()
+          .toLowerCase();
+
+      const english =
+        item.item.split("/")[1]
+          ?.trim()
+          .toLowerCase() || "";
+
+      return (
+        marathi.includes(search) ||
+        english.includes(search)
+      );
+    });
+
+    if (firstMatch) {
+      addSpecificItem(firstMatch);
+    } else {
+      setMessage("Item not found");
+      setTimeout(() => setMessage(""), 2000);
+    }
+  }
+}}
+
+
                   placeholder="Search product..."
                   className="w-full bg-gray-700 text-white px-4 py-2 rounded-lg border border-gray-600 focus:border-teal-500"
                 />

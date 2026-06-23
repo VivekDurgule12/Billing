@@ -76,6 +76,17 @@ export default function App() {
         </button>
 
         <button
+          onClick={() => setCurrentPage("orders")}
+          className={`px-3 sm:px-4 py-2 rounded font-semibold text-sm sm:text-base transition-all ${
+            currentPage === "orders"
+              ? "bg-teal-600 text-white shadow-lg"
+              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+          }`}
+        >
+          Orders
+        </button>
+        
+        <button
           onClick={() => setCurrentPage("inventory")}
           className={`px-3 sm:px-4 py-2 rounded font-semibold text-sm sm:text-base transition-all ${
             currentPage === "inventory"
@@ -97,16 +108,6 @@ export default function App() {
           Bill History
         </button>
 
-        <button
-          onClick={() => setCurrentPage("orders")}
-          className={`px-3 sm:px-4 py-2 rounded font-semibold text-sm sm:text-base transition-all ${
-            currentPage === "orders"
-              ? "bg-teal-600 text-white shadow-lg"
-              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-          }`}
-        >
-          Orders
-        </button>
 
         <button
           onClick={handleLogout}
