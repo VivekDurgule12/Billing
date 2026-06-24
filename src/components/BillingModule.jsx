@@ -483,11 +483,7 @@ useEffect(() => {
   const handleWhatsAppBillShare = async () => {
 
 
-    const success =
-      await handleGeneratePDF();
-
-    if (!success) return;
-
+   
 
     if (!customerData.mobile) {
       alert("Customer mobile number required");
@@ -542,6 +538,13 @@ Thank You
       `https://wa.me/91${phone}?text=${encodeURIComponent(message)}`,
       "_blank"
     );
+
+   const success =
+      await handleGeneratePDF();
+
+    if (!success) return;
+
+    
   };
 
 
@@ -1704,12 +1707,16 @@ Thank You
             >
               Download Invoice
             </button>
+
+
             <button
               onClick={handleWhatsAppBillShare}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded"
             >
               Share on WhatsApp
             </button>
+
+
             <button
               onClick={handlePrintWithPDF}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition-all"
