@@ -316,16 +316,23 @@ const billLoadingPercentage =
     
      
 
-    const togglePacked = (itemIndex) => {
+const togglePacked = (itemIndex) => {
 
   const updatedBill = {
     ...selectedBill,
     items: [...selectedBill.items]
   };
 
+  const newPackedStatus =
+    !updatedBill.items[itemIndex].packed;
+
   updatedBill.items[itemIndex] = {
     ...updatedBill.items[itemIndex],
-    packed: !updatedBill.items[itemIndex].packed
+    packed: newPackedStatus,
+
+    loaded: newPackedStatus
+      ? updatedBill.items[itemIndex].loaded
+      : false
   };
 
   const allOrders =

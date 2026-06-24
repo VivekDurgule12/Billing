@@ -82,14 +82,23 @@ const totalProfit =
         loadBills();
     };
     
-  const togglePacked = itemIndex => {
+const togglePacked = itemIndex => {
 
   const updatedBill = {
     ...selectedBill
   };
 
-  updatedBill.items[itemIndex].packed =
+  const newPackedStatus =
     !updatedBill.items[itemIndex].packed;
+
+  updatedBill.items[itemIndex] = {
+    ...updatedBill.items[itemIndex],
+    packed: newPackedStatus,
+
+    loaded: newPackedStatus
+      ? updatedBill.items[itemIndex].loaded
+      : false
+  };
 
   const allBills =
     billHistoryStorage.getBills();
@@ -110,7 +119,6 @@ const totalProfit =
     ...updatedBill
   });
 };
-
 const toggleLoaded = itemIndex => {
 
     if (
