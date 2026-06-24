@@ -1122,16 +1122,28 @@ Thank You
                 onKeyDown={handleBillingEnterMove}
                 className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               />
-              <input
+             <input
+  type="text"
+  data-billing-flow
+  placeholder="Mobile Number"
+  value={customerData.mobile}
+  onChange={(e) => {
 
-                type="text"
-                data-billing-flow
-                placeholder="Mobile Number"
-                value={customerData.mobile}
-                onChange={(e) => setCustomerData({ ...customerData, mobile: e.target.value })}
-                onKeyDown={handleBillingEnterMove}
-                className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
-              />
+    const value =
+      e.target.value
+        .replace(/\D/g, "")
+        .slice(0, 10);
+
+    setCustomerData({
+      ...customerData,
+      mobile: value
+    });
+
+  }}
+  maxLength={10}
+  onKeyDown={handleBillingEnterMove}
+  className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
+/>
               <input
 
                 type="text"

@@ -25,6 +25,22 @@ export default function OrdersModule() {
   const [orders, setOrders] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
+const [showWhatsAppModal,
+  setShowWhatsAppModal] =
+  useState(false);
+
+const [whatsappNumber,
+  setWhatsappNumber] =
+  useState("");
+
+const [selectedOrderForShare,
+  setSelectedOrderForShare] =
+  useState(null);
+
+const [shareType,
+  setShareType] =
+  useState("stock");
+
 
   const loadOrders = () => {
     setOrders(
@@ -126,6 +142,8 @@ export default function OrdersModule() {
 
 
 
+
+
   const currentSelectedOrder =
     selectedOrder
       ? orders.find(
@@ -154,7 +172,7 @@ export default function OrdersModule() {
 
   const handleCreateOrder = (data) => {
 
-    console.log("Create Clicked");
+
     console.log(data);
 
     orderStorage.createOrder(data);
@@ -316,6 +334,174 @@ link.download =
   };
 
 
+  const shareOrderWhatsApp = (
+  order
+) => {
+
+  if (!whatsappNumber) {
+    alert("Enter WhatsApp Number");
+    return;
+  }
+
+  const itemMap = {};
+
+  order.bills?.forEach(bill => {
+
+    bill.items?.forEach(item => {
+
+      const weight =
+        (item.qty || 0) *
+        (item.weightPerUnit || 0);
+
+      if (!itemMap[item.name]) {
+        itemMap[item.name] = {
+          name: item.name,
+          weight: 0
+        };
+      }
+
+      itemMap[item.name].weight +=
+        weight;
+
+    });
+
+  });
+
+  const sortedItems =
+    Object.values(itemMap)
+      .sort(
+        (a, b) =>
+          b.weight - a.weight
+      );
+
+  let message =
+`${order.orderName}
+
+Date: ${order.deliveryDate}
+
+`;
+
+  sortedItems.forEach(
+    (item, index) => {
+
+      message +=
+`${index + 1}. ${item.name}
+Weight : ${item.weight.toFixed(2)} KG
+
+`;
+
+    }
+  );
+
+  message +=
+`------------------
+
+Total Weight : ${
+  Number(
+    order.totalWeight || 0
+  ).toFixed(2)
+} KG`;
+
+  window.open(
+    `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`,
+    "_blank"
+  );
+};
+
+const shareCustomerWiseWhatsApp =
+  order => {
+
+    if (!whatsappNumber) {
+      alert("Enter WhatsApp Number");
+      return;
+    }
+
+    let message =
+`${order.orderName}
+
+Date: ${order.deliveryDate}
+
+`;
+
+    order.bills?.forEach(
+      (bill, billIndex) => {
+
+        message +=
+`Bill No : ${billIndex + 1}
+
+Customer : ${
+  bill.customer?.name
+}
+
+Mobile : ${
+  bill.customer?.mobile
+}
+
+Weight : ${
+  Number(
+    bill.totals?.totalWeight || 0
+  ).toFixed(2)
+} KG
+
+`;
+
+        const sortedItems =
+          [...(bill.items || [])]
+            .sort(
+              (a, b) => {
+
+                const weightA =
+                  (a.qty || 0) *
+                  (a.weightPerUnit || 0);
+
+                const weightB =
+                  (b.qty || 0) *
+                  (b.weightPerUnit || 0);
+
+                return (
+                  weightB - weightA
+                );
+              }
+            );
+
+        sortedItems.forEach(
+          (item, itemIndex) => {
+
+            const weight =
+              (item.qty || 0) *
+              (item.weightPerUnit || 0);
+
+            message +=
+`${itemIndex + 1}. ${item.name}
+Qty : ${item.qty}
+Weight : ${weight.toFixed(2)} KG
+
+`;
+
+          }
+        );
+
+        message +=
+`------------------
+
+`;
+
+      }
+    );
+
+    message +=
+`Total Weight : ${
+  Number(
+    order.totalWeight || 0
+  ).toFixed(2)
+} KG`;
+
+    window.open(
+      `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`,
+      "_blank"
+    );
+};
+
 
   return (
 
@@ -329,9 +515,10 @@ link.download =
         </h1>
 
         <button
-          onClick={() =>
-            setShowModal(true)
-          }
+          onClick={() =>{
+            setShowModal(true);
+            console.log("Click")
+          }}
           className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded"
         >
           + Create Order
@@ -555,6 +742,22 @@ rounded
                 >
                   Export CSV
                 </button>
+                <button
+  onClick={() => {
+    setSelectedOrderForShare(order);
+    setShowWhatsAppModal(true);
+  }}
+  className="
+    bg-green-500
+    hover:bg-green-600
+    text-white
+    px-4
+    py-2
+    rounded
+  "
+>
+  WhatsApp
+</button>
 
                 <button
                   onClick={() =>
@@ -582,6 +785,11 @@ rounded
         })}
 
 
+
+
+</div>
+
+)}
 <CreateOrderModal
   isOpen={showModal}
   onClose={() =>
@@ -591,9 +799,102 @@ rounded
     handleCreateOrder
   }
 />
+{showWhatsAppModal && (
+  <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
 
-</div>
+    <div className="bg-white rounded-lg p-5 w-full max-w-md">
 
+      <h2 className="text-xl font-bold mb-4">
+        Share Order
+      </h2>
+
+      <input
+  type="text"
+  placeholder="WhatsApp Number"
+  value={whatsappNumber}
+  onChange={(e) => {
+
+    const value =
+      e.target.value
+        .replace(/\D/g, "")
+        .slice(0, 10);
+
+    setWhatsappNumber(value);
+
+  }}
+  maxLength={10}
+  className="w-full border p-2 rounded mb-4"
+/>
+
+      <div className="mb-4">
+
+        <label className="flex items-center gap-2 mb-2">
+          <input
+            type="radio"
+            value="stock"
+            checked={shareType === "stock"}
+            onChange={() =>
+              setShareType("stock")
+            }
+          />
+          Stock Summary
+        </label>
+
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            value="customer"
+            checked={shareType === "customer"}
+            onChange={() =>
+              setShareType("customer")
+            }
+          />
+          Customer Orders
+        </label>
+
+      </div>
+
+      <div className="flex gap-2">
+
+        <button
+          onClick={() =>
+            setShowWhatsAppModal(false)
+          }
+          className="flex-1 bg-gray-500 text-white py-2 rounded"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={() => {
+
+            if (
+              shareType === "stock"
+            ) {
+
+              shareOrderWhatsApp(
+                selectedOrderForShare
+              );
+
+            } else {
+
+              shareCustomerWiseWhatsApp(
+                selectedOrderForShare
+              );
+
+            }
+
+          }}
+          className="flex-1 bg-green-600 text-white py-2 rounded"
+        >
+          Send
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
 )}
 
 </div>

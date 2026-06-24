@@ -368,7 +368,10 @@ const totalCost =
   />
 </td>
 
+
+ <td className="border border-gray-600 p-2 text-center">
 <input
+
   type="checkbox"
   checked={item.loaded || false}
   disabled={!item.packed}
@@ -381,6 +384,9 @@ const totalCost =
       : ""
   }
 />
+
+
+</td>
             <td className="border border-gray-600 p-2">
               {index + 1}
             </td>
