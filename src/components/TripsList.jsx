@@ -167,6 +167,41 @@ export default function TripsList({ trips, drivers, vehicles, onDataChange }) {
     }
   };
 
+
+  const sendWhatsApp = (trip) => {
+  if (!trip.customerMobile) {
+    showMessage("Customer mobile number not available.");
+    return;
+  }
+
+  const phone = `91${trip.customerMobile.replace(/\D/g, "")}`;
+
+  const message = `
+*DURGULE TRANSPORT*
+
+Trip No: ${trip.tripNumber}
+Customer: ${trip.customerName}
+
+Route:
+${trip.sourceCity} → ${trip.destinationCity}
+
+Vehicle: ${getVehicle(trip.vehicleId)?.vehicleNumber || "-"}
+
+Amount: ₹${transportCalculator.calculateTripStats(
+  trip,
+  transportStorage.getExpensesByTrip(trip.id)
+).totalIncome.toFixed(2)}
+
+Thank you for choosing Durgule Transport.
+`.trim();
+
+  window.open(
+    `https://wa.me/${phone}?text=${encodeURIComponent(message)}`,
+    "_blank"
+  );
+};
+
+
   return (
     <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
       {message && <div className="mb-4 rounded border border-teal-500 bg-gray-900 p-3 text-sm text-white">{message}</div>}
@@ -252,6 +287,12 @@ export default function TripsList({ trips, drivers, vehicles, onDataChange }) {
                         <button onClick={() => shareInvoice(trip)} className="rounded bg-green-600 px-3 py-1 text-xs font-bold hover:bg-green-700">Share Invoice</button>
                         <button onClick={() => openFinanceEditor(trip)} className="rounded bg-blue-600 px-3 py-1 text-xs font-bold hover:bg-blue-700">Edit Amounts</button>
                         <button  onClick={() => deleteTrip(trip.id, trip.tripNumber)}  className="rounded bg-red-600 px-3 py-1 text-xs font-bold hover:bg-red-700">   Delete</button>
+                        <button
+  onClick={() => sendWhatsApp(trip)}
+  className="rounded bg-green-700 px-3 py-1 text-xs font-bold hover:bg-green-800"
+>
+  WhatsApp
+</button>
                       </div>
                     </td>
                   </tr>
