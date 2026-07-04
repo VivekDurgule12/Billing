@@ -41,18 +41,18 @@ export default function VehicleManagement({ onDataChange }) {
     e.preventDefault();
 
     if (!formData.vehicleName || !formData.vehicleNumber || !formData.capacity) {
-      setMessage('❌ Vehicle name, number, and capacity are required');
+      setMessage('Error: Vehicle name, number, and capacity are required');
       setTimeout(() => setMessage(''), 3000);
       return;
     }
 
     if (editingId) {
       transportStorage.updateVehicle(editingId, formData);
-      setMessage('✅ Vehicle updated successfully');
+      setMessage('Success: Vehicle updated successfully');
       setEditingId(null);
     } else {
       transportStorage.addVehicle(formData);
-      setMessage('✅ Vehicle added successfully');
+      setMessage('Success: Vehicle added successfully');
     }
 
     setFormData({
@@ -89,12 +89,13 @@ export default function VehicleManagement({ onDataChange }) {
       status: vehicle.status,
     });
     setEditingId(vehicle.id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this vehicle?')) {
       transportStorage.deleteVehicle(id);
-      setMessage('✅ Vehicle deleted successfully');
+      setMessage('Success: Vehicle deleted successfully');
       loadVehicles();
       onDataChange?.();
       setTimeout(() => setMessage(''), 3000);
@@ -107,237 +108,241 @@ export default function VehicleManagement({ onDataChange }) {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {message && (
-        <div className="fixed top-4 right-4 bg-gray-800 border-l-4 border-teal-500 p-4 rounded shadow-lg z-50">
+        <div className={`fixed top-4 right-4 p-3 sm:p-4 rounded shadow-lg z-50 text-xs sm:text-sm max-w-xs sm:max-w-md ${
+          message.includes('Error') 
+            ? 'bg-red-800 border-l-4 border-red-500 text-red-100'
+            : 'bg-green-800 border-l-4 border-green-500 text-green-100'
+        }`}>
           {message}
         </div>
       )}
 
       {/* Add/Edit Form */}
-      <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-        <h2 className="text-xl font-semibold text-teal-300 mb-4">
-          {editingId ? '✏️ Edit Vehicle' : '➕ Add New Vehicle'}
+      <div className="bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-700">
+        <h2 className="text-lg sm:text-xl font-semibold text-teal-300 mb-4">
+          {editingId ? 'Edit Vehicle' : 'Add New Vehicle'}
         </h2>
-        <form onSubmit={handleAddOrUpdate} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <input
-            type="text"
-            name="vehicleName"
-            placeholder="Vehicle Name *"
-            value={formData.vehicleName}
-            onChange={handleInputChange}
-            className="bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
-          />
-          <input
-            type="text"
-            name="vehicleNumber"
-            placeholder="Vehicle Number *"
-            value={formData.vehicleNumber}
-            onChange={handleInputChange}
-            className="bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
-          />
-          <select
-            name="vehicleType"
-            value={formData.vehicleType}
-            onChange={handleInputChange}
-            className="bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
-          >
-            <option value="Truck">Truck</option>
-            <option value="Pickup">Pickup</option>
-            <option value="Tempo">Tempo</option>
-            <option value="Mini Truck">Mini Truck</option>
-            <option value="Container">Container</option>
-            <option value="Tanker">Tanker</option>
-          </select>
-          <div className="flex gap-2">
+        <form onSubmit={handleAddOrUpdate} className="space-y-3 sm:space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             <input
-              type="number"
-              name="capacity"
-              placeholder="Capacity *"
-              value={formData.capacity}
+              type="text"
+              name="vehicleName"
+              placeholder="Vehicle Name"
+              value={formData.vehicleName}
               onChange={handleInputChange}
-              className="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
+              className="bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base"
+            />
+            <input
+              type="text"
+              name="vehicleNumber"
+              placeholder="Vehicle Number"
+              value={formData.vehicleNumber}
+              onChange={handleInputChange}
+              className="bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base"
             />
             <select
-              name="capacityUnit"
-              value={formData.capacityUnit}
+              name="vehicleType"
+              value={formData.vehicleType}
               onChange={handleInputChange}
-              className="bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
+              className="bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base"
             >
-              <option value="KG">KG</option>
-              <option value="Ton">Ton</option>
+              <option value="Truck">Truck</option>
+              <option value="Pickup">Pickup</option>
+              <option value="Tempo">Tempo</option>
+              <option value="Mini Truck">Mini Truck</option>
+              <option value="Container">Container</option>
+              <option value="Tanker">Tanker</option>
+            </select>
+            <div className="flex gap-2 sm:gap-3 col-span-1 sm:col-span-2 lg:col-span-1">
+              <input
+                type="number"
+                name="capacity"
+                placeholder="Capacity"
+                value={formData.capacity}
+                onChange={handleInputChange}
+                className="flex-1 bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base"
+              />
+              <select
+                name="capacityUnit"
+                value={formData.capacityUnit}
+                onChange={handleInputChange}
+                className="bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base"
+              >
+                <option value="KG">KG</option>
+                <option value="Ton">Ton</option>
+              </select>
+            </div>
+            <input
+              type="text"
+              name="rcNumber"
+              placeholder="RC Number"
+              value={formData.rcNumber}
+              onChange={handleInputChange}
+              className="bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base"
+            />
+            <input
+              type="text"
+              name="insuranceNumber"
+              placeholder="Insurance Number"
+              value={formData.insuranceNumber}
+              onChange={handleInputChange}
+              className="bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base"
+            />
+            <input
+              type="date"
+              name="fitnessExpiry"
+              placeholder="Fitness Expiry"
+              value={formData.fitnessExpiry}
+              onChange={handleInputChange}
+              className="bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base"
+            />
+            <select
+              name="fuelType"
+              value={formData.fuelType}
+              onChange={handleInputChange}
+              className="bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base"
+            >
+              <option value="Diesel">Diesel</option>
+              <option value="Petrol">Petrol</option>
+              <option value="CNG">CNG</option>
+              <option value="LPG">LPG</option>
+            </select>
+            <input
+              type="number"
+              name="mileage"
+              placeholder="Mileage (KM/L)"
+              value={formData.mileage}
+              onChange={handleInputChange}
+              className="bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base"
+            />
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleInputChange}
+              className="bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base"
+            >
+              <option value="Available">Available</option>
+              <option value="Running">Running</option>
+              <option value="Maintenance">Maintenance</option>
             </select>
           </div>
-          <input
-            type="text"
-            name="rcNumber"
-            placeholder="RC Number"
-            value={formData.rcNumber}
-            onChange={handleInputChange}
-            className="bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
-          />
-          <input
-            type="text"
-            name="insuranceNumber"
-            placeholder="Insurance Number"
-            value={formData.insuranceNumber}
-            onChange={handleInputChange}
-            className="bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
-          />
-          <input
-            type="date"
-            name="fitnessExpiry"
-            placeholder="Fitness Expiry"
-            value={formData.fitnessExpiry}
-            onChange={handleInputChange}
-            className="bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
-          />
-          <select
-            name="fuelType"
-            value={formData.fuelType}
-            onChange={handleInputChange}
-            className="bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
-          >
-            <option value="Diesel">Diesel</option>
-            <option value="Petrol">Petrol</option>
-            <option value="CNG">CNG</option>
-            <option value="LPG">LPG</option>
-          </select>
-          <input
-            type="number"
-            name="mileage"
-            placeholder="Mileage (KM/L)"
-            value={formData.mileage}
-            onChange={handleInputChange}
-            className="bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
-          />
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleInputChange}
-            className="bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
-          >
-            <option value="Available">Available</option>
-            <option value="Running">Running</option>
-            <option value="Maintenance">Maintenance</option>
-          </select>
-          <button
-            type="submit"
-            className="lg:col-span-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 rounded transition-all"
-          >
-            {editingId ? '💾 Update' : '➕ Add Vehicle'}
-          </button>
-          {editingId && (
+          <div className="flex gap-2 sm:gap-3">
             <button
-              type="button"
-              onClick={() => {
-                setEditingId(null);
-                setFormData({
-                  vehicleName: '',
-                  vehicleNumber: '',
-                  vehicleType: 'Truck',
-                  capacity: '',
-                  capacityUnit: 'KG',
-                  insuranceNumber: '',
-                  fitnessExpiry: '',
-                  rcNumber: '',
-                  fuelType: 'Diesel',
-                  mileage: '',
-                  status: 'Available',
-                });
-              }}
-              className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 rounded transition-all"
+              type="submit"
+              className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 sm:py-3 rounded transition-all text-xs sm:text-base"
             >
-              ❌ Cancel
+              {editingId ? 'Update Vehicle' : 'Add Vehicle'}
             </button>
-          )}
+            {editingId && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingId(null);
+                  setFormData({
+                    vehicleName: '',
+                    vehicleNumber: '',
+                    vehicleType: 'Truck',
+                    capacity: '',
+                    capacityUnit: 'KG',
+                    insuranceNumber: '',
+                    fitnessExpiry: '',
+                    rcNumber: '',
+                    fuelType: 'Diesel',
+                    mileage: '',
+                    status: 'Available',
+                  });
+                }}
+                className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 sm:py-3 px-3 sm:px-4 rounded transition-all text-xs sm:text-base"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
         </form>
       </div>
 
       {/* Search */}
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
         <input
           type="text"
-          placeholder="🔍 Search by name or number..."
+          placeholder="Search by name or number..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
+          className="flex-1 bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base"
         />
       </div>
 
       {/* Vehicles Table */}
-      <div className="bg-gray-800 rounded-lg overflow-x-auto border border-gray-700">
-        <table className="w-full text-white text-sm">
-          <thead className="bg-gray-700 sticky top-0">
-            <tr>
-              <th className="p-3 text-left">Name</th>
-              <th className="p-3 text-left">Number</th>
-              <th className="p-3 text-left">Type</th>
-              <th className="p-3 text-left">Capacity</th>
-              <th className="p-3 text-left">RC Number</th>
-              <th className="p-3 text-left">Fitness Expiry</th>
-              <th className="p-3 text-left">Fuel Type</th>
-              <th className="p-3 text-left">Status</th>
-              <th className="p-3 text-center">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredVehicles.length > 0 ? (
-              filteredVehicles.map(vehicle => (
-                <tr key={vehicle.id} className="border-t border-gray-700 hover:bg-gray-700 transition-all">
-                  <td className="p-3">{vehicle.vehicleName}</td>
-                  <td className="p-3">{vehicle.vehicleNumber}</td>
-                  <td className="p-3">{vehicle.vehicleType}</td>
-                  <td className="p-3">{vehicle.capacity} {vehicle.capacityUnit}</td>
-                  <td className="p-3">{vehicle.rcNumber || '-'}</td>
-                  <td className="p-3">{vehicle.fitnessExpiry || '-'}</td>
-                  <td className="p-3">{vehicle.fuelType}</td>
-                  <td className="p-3">
-                    <span className={`px-2 py-1 rounded text-xs font-bold ${
-                      vehicle.status === 'Available' ? 'bg-green-600' :
-                      vehicle.status === 'Running' ? 'bg-blue-600' : 'bg-orange-600'
-                    }`}>
-                      {vehicle.status}
-                    </span>
-                  </td>
-                  <td className="p-3 text-center space-x-2">
-                    <button
-                      onClick={() => handleEdit(vehicle)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs transition-all"
-                    >
-                      ✏️ Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(vehicle.id)}
-                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs transition-all"
-                    >
-                      🗑️ Delete
-                    </button>
+      <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-white text-xs sm:text-sm">
+            <thead className="bg-gray-700 sticky top-0">
+              <tr>
+                <th className="p-2 sm:p-3 text-left">Name</th>
+                <th className="p-2 sm:p-3 text-left hidden sm:table-cell">Number</th>
+                <th className="p-2 sm:p-3 text-left hidden md:table-cell">Type</th>
+                <th className="p-2 sm:p-3 text-left">Capacity</th>
+                <th className="p-2 sm:p-3 text-left hidden lg:table-cell">Status</th>
+                <th className="p-2 sm:p-3 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredVehicles.length > 0 ? (
+                filteredVehicles.map(vehicle => (
+                  <tr key={vehicle.id} className="border-t border-gray-700 hover:bg-gray-700 transition-all">
+                    <td className="p-2 sm:p-3">{vehicle.vehicleName}</td>
+                    <td className="p-2 sm:p-3 hidden sm:table-cell">{vehicle.vehicleNumber}</td>
+                    <td className="p-2 sm:p-3 hidden md:table-cell text-xs">{vehicle.vehicleType}</td>
+                    <td className="p-2 sm:p-3 text-xs">{vehicle.capacity} {vehicle.capacityUnit}</td>
+                    <td className="p-2 sm:p-3 hidden lg:table-cell">
+                      <span className={`px-2 py-1 rounded text-xs font-bold ${
+                        vehicle.status === 'Available' ? 'bg-green-600' :
+                        vehicle.status === 'Running' ? 'bg-blue-600' : 'bg-orange-600'
+                      }`}>
+                        {vehicle.status}
+                      </span>
+                    </td>
+                    <td className="p-2 sm:p-3 text-center space-x-1">
+                      <button
+                        onClick={() => handleEdit(vehicle)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition-all"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(vehicle.id)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition-all"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="6" className="p-4 sm:p-6 text-center text-gray-400 text-xs sm:text-base">
+                    No vehicles found. Add your first vehicle to get started.
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="9" className="p-6 text-center text-gray-400">
-                  No vehicles found. Add your first vehicle to get started!
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Summary */}
       {vehicles.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-gray-800 p-4 rounded border border-gray-700">
-            <p className="text-gray-300"><strong>Total Vehicles:</strong> {vehicles.length}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
+          <div className="bg-gray-800 p-3 sm:p-4 rounded border border-gray-700">
+            <p className="text-gray-300 text-xs sm:text-base"><strong>Total:</strong> {vehicles.length}</p>
           </div>
-          <div className="bg-gray-800 p-4 rounded border border-gray-700">
-            <p className="text-green-400"><strong>Available:</strong> {vehicles.filter(v => v.status === 'Available').length}</p>
+          <div className="bg-gray-800 p-3 sm:p-4 rounded border border-gray-700">
+            <p className="text-green-400 text-xs sm:text-base"><strong>Available:</strong> {vehicles.filter(v => v.status === 'Available').length}</p>
           </div>
-          <div className="bg-gray-800 p-4 rounded border border-gray-700">
-            <p className="text-orange-400"><strong>Maintenance:</strong> {vehicles.filter(v => v.status === 'Maintenance').length}</p>
+          <div className="bg-gray-800 p-3 sm:p-4 rounded border border-gray-700">
+            <p className="text-orange-400 text-xs sm:text-base"><strong>Maintenance:</strong> {vehicles.filter(v => v.status === 'Maintenance').length}</p>
           </div>
         </div>
       )}
