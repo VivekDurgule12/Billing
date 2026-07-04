@@ -126,7 +126,7 @@ export default function CreateTrip({ drivers, vehicles, onTripCreated }) {
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40 p-4">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-gray-700">
+          <div className="bg-gray-800 rounded-lg p-6 w-[95vw] max-w-7xl max-h-[90vh] overflow-y-auto border border-gray-700">
             <h2 className="text-2xl font-bold text-teal-300 mb-4">Create New Trip</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -230,15 +230,16 @@ export default function CreateTrip({ drivers, vehicles, onTripCreated }) {
                 <div className="space-y-4">
                   {formData.fareGroups.map((fare, fareIndex) => (
                     <div key={fare.id} className="rounded border border-gray-600 p-3">
-                      <div className="mb-3 flex flex-wrap items-center gap-2"><strong className="mr-auto text-indigo-300">Fare {fareIndex + 1}</strong><input type="number" min="0" step="0.01" placeholder="Fare amount" value={fare.amount} onChange={e => updateFare(fare.id, 'amount', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2 text-white" /><button type="button" onClick={() => addFareLeg(fare.id)} className="rounded bg-blue-600 px-3 py-2 text-sm">+ City Leg</button><button type="button" onClick={() => removeFare(fare.id)} className="rounded bg-red-600 px-3 py-2 text-sm">Remove Fare</button></div>
+                      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 items-end mb-4"><strong className="mr-auto text-indigo-300">Fare {fareIndex + 1}</strong><input type="number" min="0" step="0.01" placeholder="Fare amount" value={fare.amount} onChange={e => updateFare(fare.id, 'amount', e.target.value)} className="w-full rounded border border-gray-600 bg-gray-700 p-2 text-white" /><button type="button" onClick={() => addFareLeg(fare.id)} className="rounded bg-blue-600 px-3 py-2 text-sm">+ City Leg</button><button type="button" onClick={() => removeFare(fare.id)} className="rounded bg-red-600 px-3 py-2 text-sm">Remove Fare</button></div>
                       <div className="space-y-2">{fare.legs.map(leg => (
-                        <div key={leg.id} className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_0.7fr_1fr_auto]">
-                          <input placeholder="From city" value={leg.from} onChange={e => updateFareLeg(fare.id, leg.id, 'from', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2 text-white" />
-                          <input placeholder="To city" value={leg.to} onChange={e => updateFareLeg(fare.id, leg.id, 'to', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2 text-white" />
-                          <input type="number" min="0" step="0.1" placeholder="KM" value={leg.distanceKm} onChange={e => updateFareLeg(fare.id, leg.id, 'distanceKm', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2 text-white" />
-                          <select value={leg.loadStatus} onChange={e => updateFareLeg(fare.id, leg.id, 'loadStatus', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2 text-white"><option>Loaded</option><option>Empty</option></select>
-                          <button type="button" onClick={() => removeFareLeg(fare.id, leg.id)} className="rounded bg-red-700 px-3 py-2">Remove</button>
+                        <div key={leg.id}  className="grid grid-cols-1 md:grid-cols-2 gap-3 rounded-lg border border-gray-700 p-3">
+                          <input placeholder="From city" value={leg.from} onChange={e => updateFareLeg(fare.id, leg.id, 'from', e.target.value)} className="w-full rounded border border-gray-600 bg-gray-700 p-2 text-white" />
+                          <input placeholder="To city" value={leg.to} onChange={e => updateFareLeg(fare.id, leg.id, 'to', e.target.value)} className="w-full rounded border border-gray-600 bg-gray-700 p-2 text-white" />
+                          <input type="number" min="0" step="0.1" placeholder="KM" value={leg.distanceKm} onChange={e => updateFareLeg(fare.id, leg.id, 'distanceKm', e.target.value)} className="w-full rounded border border-gray-600 bg-gray-700 p-2 text-white" />
+                          <select value={leg.loadStatus} onChange={e => updateFareLeg(fare.id, leg.id, 'loadStatus', e.target.value)} className="w-full rounded border border-gray-600 bg-gray-700 p-2 text-white"><option>Loaded</option><option>Empty</option></select>
+                          <button type="button" onClick={() => removeFareLeg(fare.id, leg.id)} className="shrink-0 min-w-[100px] rounded bg-red-700 px-3 py-2">Remove</button>
                         </div>
+
                   ))}</div>
                   <p className="mt-2 text-right text-sm font-bold text-cyan-300">Fare KM: {fare.legs.reduce((sum, leg) => sum + (Number(leg.distanceKm) || 0), 0).toFixed(1)} km</p>
                     </div>
@@ -249,7 +250,7 @@ export default function CreateTrip({ drivers, vehicles, onTripCreated }) {
               <div className="rounded-lg border border-green-600/60 bg-gray-900/40 p-4">
                 <div className="mb-3 flex items-center justify-between gap-3"><div><h3 className="font-bold text-green-300">Customer Payments</h3><p className="text-xs text-gray-400">Record payment in two, three, or more installments.</p></div><button type="button" onClick={addCustomerPayment} className="rounded bg-green-600 px-3 py-2 text-sm font-bold">+ Add Payment</button></div>
                 <div className="space-y-2">{formData.customerPayments.map((payment, index) => (
-                  <div key={payment.id} className="grid grid-cols-1 gap-2 rounded border border-gray-700 p-3 md:grid-cols-[auto_1fr_1fr_1fr_2fr_auto]"><span className="self-center font-bold">#{index + 1}</span><input type="date" value={payment.date} onChange={e => updateCustomerPayment(payment.id, 'date', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2 text-white" /><input type="number" min="0" step="0.01" placeholder="Amount" value={payment.amount} onChange={e => updateCustomerPayment(payment.id, 'amount', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2 text-white" /><select value={payment.method} onChange={e => updateCustomerPayment(payment.id, 'method', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2 text-white"><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option></select><input placeholder="Reference / note" value={payment.note} onChange={e => updateCustomerPayment(payment.id, 'note', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2 text-white" /><button type="button" onClick={() => removeCustomerPayment(payment.id)} className="rounded bg-red-600 px-3 py-2">Remove</button></div>
+                  <div key={payment.id} className="grid grid-cols-1 gap-2 rounded border border-gray-700 p-3 md:grid-cols-[auto_1fr_1fr_1fr_2fr_auto]"><span className="self-center font-bold">#{index + 1}</span><input type="date" value={payment.date} onChange={e => updateCustomerPayment(payment.id, 'date', e.target.value)} className="w-full rounded border border-gray-600 bg-gray-700 p-2 text-white" /><input type="number" min="0" step="0.01" placeholder="Amount" value={payment.amount} onChange={e => updateCustomerPayment(payment.id, 'amount', e.target.value)} className="w-full rounded border border-gray-600 bg-gray-700 p-2 text-white" /><select value={payment.method} onChange={e => updateCustomerPayment(payment.id, 'method', e.target.value)} className="w-full rounded border border-gray-600 bg-gray-700 p-2 text-white"><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option></select><input placeholder="Reference / note" value={payment.note} onChange={e => updateCustomerPayment(payment.id, 'note', e.target.value)} className="w-full rounded border border-gray-600 bg-gray-700 p-2 text-white" /><button type="button" onClick={() => removeCustomerPayment(payment.id)} className="rounded bg-red-600 px-3 py-2">Remove</button></div>
                 ))}</div>
                 <p className="mt-3 text-right font-bold text-green-300">Total Received: ₹{formData.customerPayments.reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0).toFixed(2)}</p>
               </div>
@@ -264,13 +265,22 @@ export default function CreateTrip({ drivers, vehicles, onTripCreated }) {
                 <div className="space-y-3">
                   {formData.expenses.length === 0 && <p className="text-sm text-gray-500">No expenses added.</p>}
                   {formData.expenses.map(expense => (
-                    <div key={expense.id} className="grid grid-cols-1 gap-2 rounded border border-gray-700 p-3 md:grid-cols-[1fr_1fr_2fr_auto]">
+                    <div key={expense.id} className="grid grid-cols-1 gap-2 rounded border border-gray-700 p-3 grid grid-cols-1
+md:grid-cols-2
+xl:grid-cols-4
+gap-3">
                       <select value={expense.category} onChange={e => updateExpense(expense.id, 'category', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2 text-white">
                         {['Fuel / Oil', 'Toll', 'Breakfast / Meals', 'Traffic Fine', 'Maintenance', 'Driver Payment', 'Cleaner Payment', 'Parking', 'Loading / Unloading', 'Other'].map(category => <option key={category}>{category}</option>)}
                       </select>
                       <input type="number" min="0" step="0.01" placeholder="Amount" value={expense.amount} onChange={e => updateExpense(expense.id, 'amount', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2 text-white" />
                       <input type="text" placeholder="Bill number / details / note" value={expense.note} onChange={e => updateExpense(expense.id, 'note', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2 text-white" />
-                      <button type="button" onClick={() => removeExpense(expense.id)} className="rounded bg-red-600 px-3 py-2 font-bold hover:bg-red-700">Remove</button>
+                      <button type="button" onClick={() => removeExpense(expense.id)} className="w-full
+xl:w-auto
+rounded
+bg-red-600
+px-4
+py-2
+font-semibold">Remove</button>
                     </div>
                   ))}
                 </div>

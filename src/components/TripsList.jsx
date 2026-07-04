@@ -24,6 +24,21 @@ export default function TripsList({ trips, drivers, vehicles, onDataChange }) {
     window.setTimeout(() => setMessage(''), 3500);
   };
 
+
+  const deleteTrip = (tripId, tripNumber) => {
+  if (!window.confirm(`Delete Trip ${tripNumber}?`)) return;
+
+  const deleted = transportStorage.deleteTrip(tripId);
+
+  if (deleted) {
+    onDataChange?.();
+    showMessage("Trip deleted successfully.");
+  } else {
+    showMessage("Failed to delete trip.");
+  }
+};
+
+
   const downloadInvoice = (trip) => {
     try {
       const { vehicle, driver, expenses } = getInvoiceData(trip);
@@ -236,6 +251,7 @@ export default function TripsList({ trips, drivers, vehicles, onDataChange }) {
                         <button onClick={() => downloadInvoice(trip)} className="rounded bg-teal-600 px-3 py-1 text-xs font-bold hover:bg-teal-700">Download PDF</button>
                         <button onClick={() => shareInvoice(trip)} className="rounded bg-green-600 px-3 py-1 text-xs font-bold hover:bg-green-700">Share Invoice</button>
                         <button onClick={() => openFinanceEditor(trip)} className="rounded bg-blue-600 px-3 py-1 text-xs font-bold hover:bg-blue-700">Edit Amounts</button>
+                        <button  onClick={() => deleteTrip(trip.id, trip.tripNumber)}  className="rounded bg-red-600 px-3 py-1 text-xs font-bold hover:bg-red-700">   Delete</button>
                       </div>
                     </td>
                   </tr>
@@ -270,7 +286,7 @@ export default function TripsList({ trips, drivers, vehicles, onDataChange }) {
               <div className="mb-3 flex justify-between"><h4 className="font-bold text-indigo-300">Fares & Route Legs</h4><button type="button" onClick={addEditorFare} className="rounded bg-indigo-600 px-3 py-2 text-sm font-bold">+ Add Fare</button></div>
               <div className="space-y-3">{(financeForm.fareGroups || []).map((fare, fareIndex) => (
                 <div key={fare.id} className="rounded border border-gray-600 p-3"><div className="mb-2 flex flex-wrap items-center gap-2"><strong className="mr-auto">Fare {fareIndex + 1}</strong><input type="number" min="0" step="0.01" placeholder="Amount" value={fare.amount} onChange={e => updateEditorFare(fare.id, 'amount', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2" /><button type="button" onClick={() => addEditorLeg(fare.id)} className="rounded bg-blue-600 px-3 py-2">+ Leg</button><button type="button" onClick={() => removeEditorFare(fare.id)} className="rounded bg-red-600 px-3 py-2">Remove</button></div>
-                  <div className="space-y-2">{fare.legs.map(leg => <div key={leg.id} className="grid grid-cols-1 gap-2 md:grid-cols-[1fr_1fr_0.7fr_1fr_auto]"><input placeholder="From city" value={leg.from} onChange={e => updateEditorLeg(fare.id, leg.id, 'from', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2" /><input placeholder="To city" value={leg.to} onChange={e => updateEditorLeg(fare.id, leg.id, 'to', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2" /><input type="number" min="0" step="0.1" placeholder="KM" value={leg.distanceKm || ''} onChange={e => updateEditorLeg(fare.id, leg.id, 'distanceKm', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2" /><select value={leg.loadStatus} onChange={e => updateEditorLeg(fare.id, leg.id, 'loadStatus', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2"><option>Loaded</option><option>Empty</option></select><button type="button" onClick={() => removeEditorLeg(fare.id, leg.id)} className="rounded bg-red-700 px-3 py-2">Remove</button></div>)}</div>
+                  <div className="space-y-2">{fare.legs.map(leg => <div key={leg.id} className="grid grid-cols-1 md:grid-cols-2 gap-3 rounded border border-gray-700 p-3"><input placeholder="From city" value={leg.from} onChange={e => updateEditorLeg(fare.id, leg.id, 'from', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2" /><input placeholder="To city" value={leg.to} onChange={e => updateEditorLeg(fare.id, leg.id, 'to', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2" /><input type="number" min="0" step="0.1" placeholder="KM" value={leg.distanceKm || ''} onChange={e => updateEditorLeg(fare.id, leg.id, 'distanceKm', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2" /><select value={leg.loadStatus} onChange={e => updateEditorLeg(fare.id, leg.id, 'loadStatus', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2"><option>Loaded</option><option>Empty</option></select><button type="button" onClick={() => removeEditorLeg(fare.id, leg.id)} className="md:col-span-2 w-full rounded bg-red-600 px-4 py-2 font-semibold">Remove</button></div>)}</div>
                   <p className="mt-2 text-right text-sm font-bold text-cyan-300">Fare KM: {fare.legs.reduce((sum, leg) => sum + (Number(leg.distanceKm) || 0), 0).toFixed(1)} km</p>
                 </div>
               ))}</div>
@@ -278,7 +294,7 @@ export default function TripsList({ trips, drivers, vehicles, onDataChange }) {
             </div>
             <div className="mt-5 rounded-lg border border-green-600/60 bg-gray-900/40 p-4">
               <div className="mb-3 flex justify-between"><h4 className="font-bold text-green-300">Customer Payment Installments</h4><button type="button" onClick={addEditorPayment} className="rounded bg-green-600 px-3 py-2 text-sm font-bold">+ Add Payment</button></div>
-              <div className="space-y-2">{(financeForm.customerPayments || []).map((payment, index) => <div key={payment.id} className="grid grid-cols-1 gap-2 rounded border border-gray-700 p-3 md:grid-cols-[auto_1fr_1fr_1fr_2fr_auto]"><span className="self-center font-bold">#{index + 1}</span><input type="date" value={payment.date} onChange={e => updateEditorPayment(payment.id, 'date', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2" /><input type="number" min="0" step="0.01" placeholder="Amount" value={payment.amount} onChange={e => updateEditorPayment(payment.id, 'amount', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2" /><select value={payment.method} onChange={e => updateEditorPayment(payment.id, 'method', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2"><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option></select><input placeholder="Reference / note" value={payment.note || ''} onChange={e => updateEditorPayment(payment.id, 'note', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2" /><button type="button" onClick={() => removeEditorPayment(payment.id)} className="rounded bg-red-600 px-3 py-2">Remove</button></div>)}</div>
+              <div className="space-y-2">{(financeForm.customerPayments || []).map((payment, index) => <div key={payment.id} className="grid grid-cols-1 md:grid-cols-2 gap-3 rounded border border-gray-700 p-3"><span className="self-center font-bold">#{index + 1}</span><input type="date" value={payment.date} onChange={e => updateEditorPayment(payment.id, 'date', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2" /><input type="number" min="0" step="0.01" placeholder="Amount" value={payment.amount} onChange={e => updateEditorPayment(payment.id, 'amount', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2" /><select value={payment.method} onChange={e => updateEditorPayment(payment.id, 'method', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2"><option>Cash</option><option>UPI</option><option>Bank Transfer</option><option>Cheque</option></select><input placeholder="Reference / note" value={payment.note || ''} onChange={e => updateEditorPayment(payment.id, 'note', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2" /><button type="button" onClick={() => removeEditorPayment(payment.id)} className="md:col-span-2 w-full rounded bg-red-600 px-4 py-2 font-semibold">Remove</button></div>)}</div>
             </div>
             <div className="mt-5 rounded-lg border border-gray-600 bg-gray-900/40 p-4">
               <div className="mb-3 flex items-center justify-between gap-3">
@@ -288,13 +304,13 @@ export default function TripsList({ trips, drivers, vehicles, onDataChange }) {
               <div className="space-y-3">
                 {(financeForm.expenses || []).length === 0 && <p className="text-sm text-gray-500">No expenses added.</p>}
                 {(financeForm.expenses || []).map(expense => (
-                  <div key={expense.id} className="grid grid-cols-1 gap-2 rounded border border-gray-700 p-3 md:grid-cols-[1fr_1fr_2fr_auto]">
+                  <div key={expense.id} className="grid grid-cols-1 md:grid-cols-2 gap-3 rounded border border-gray-700 p-3">
                     <select value={expense.category} onChange={e => updateFinanceExpense(expense.id, 'category', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2 text-white">
                       {['Fuel / Oil', 'Toll', 'Breakfast / Meals', 'Traffic Fine', 'Maintenance', 'Driver Payment', 'Cleaner Payment', 'Parking', 'Loading / Unloading', 'Other'].map(category => <option key={category}>{category}</option>)}
                     </select>
                     <input type="number" min="0" step="0.01" placeholder="Amount" value={expense.amount} onChange={e => updateFinanceExpense(expense.id, 'amount', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2 text-white" />
                     <input type="text" placeholder="Bill number / details / note" value={expense.note || ''} onChange={e => updateFinanceExpense(expense.id, 'note', e.target.value)} className="rounded border border-gray-600 bg-gray-700 p-2 text-white" />
-                    <button type="button" onClick={() => removeFinanceExpense(expense.id)} className="rounded bg-red-600 px-3 py-2 font-bold hover:bg-red-700">Remove</button>
+                    <button type="button" onClick={() => removeFinanceExpense(expense.id)} className="md:col-span-2 w-full rounded bg-red-600 px-4 py-2 font-semibold">Remove</button>
                   </div>
                 ))}
               </div>
