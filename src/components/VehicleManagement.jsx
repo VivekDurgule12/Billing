@@ -14,6 +14,11 @@ export default function VehicleManagement({ onDataChange }) {
     rcNumber: '',
     fuelType: 'Diesel',
     mileage: '',
+    loanAmount: '',
+    loanPaid: '',
+    maintenanceCost: '',
+    maintenanceDate: '',
+    maintenanceNote: '',
     status: 'Available',
   });
   const [editingId, setEditingId] = useState(null);
@@ -66,6 +71,11 @@ export default function VehicleManagement({ onDataChange }) {
       rcNumber: '',
       fuelType: 'Diesel',
       mileage: '',
+      loanAmount: '',
+      loanPaid: '',
+      maintenanceCost: '',
+      maintenanceDate: '',
+      maintenanceNote: '',
       status: 'Available',
     });
 
@@ -86,6 +96,11 @@ export default function VehicleManagement({ onDataChange }) {
       rcNumber: vehicle.rcNumber,
       fuelType: vehicle.fuelType,
       mileage: vehicle.mileage,
+      loanAmount: vehicle.loanAmount || '',
+      loanPaid: vehicle.loanPaid || '',
+      maintenanceCost: vehicle.maintenanceCost || '',
+      maintenanceDate: vehicle.maintenanceDate || '',
+      maintenanceNote: vehicle.maintenanceNote || '',
       status: vehicle.status,
     });
     setEditingId(vehicle.id);
@@ -217,6 +232,11 @@ export default function VehicleManagement({ onDataChange }) {
               onChange={handleInputChange}
               className="bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base"
             />
+            <input type="number" min="0" step="0.01" name="loanAmount" placeholder="Total Vehicle Loan" value={formData.loanAmount} onChange={handleInputChange} className="bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base" />
+            <input type="number" min="0" step="0.01" name="loanPaid" placeholder="Loan Amount Paid" value={formData.loanPaid} onChange={handleInputChange} className="bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base" />
+            <input type="number" min="0" step="0.01" name="maintenanceCost" placeholder="Maintenance Cost" value={formData.maintenanceCost} onChange={handleInputChange} className="bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base" />
+            <input type="date" name="maintenanceDate" value={formData.maintenanceDate} onChange={handleInputChange} className="bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base" />
+            <input type="text" name="maintenanceNote" placeholder="Maintenance Details" value={formData.maintenanceNote} onChange={handleInputChange} className="bg-gray-700 text-white p-2 sm:p-3 rounded border border-gray-600 focus:border-teal-500 outline-none text-xs sm:text-base" />
             <select
               name="status"
               value={formData.status}
@@ -251,6 +271,11 @@ export default function VehicleManagement({ onDataChange }) {
                     rcNumber: '',
                     fuelType: 'Diesel',
                     mileage: '',
+                    loanAmount: '',
+                    loanPaid: '',
+                    maintenanceCost: '',
+                    maintenanceDate: '',
+                    maintenanceNote: '',
                     status: 'Available',
                   });
                 }}
@@ -285,6 +310,8 @@ export default function VehicleManagement({ onDataChange }) {
                 <th className="p-2 sm:p-3 text-left hidden md:table-cell">Type</th>
                 <th className="p-2 sm:p-3 text-left">Capacity</th>
                 <th className="p-2 sm:p-3 text-left hidden lg:table-cell">Status</th>
+                <th className="p-2 sm:p-3 text-left">Loan Remaining</th>
+                <th className="p-2 sm:p-3 text-left hidden md:table-cell">Maintenance</th>
                 <th className="p-2 sm:p-3 text-center">Actions</th>
               </tr>
             </thead>
@@ -304,6 +331,8 @@ export default function VehicleManagement({ onDataChange }) {
                         {vehicle.status}
                       </span>
                     </td>
+                    <td className="p-2 sm:p-3 text-yellow-300">₹{Math.max(0, (Number(vehicle.loanAmount) || 0) - (Number(vehicle.loanPaid) || 0)).toFixed(0)}</td>
+                    <td className="p-2 sm:p-3 hidden md:table-cell text-orange-300">₹{(Number(vehicle.maintenanceCost) || 0).toFixed(0)}<div className="text-[10px] text-gray-400">{vehicle.maintenanceDate || '-'}</div></td>
                     <td className="p-2 sm:p-3 text-center space-x-1">
                       <button
                         onClick={() => handleEdit(vehicle)}
@@ -322,7 +351,7 @@ export default function VehicleManagement({ onDataChange }) {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="p-4 sm:p-6 text-center text-gray-400 text-xs sm:text-base">
+                  <td colSpan="8" className="p-4 sm:p-6 text-center text-gray-400 text-xs sm:text-base">
                     No vehicles found. Add your first vehicle to get started.
                   </td>
                 </tr>

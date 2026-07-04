@@ -156,6 +156,28 @@ export default function TransportModule() {
               <p><strong>Phone:</strong> 9112251220</p>
             </div>
           </div>
+
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+            <div className="rounded-lg border border-gray-700 bg-gray-800 p-4 sm:p-6">
+              <h2 className="mb-4 text-lg font-bold text-teal-300">Vehicle Dashboard</h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{vehicles.map(vehicle => {
+                const vehicleTrips = trips.filter(trip => String(trip.vehicleId) === String(vehicle.id));
+                const km = vehicleTrips.reduce((sum, trip) => sum + transportCalculator.calculateTripStats(trip).totalDistance, 0);
+                const profit = vehicleTrips.reduce((sum, trip) => sum + transportCalculator.calculateTripStats(trip).netProfit, 0);
+                const loanRemaining = Math.max(0, (Number(vehicle.loanAmount) || 0) - (Number(vehicle.loanPaid) || 0));
+                return <div key={vehicle.id} className="rounded border border-gray-700 bg-gray-900/50 p-3 text-sm"><div className="flex justify-between gap-2"><strong className="text-cyan-300">{vehicle.vehicleName}</strong><span className="text-xs text-gray-400">{vehicle.vehicleNumber}</span></div><div className="mt-2 grid grid-cols-2 gap-1 text-xs text-gray-300"><span>Trips: {vehicleTrips.length}</span><span>KM: {km.toFixed(1)}</span><span>Profit: ₹{profit.toFixed(0)}</span><span>Maintenance: ₹{(Number(vehicle.maintenanceCost) || 0).toFixed(0)}</span><span className="col-span-2 text-yellow-300">Loan remaining: ₹{loanRemaining.toFixed(0)}</span></div></div>;
+              })}</div>
+            </div>
+            <div className="rounded-lg border border-gray-700 bg-gray-800 p-4 sm:p-6">
+              <h2 className="mb-4 text-lg font-bold text-teal-300">Driver Dashboard</h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{drivers.map(driver => {
+                const driverTrips = trips.filter(trip => String(trip.driverId) === String(driver.id));
+                const km = driverTrips.reduce((sum, trip) => sum + transportCalculator.calculateTripStats(trip).totalDistance, 0);
+                const payments = driverTrips.reduce((total, trip) => total + (trip.expenses || []).filter(expense => expense.category === 'Driver Payment').reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0) + (Number(trip.driverPayment) || 0), 0);
+                return <div key={driver.id} className="rounded border border-gray-700 bg-gray-900/50 p-3 text-sm"><div className="flex justify-between gap-2"><strong className="text-cyan-300">{driver.driverName}</strong><span className="text-xs text-gray-400">{driver.status}</span></div><div className="mt-2 grid grid-cols-2 gap-1 text-xs text-gray-300"><span>Trips: {driverTrips.length}</span><span>KM: {km.toFixed(1)}</span><span className="col-span-2 text-orange-300">Payments: ₹{payments.toFixed(0)}</span></div></div>;
+              })}</div>
+            </div>
+          </div>
         </div>
       )}
 

@@ -4,6 +4,18 @@ import { transportCalculator } from '../utils/transportCalculator';
 export default function Reports({ trips, drivers, vehicles }) {
   const [reportType, setReportType] = useState('daily');
 
+  const getEntityStats = (entityTrips) => entityTrips.reduce((stats, trip) => {
+    const tripStats = transportCalculator.calculateTripStats(trip);
+    return {
+      trips: stats.trips + 1,
+      completed: stats.completed + (trip.status === 'Completed' ? 1 : 0),
+      km: stats.km + tripStats.totalDistance,
+      income: stats.income + tripStats.totalIncome,
+      expenses: stats.expenses + tripStats.totalExpenses,
+      profit: stats.profit + tripStats.netProfit,
+    };
+  }, { trips: 0, completed: 0, km: 0, income: 0, expenses: 0, profit: 0 });
+
   const getDailyReport = () => {
     const today = new Date().toISOString().split('T')[0];
     const todayTrips = trips.filter(t => t.bookingDate === today);
@@ -122,6 +134,24 @@ export default function Reports({ trips, drivers, vehicles }) {
             <p><strong>On Leave:</strong> {drivers.filter(d => d.status === 'Leave').length}</p>
           </div>
         </div>
+      </div>
+
+      <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+        <div className="p-4 sm:p-6"><h3 className="text-lg font-bold text-teal-300">Vehicle Performance & Finance</h3><p className="text-xs text-gray-400">Trips, distance, profit, maintenance and loan position for every vehicle.</p></div>
+        <div className="overflow-x-auto"><table className="w-full min-w-[850px] text-xs text-white sm:text-sm"><thead className="bg-gray-700"><tr>{['Vehicle', 'Trips', 'Completed', 'KM', 'Income', 'Expenses', 'Profit', 'Maintenance', 'Loan Paid', 'Loan Remaining'].map(label => <th key={label} className="p-3 text-left">{label}</th>)}</tr></thead><tbody>{vehicles.map(vehicle => {
+          const stats = getEntityStats(trips.filter(trip => String(trip.vehicleId) === String(vehicle.id)));
+          return <tr key={vehicle.id} className="border-t border-gray-700"><td className="p-3 font-bold text-cyan-300">{vehicle.vehicleName}<div className="text-[10px] text-gray-400">{vehicle.vehicleNumber}</div></td><td className="p-3">{stats.trips}</td><td className="p-3">{stats.completed}</td><td className="p-3">{stats.km.toFixed(1)}</td><td className="p-3">₹{stats.income.toFixed(0)}</td><td className="p-3">₹{stats.expenses.toFixed(0)}</td><td className={`p-3 font-bold ${stats.profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>₹{stats.profit.toFixed(0)}</td><td className="p-3">₹{(Number(vehicle.maintenanceCost) || 0).toFixed(0)}</td><td className="p-3">₹{(Number(vehicle.loanPaid) || 0).toFixed(0)}</td><td className="p-3 text-yellow-300">₹{Math.max(0, (Number(vehicle.loanAmount) || 0) - (Number(vehicle.loanPaid) || 0)).toFixed(0)}</td></tr>;
+        })}</tbody></table></div>
+      </div>
+
+      <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+        <div className="p-4 sm:p-6"><h3 className="text-lg font-bold text-teal-300">Driver Performance</h3><p className="text-xs text-gray-400">Individual workload, distance, income and recorded driver payments.</p></div>
+        <div className="overflow-x-auto"><table className="w-full min-w-[650px] text-xs text-white sm:text-sm"><thead className="bg-gray-700"><tr>{['Driver', 'Status', 'Trips', 'Completed', 'KM', 'Trip Income', 'Driver Payments'].map(label => <th key={label} className="p-3 text-left">{label}</th>)}</tr></thead><tbody>{drivers.map(driver => {
+          const driverTrips = trips.filter(trip => String(trip.driverId) === String(driver.id));
+          const stats = getEntityStats(driverTrips);
+          const payments = driverTrips.reduce((total, trip) => total + (trip.expenses || []).filter(expense => expense.category === 'Driver Payment').reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0) + (Number(trip.driverPayment) || 0), 0);
+          return <tr key={driver.id} className="border-t border-gray-700"><td className="p-3 font-bold text-cyan-300">{driver.driverName}<div className="text-[10px] text-gray-400">{driver.mobileNumber}</div></td><td className="p-3">{driver.status}</td><td className="p-3">{stats.trips}</td><td className="p-3">{stats.completed}</td><td className="p-3">{stats.km.toFixed(1)}</td><td className="p-3">₹{stats.income.toFixed(0)}</td><td className="p-3 text-orange-300">₹{payments.toFixed(0)}</td></tr>;
+        })}</tbody></table></div>
       </div>
     </div>
   );

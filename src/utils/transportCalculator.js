@@ -54,16 +54,30 @@ export const transportCalculator = {
 
   // Calculate trip statistics
   calculateTripStats: (trip, expenses = []) => {
-    const freightCharges = transportCalculator.calculateFreightCharges(trip, trip.pricingMethod);
+    const fareTotal = (trip.fareGroups || []).reduce((sum, fare) => sum + (parseFloat(fare.amount) || 0), 0);
+    const freightCharges = fareTotal || parseFloat(trip.agreedAmount) || transportCalculator.calculateFreightCharges(trip, trip.pricingMethod);
     const extraCharges = transportCalculator.calculateExtraCharges(trip);
-    const totalExpenses = transportCalculator.calculateTotalExpenses(expenses);
+    const recordedTripExpenses = ['oilExpense', 'driverPayment', 'cleanerPayment', 'otherExpense']
+      .reduce((sum, field) => sum + (parseFloat(trip[field]) || 0), 0);
+    const itemizedExpenses = transportCalculator.calculateTotalExpenses(trip.expenses || []);
+    const totalExpenses = recordedTripExpenses + itemizedExpenses + transportCalculator.calculateTotalExpenses(expenses);
     const netProfit = transportCalculator.calculateNetProfit(freightCharges, extraCharges, totalExpenses);
+
+    const installmentTotal = (trip.customerPayments || []).reduce((sum, payment) => sum + (parseFloat(payment.amount) || 0), 0);
+    const receivedAmount = installmentTotal || parseFloat(trip.receivedAmount) || 0;
+    const routeDistance = (trip.fareGroups || []).reduce(
+      (total, fare) => total + (fare.legs || []).reduce((sum, leg) => sum + (parseFloat(leg.distanceKm) || 0), 0),
+      0
+    );
 
     return {
       freightCharges,
       extraCharges,
       totalExpenses,
       totalIncome: freightCharges + extraCharges,
+      receivedAmount,
+      balanceAmount: Math.max(0, freightCharges + extraCharges - receivedAmount),
+      totalDistance: routeDistance || parseFloat(trip.distance) || 0,
       netProfit,
       profitMargin: freightCharges + extraCharges > 0 ? (netProfit / (freightCharges + extraCharges)) * 100 : 0,
       isProfitable: netProfit > 0,
@@ -123,7 +137,7 @@ export const transportCalculator = {
   },
 
   // Calculate daily income
-  calculateDailyIncome: (trips, payments = []) => {
+  calculateDailyIncome: (trips) => {
     const today = new Date().toISOString().split('T')[0];
     const todayTrips = trips.filter(t => t.bookingDate === today && t.status === 'Completed');
 
