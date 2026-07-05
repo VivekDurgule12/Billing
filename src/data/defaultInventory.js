@@ -2835,7 +2835,50 @@ export const defaultInventory = [
 { sn: 5766, item: 'Savlon Herbal Sensitive Handwash Pouch / savlon herbal sensitive handwash pouch', type: 'L', category: 'वैयक्तिक काळजी', costPrice: 71, sellingPrice: 79, weightPerUnit: 0.72 },
 { sn: 5782, item: 'Flair Penitizer - Empty Refillable Pocket Mist Spray Pen / flair penitizer empty refillable pocket mist spray pen', type: 'UNIT', category: 'वैयक्तिक काळजी', costPrice: 17, sellingPrice: 19, weightPerUnit: 1.00 },
 
+  { sn: 5783, item: 'Daawat Traditional Basmati Rice / daawat traditional basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 180, sellingPrice: 200, weightPerUnit: 1.00 },
+{ sn: 5784, item: 'Daawat Traditional Basmati Rice 5kg / daawat traditional basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 890, sellingPrice: 980, weightPerUnit: 5.00 },
+{ sn: 5785, item: 'Daawat Super Basmati Rice / daawat super basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 170, sellingPrice: 190, weightPerUnit: 1.00 },
+{ sn: 5786, item: 'Daawat Super Basmati Rice 5kg / daawat super basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 850, sellingPrice: 930, weightPerUnit: 5.00 },
+{ sn: 5787, item: 'Daawat Biryani Basmati Rice / daawat biryani basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 225, sellingPrice: 250, weightPerUnit: 1.00 },
+{ sn: 5788, item: 'Daawat Biryani Basmati Rice 5kg / daawat biryani basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 1125, sellingPrice: 1225, weightPerUnit: 5.00 },
+{ sn: 5789, item: 'Daawat Pulav Basmati Rice / daawat pulav basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 175, sellingPrice: 195, weightPerUnit: 1.00 },
+{ sn: 5790, item: 'Daawat Pulav Basmati Rice 5kg / daawat pulav basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 865, sellingPrice: 955, weightPerUnit: 5.00 },
+{ sn: 5791, item: 'Daawat Rozana Basmati Rice / daawat rozana basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 95, sellingPrice: 110, weightPerUnit: 1.00 },
+{ sn: 5792, item: 'Daawat Rozana Basmati Rice 5kg / daawat rozana basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 470, sellingPrice: 525, weightPerUnit: 5.00 },
+{ sn: 5793, item: 'Daawat Rozana Super Basmati Rice / daawat rozana super basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 110, sellingPrice: 125, weightPerUnit: 1.00 },
+{ sn: 5794, item: 'Daawat Rozana Super Basmati Rice 5kg / daawat rozana super basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 540, sellingPrice: 610, weightPerUnit: 5.00 },
+{ sn: 5795, item: 'Daawat Rozana Gold Basmati Rice / daawat rozana gold basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 125, sellingPrice: 145, weightPerUnit: 1.00 },
+{ sn: 5796, item: 'Daawat Rozana Gold Basmati Rice 5kg / daawat rozana gold basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 620, sellingPrice: 690, weightPerUnit: 5.00 },
+{ sn: 5797, item: 'Daawat Brown Basmati Rice / daawat brown basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 185, sellingPrice: 210, weightPerUnit: 1.00 },
+{ sn: 5798, item: 'Daawat Brown Basmati Rice 5kg / daawat brown basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 920, sellingPrice: 1020, weightPerUnit: 5.00 },
+{ sn: 5799, item: 'Daawat Devaaya Basmati Rice / daawat devaaya basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 60, sellingPrice: 72, weightPerUnit: 1.00 },
+{ sn: 5800, item: 'Daawat Devaaya Basmati Rice 5kg / daawat devaaya basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 300, sellingPrice: 340, weightPerUnit: 5.00 },
+{ sn: 5801, item: 'Daawat Dubar Basmati Rice / daawat dubar basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 120, sellingPrice: 135, weightPerUnit: 1.00 },
+{ sn: 5802, item: 'Daawat Dubar Basmati Rice 5kg / daawat dubar basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 595, sellingPrice: 660, weightPerUnit: 5.00 },
+{ sn: 5803, item: 'Daawat Tibar Basmati Rice / daawat tibar basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 105, sellingPrice: 120, weightPerUnit: 1.00 },
+{ sn: 5804, item: 'Daawat Tibar Basmati Rice 5kg / daawat tibar basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 520, sellingPrice: 590, weightPerUnit: 5.00 },
+{ sn: 5805, item: 'Daawat Sehat Mogra Rice / daawat sehat mogra rice', type: 'KG', category: 'तांदूळ', costPrice: 65, sellingPrice: 78, weightPerUnit: 1.00 },
+{ sn: 5806, item: 'Daawat Mini Mogra Rice / daawat mini mogra rice', type: 'KG', category: 'तांदूळ', costPrice: 60, sellingPrice: 72, weightPerUnit: 1.00 },
+{ sn: 5807, item: 'Daawat Jasmine Rice / daawat jasmine rice', type: 'KG', category: 'तांदूळ', costPrice: 220, sellingPrice: 245, weightPerUnit: 1.00 },
+{ sn: 5808, item: 'Daawat Golden Sella Rice / daawat golden sella rice', type: 'KG', category: 'तांदूळ', costPrice: 180, sellingPrice: 200, weightPerUnit: 1.00 },
+{ sn: 5809, item: 'Daawat Original Basmati Rice / daawat original basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 195, sellingPrice: 220, weightPerUnit: 1.00 },
+  
+{ sn: 5810, item: 'Daawat 40 Basmati Rice / daawat 40 basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 38, sellingPrice: 40, weightPerUnit: 1.00 },
 
+{ sn: 5812, item: 'Daawat 50 Basmati Rice / daawat 50 basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 48, sellingPrice: 50, weightPerUnit: 1.00 },
+
+{ sn: 5814, item: 'Daawat 60 Basmati Rice / daawat 60 basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 58, sellingPrice: 60, weightPerUnit: 1.00 },
+
+{ sn: 5816, item: 'Daawat 70 Basmati Rice / daawat 70 basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 68, sellingPrice: 70, weightPerUnit: 1.00 },
+
+{ sn: 5818, item: 'Daawat 80 Basmati Rice / daawat 80 basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 78, sellingPrice: 80, weightPerUnit: 1.00 },
+
+{ sn: 5820, item: 'Daawat 90 Basmati Rice / daawat 90 basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 88, sellingPrice: 90, weightPerUnit: 1.00 },
+
+{ sn: 5823, item: 'Daawat Classic Basmati Rice / daawat classic basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 150, sellingPrice: 165, weightPerUnit: 1.00 },
+{ sn: 5824, item: 'Daawat Chef Secretz Basmati Rice / daawat chef secretz basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 210, sellingPrice: 235, weightPerUnit: 1.00 },
+{ sn: 5825, item: 'Daawat Select Basmati Rice / daawat select basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 240, sellingPrice: 265, weightPerUnit: 1.00 },
+{ sn: 5826, item: 'Daawat Everyday Basmati Rice / daawat everyday basmati rice', type: 'KG', category: 'तांदूळ', costPrice: 95, sellingPrice: 110, weightPerUnit: 1.00 },
   
   
   
