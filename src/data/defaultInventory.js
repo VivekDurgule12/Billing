@@ -632,7 +632,11 @@ export const defaultInventory = [
 { sn: 537, item: 'Everest Dry Mango Powder 100g / everest amchur', type: 'UNIT', category: 'मसाले', costPrice: 52, sellingPrice: 62, weightPerUnit: 0.10 },
 { sn: 538, item: 'Everest Black Pepper Powder 50g / everest black pepper', type: 'UNIT', category: 'मसाले', costPrice: 72, sellingPrice: 88, weightPerUnit: 0.05 },
 { sn: 539, item: 'Everest White Pepper Powder 50g / everest white pepper', type: 'UNIT', category: 'मसाले', costPrice: 78, sellingPrice: 95, weightPerUnit: 0.05 },
+<<<<<<< HEAD
 { sn: 540, item: 'Everest Hing Powder 50g / everest hing', type: 'UNIT', category: 'मसाले', costPrice: 125, sellingPrice: 145, weightPerUnit: 0.05 }
+=======
+{ sn: 540, item: 'Everest Hing Powder 50g / everest hing', type: 'UNIT', category: 'मसाले', costPrice: 125, sellingPrice: 145, weightPerUnit: 0.05 },
+>>>>>>> 1d02393 (Inventory Updated)
   // =========================
 // RA MASALE (₹10 PACK & REGULAR PACKS)
 // =========================
