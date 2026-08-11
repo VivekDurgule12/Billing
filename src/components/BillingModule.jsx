@@ -627,55 +627,45 @@ Thank You
 
 
 
-  const handleAddLineItem = () => {
+const handleAddLineItem = () => {
+  const typedName = searchItem.trim();
 
-    if (!selectedItem) {
-      setMessage("❌ Please select an item");
-      setTimeout(() => setMessage(""), 3000);
-      return;
-    }
+  if (!typedName) {
+    setMessage("Please enter product name");
+    setTimeout(() => setMessage(""), 2000);
+    return;
+  }
 
-    const item = inventory.find(i => {
-      const marathiName =
-        i.item.split("/")[0].trim();
+  // If product exists in inventory, use inventory details
+  const item = inventory.find(i => {
+    const marathiName = i.item.split("/")[0].trim().toLowerCase();
+    const englishName =
+      i.item.split("/")[1]?.trim().toLowerCase() || "";
 
-      return marathiName === selectedItem;
-    });
+    return (
+      marathiName === typedName.toLowerCase() ||
+      englishName === typedName.toLowerCase()
+    );
+  });
 
-    if (!item) {
-      setMessage("❌ Item not found");
-      setTimeout(() => setMessage(""), 2000);
-      return;
-    }
-
-    if (item.sellingPrice <= 0) {
-      setMessage("❌ Product price is invalid");
-      setTimeout(() => setMessage(""), 2000);
-      return;
-    }
+  // Existing inventory product
+  if (item) {
     const existingIndex = lineItems.findIndex(
-      (line) => line.sn === item.sn
+      line => line.sn === item.sn
     );
 
     if (existingIndex !== -1) {
-
       const allowDuplicate = window.confirm(
         `${item.item.split("/")[0].trim()} already exists at Sr No ${existingIndex + 1}.\n\nAdd again?`
       );
 
       if (!allowDuplicate) {
-
         setSearchItem("");
         setSelectedItem("");
-
         searchInputRef.current?.focus();
-
         return;
       }
     }
-
-
-
 
     const newId = Date.now();
 
@@ -686,32 +676,52 @@ Thank You
         sn: item.sn,
         name: item.item.split("/")[0].trim(),
         qty: 1,
-        rate: item.sellingPrice,
-        costPrice: item.costPrice,
-        amount: item.sellingPrice,
-        weightPerUnit: item.weightPerUnit,
-        unitType: item.unitType,
+        rate: Number(item.sellingPrice) || 0,
+        costPrice: Number(item.costPrice) || 0,
+        amount: Number(item.sellingPrice) || 0,
+        weightPerUnit: Number(item.weightPerUnit) || 0,
+        unitType: item.unitType || "KG",
       },
     ]);
-
-    setSelectedItem("");
-    setSearchItem("");
-
-    setMessage("✅ Item added");
-    setTimeout(() => setMessage(""), 2000);
-
-    setTimeout(() => {
-      const qtyInputs = document.querySelectorAll(
-        '[data-line-field="qty"]'
-      );
-
-      const lastQty =
-        qtyInputs[qtyInputs.length - 1];
-
-      lastQty?.focus();
-      lastQty?.select();
-    }, 100);
   }
+
+  // Product NOT in inventory
+  else {
+    const newId = Date.now();
+
+    setLineItems(prev => [
+      ...prev,
+      {
+        id: newId,
+        sn: `CUSTOM-${newId}`,
+        name: typedName,
+        qty: 1,
+        rate: 0,
+        costPrice: 0,
+        amount: 0,
+        weightPerUnit: 0,
+        unitType: "KG",
+      },
+    ]);
+  }
+
+  setSelectedItem("");
+  setSearchItem("");
+
+  setMessage("Item added");
+  setTimeout(() => setMessage(""), 2000);
+
+  setTimeout(() => {
+    const qtyInputs = document.querySelectorAll(
+      '[data-line-field="qty"]'
+    );
+
+    const lastQty = qtyInputs[qtyInputs.length - 1];
+
+    lastQty?.focus();
+    lastQty?.select();
+  }, 100);
+};
 
 
   const addSpecificItem = (item) => {
@@ -1276,43 +1286,12 @@ Thank You
 
                   }}
 
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-
-                      if (!searchItem.trim()) {
-                        setMessage("❌ Please search and select an item");
-                        setTimeout(() => setMessage(""), 2000);
-                        return;
-                      }
-
-                      const search = searchItem.trim().toLowerCase();
-
-                      const firstMatch = inventory.find(item => {
-                        const marathi =
-                          item.item.split("/")[0]
-                            .trim()
-                            .toLowerCase();
-
-                        const english =
-                          item.item.split("/")[1]
-                            ?.trim()
-                            .toLowerCase() || "";
-
-                        return (
-                          marathi.includes(search) ||
-                          english.includes(search)
-                        );
-                      });
-
-                      if (firstMatch) {
-                        addSpecificItem(firstMatch);
-                      } else {
-                        setMessage("Item not found");
-                        setTimeout(() => setMessage(""), 2000);
-                      }
-                    }
-                  }}
+                 onKeyDown={(e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    handleAddLineItem();
+  }
+}}
 
 
                   placeholder="Search product..."
