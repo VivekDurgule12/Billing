@@ -1447,17 +1447,14 @@ const handleAddLineItem = () => {
                               )
                             }
                             onBlur={(e) => {
-                              if (
-                                e.target.value === "" ||
-                                Number(e.target.value) <= 0
-                              ) {
-                                handleUpdateLineItem(
-                                  item.id,
-                                  "qty",
-                                  1
-                                );
-                              }
-                            }}
+  if (e.target.value === "" || Number(e.target.value) < 0) {
+    handleUpdateLineItem(
+      item.id,
+      "qty",
+      0
+    );
+  }
+}}
 
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
@@ -1471,7 +1468,7 @@ const handleAddLineItem = () => {
                               }
                             }}
                             className="w-16 bg-gray-600 text-white p-1 rounded text-center"
-                            min="1"
+                            min="0"
                           />
                         </td>
                         <td className="p-2">
