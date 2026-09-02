@@ -5,6 +5,7 @@ export const generateInvoicePDF = async ({
   customerData,
   totals,
   invoiceNumber,
+  invoiceDate,
 }) => {
 
   const invoice =
@@ -143,7 +144,7 @@ export const generateInvoicePDF = async ({
       );
 
       pdf.text(
-        `Page ${pageNumber}`,
+        `Page ${pageNumber} · ${customerData?.name || "Walk-in customer"}`,
         pageWidth / 2,
         pageHeight - 5,
         {
@@ -152,7 +153,7 @@ export const generateInvoicePDF = async ({
       );
 
       pdf.text(
-        new Date()
+        new Date(invoiceDate || Date())
           .toLocaleDateString(),
         pageWidth - 25,
         pageHeight - 5

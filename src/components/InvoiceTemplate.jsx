@@ -6,21 +6,26 @@ export default function InvoiceTemplate({
   totals = {},
   summary = {},
   invoiceNumber,
+  invoiceDate,
+  pageLabel,
   totalItems,
   showSummary = true,
   startIndex = 0
 }) {
-  const porterage = totals?.porterage || 0;
+
+  const money = (value) => `₹${Number(value || 0).toFixed(2)}`;
 
   return (
     <div
       id="invoice-template"
       style={{
         width: "100%",
-    maxWidth: "none",
+        minWidth: 0,
+        maxWidth: "100%",
     margin: 0,
     padding: "8px",
     boxSizing: "border-box",
+        pointerEvents: "none",
       }}
     >
       {/* HEADER */}
@@ -77,7 +82,7 @@ export default function InvoiceTemplate({
 
               <td align="right">
                 <strong>Date :</strong>{" "}
-                {new Date().toLocaleDateString()}
+                {new Date(invoiceDate || Date.now()).toLocaleDateString("en-IN")}
               </td>
             </tr>
 
@@ -101,6 +106,7 @@ export default function InvoiceTemplate({
 
               <td></td>
             </tr>
+            {customerData.orderId && <tr><td><strong>Order :</strong> {customerData.orderName || customerData.orderId}</td><td /></tr>}
           </tbody>
         </table>
 
@@ -141,6 +147,7 @@ export default function InvoiceTemplate({
                 ["15%", "Qty"],
                 ["15%", "Rate"],
                 ["15%", "Amount"],
+                ["15%", "Weight"],
               ].map(([width, label]) => (
                 <th
                   key={label}
@@ -209,7 +216,7 @@ export default function InvoiceTemplate({
                       "1px solid #aaa",
                   }}
                 >
-                  ₹{item.rate.toFixed(2)}
+                  {money(item.rate)}
                 </td>
 
                 <td
@@ -220,7 +227,10 @@ export default function InvoiceTemplate({
                       "1px solid #aaa",
                   }}
                 >
-                  ₹{item.amount.toFixed(2)}
+                  {money(item.amount)}
+                </td>
+                <td align="right" style={{ padding: "6px", borderBottom: "1px solid #aaa" }}>
+                  {((Number(item.qty) || 0) * (Number(item.weightPerUnit) || 0)).toFixed(2)}
                 </td>
               </tr>
             ))}
@@ -230,91 +240,120 @@ export default function InvoiceTemplate({
 
 
 
-        {/* Summary */}
-        {showSummary && (
 
-        <table
-          style={{
-            width: "40%",
-            marginLeft: "auto",
-            marginTop: "12px",
-          }}
-        >
-          <tbody>
-            <tr>
-              <td align="right">
-                <strong>SUB TOTAL</strong>
-              </td>
+{/* Summary */}
+{showSummary && (
+  <table
+    style={{
+      width: "40%",
+      marginLeft: "auto",
+      marginTop: "12px",
+    }}
+  >
+    <tbody>
 
-              <td align="right">
-                ₹{Number(
-  totals?.subtotal || 0
-).toFixed(2)}
-              </td>
-            </tr>
+      {/* SUB TOTAL - always show */}
+      {Number(totals?.subtotal || 0) > 0 && (
+        <tr>
+          <td align="right">
+            <strong>SUB TOTAL</strong>
+          </td>
+          <td align="right">
+            {money(totals.subtotal)}
+          </td>
+        </tr>
+      )}
 
-            {porterage > 0 && (
-              <tr>
-                <td align="right">
-                  <strong>PORTAGE</strong>
-                </td>
+      {/* PORTERAGE */}
+      {Number(totals?.porterage || 0) > 0 && (
+        <tr>
+          <td align="right">
+            <strong>PORTERAGE</strong>
+          </td>
+          <td align="right">
+            {money(totals.porterage)}
+          </td>
+        </tr>
+      )}
 
-                <td align="right">
-                  ₹{porterage.toFixed(2)}
-                </td>
-              </tr>
+      {/* OLD BALANCE */}
+      {Number(
+        totals?.oldBalance ?? summary?.oldBalance ?? 0
+      ) > 0 && (
+        <tr>
+          <td align="right">
+            <strong>OLD BALANCE</strong>
+          </td>
+          <td align="right">
+            {money(
+              totals?.oldBalance ?? summary?.oldBalance
             )}
+          </td>
+        </tr>
+      )}
 
-            {totals.discount > 0 && (
-              <tr>
-                <td align="right">
-                  <strong>DISCOUNT</strong>
-                </td>
+      {/* DISCOUNT */}
+      {Number(totals?.discount || 0) > 0 && (
+        <tr>
+          <td align="right">
+            <strong>DISCOUNT</strong>
+          </td>
+          <td align="right">
+            {money(totals.discount)}
+          </td>
+        </tr>
+      )}
 
-                <td align="right">
-                  ₹{Number(
-  totals?.discount || 0
-).toFixed(2)}
-                </td>
-              </tr>
+      {/* RECEIVED */}
+      {Number(
+        totals?.receivedAmount ??
+        summary?.receivedAmount ??
+        0
+      ) > 0 && (
+        <tr>
+          <td align="right">
+            <strong>RECEIVED</strong>
+          </td>
+          <td align="right">
+            {money(
+              totals?.receivedAmount ??
+              summary?.receivedAmount
             )}
+          </td>
+        </tr>
+      )}
 
-        {summary?.receivedAmount > 0 && (
-              <tr>
-                <td align="right">
-                  <strong>RECEIVED</strong>
-                </td>
+      {/* AFTER DISCOUNT */}
+      {Number(totals?.afterDiscount || 0) > 0 && (
+        <tr>
+          <td align="right">
+            <strong>AFTER DISCOUNT</strong>
+          </td>
+          <td align="right">
+            {money(totals.afterDiscount)}
+          </td>
+        </tr>
+      )}
 
-                <td align="right">
-                  ₹
-                {Number(
-  summary?.receivedAmount || 0
-).toFixed(2)}
-                </td>
-              </tr>
-            )}
+      {/* BALANCE */}
+      {Number(totals?.payable || 0) > 0 && (
+        <tr>
+          <td align="right">
+            <strong>BALANCE</strong>
+          </td>
+          <td align="right">
+            {money(totals.payable)}
+          </td>
+        </tr>
+      )}
 
-            {totals.payable > 0 &&
-              summary.receivedAmount > 0 && (
-                <tr>
-                  <td align="right">
-                    <strong>BALANCE</strong>
-                  </td>
-
-                  <td align="right">
-                    ₹{Number(
-  totals?.payable || 0
-).toFixed(2)}
-                  </td>
-                </tr>
-              )}
-          </tbody>
-        </table>
+    </tbody>
+  </table>
 )}
 
 
 
-
+        {showSummary && <>
         {/* Grand Total */}
         <div
           style={{
@@ -336,7 +375,18 @@ export default function InvoiceTemplate({
 ).toFixed(2)}
           </span>
         </div>
-
+     {Number(totals?.totalProfit || 0) > 0 && (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      marginTop: "8px",
+      fontWeight: "bold",
+    }}
+  >
+ 
+  </div>
+)}
         {/* Note */}
         {summary.note && (
           <div
@@ -348,6 +398,7 @@ export default function InvoiceTemplate({
             {summary.note}
           </div>
         )}
+        </>}
 
         {/* Footer */}
         <div
@@ -358,9 +409,34 @@ export default function InvoiceTemplate({
             fontSize: "11px",
           }}
         >
-          Thank You For Your Business
-          <br />
-          DURGULE TRADERS
+          {pageLabel && <><strong>{pageLabel}</strong><br /></>}
+          <div
+  style={{
+    textAlign: "center",
+    marginTop: "15px",
+    color: "#666",
+    fontSize: "11px",
+  }}
+>
+  <div>
+    INV-{invoiceNumber}
+    {" · "}
+    {customerData.name || "Walk-in customer"}
+    {customerData.orderName && (
+      <>{" · "}{customerData.orderName}</>
+    )}
+    {" · "}
+    {new Date(
+      invoiceDate || Date.now()
+    ).toLocaleDateString("en-IN")}
+  </div>
+
+  <div style={{ marginTop: "4px" }}>
+    Thank You For Your Business
+    {" · "}
+    DURGULE TRADERS
+  </div>
+</div>
         </div>
       </div>
     </div>

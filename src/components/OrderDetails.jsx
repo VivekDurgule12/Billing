@@ -9,27 +9,20 @@ import { generateOrderPDF }
 export default function OrderDetails({
   order,
   onBack,
-  onDeleteBill
+  onDeleteBill,
+  onEditBill
 }) {
   console.log("OrderDetails Loaded");
   console.log(order);
 
-  if (!order) {
-    return null;
-  }
-  const freshOrders =
-  orderStorage.getOrders();
-
-const currentOrder =
-  freshOrders.find(
-    o => o.id === order.id
-  ) || order;
-
 const [selectedBill, setSelectedBill] =
   useState(null);
 
-const [editMode, setEditMode] =
-  useState(false);
+  if (!order) {
+    return null;
+  }
+  const freshOrders = orderStorage.getOrders();
+  const currentOrder = freshOrders.find((o) => o.id === order.id) || order;
   
 
   const toggleBillPacked = billId => {
@@ -128,7 +121,7 @@ if (
       0
     ) || 0;
 
-  const packedWeight =
+   const _packedWeight =
      currentOrder.bills?.reduce(
       (sum, bill) => {
 
@@ -192,8 +185,7 @@ if (
       0
     ) || 0;
 
-  const remainingWeight =
-    totalWeight - loadedWeight;
+   const remainingWeight = totalWeight - loadedWeight;
 
   const moveBillUp = index => {
 
@@ -408,12 +400,9 @@ if (
 
   setSelectedBill(updatedBill);
 };
-if (selectedBill && !editMode) {
+if (selectedBill) {
 
 
-
-  const totalItems =
-  selectedBill?.items?.length || 0;
 
 const totalQty =
   selectedBill?.items?.reduce(
@@ -1094,12 +1083,7 @@ const itemProfit =
                       <button
                         onClick={() => {
 
-                          localStorage.setItem(
-                            "editingBill",
-                            JSON.stringify(bill)
-                          );
-
-                          window.location.reload();
+                          onEditBill?.(bill);
 
                         }}
                         className="bg-yellow-600 hover:bg-yellow-700 text-white px-3 py-1 rounded"
@@ -1154,24 +1138,29 @@ const itemProfit =
       </div>
 
     </div>
-    {/* Hidden PDF Template */}
+    {/* Off-screen PDF-only surface. It is never part of the interactive order UI. */}
 
    <div
   id="order-pdf-template"
   style={{
     position: "fixed",
-    left: "-99999px",
     top: 0,
-    width: "800px",
+    left: 0,
+    width: "794px",
+    transform: "translateX(-200vw)",
+    pointerEvents: "none",
+    overflow: "hidden",
+    contain: "layout paint size",
+    isolation: "isolate",
+    zIndex: -1,
     background: "#fff",
-    zIndex: -1
   }}
 >
 
 
       { currentOrder.bills?.map((bill, index) => {
 
-        const ITEMS_PER_PAGE = 18;
+        const ITEMS_PER_PAGE = 10;
 
         const pages = [];
 
@@ -1196,20 +1185,22 @@ const itemProfit =
               style={{
                 marginBottom: "20px",
                 width: "100%",
-                maxWidth: "none",
+                maxWidth: "100%",
                 margin: 0,
                 padding: "8px",
                 boxSizing: "border-box",
               }}
             >
               <InvoiceTemplate
-                customerData={bill.customer || {}}
+                customerData={{ ...(bill.customer || {}), orderName: currentOrder.orderName }}
                 lineItems={pageItems}
                 totals={bill.totals}
                 summary={bill.summary}
-                invoiceNumber={index + 1}
+                invoiceNumber={bill.invoiceNumber || index + 1}
+                invoiceDate={bill.billDateTime || bill.createdAt}
                 totalItems={bill.items.length}
                 startIndex={pageIndex * ITEMS_PER_PAGE}
+                pageLabel={`Page ${pageIndex + 1} of ${pages.length}`}
                 showSummary={
                   pageIndex === pages.length - 1
                 }

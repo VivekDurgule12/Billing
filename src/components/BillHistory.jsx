@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { billHistoryStorage } from "../utils/billHistoryStorage";
 
 export default function BillHistory({
-    setCurrentPage
+    onEdit,
+    notice
 }) {
 
     const [bills, setBills] = useState([]);
@@ -11,7 +12,7 @@ export default function BillHistory({
 
     useEffect(() => {
         loadBills();
-    }, []);
+    }, [notice]);
 
    const inventory = JSON.parse(
   localStorage.getItem("inventoryData")
@@ -30,9 +31,6 @@ export default function BillHistory({
     setBills(sortedBills);
 };
 
-
-const totalItems =
-  selectedBill?.items?.length || 0;
 
 const totalQty =
   selectedBill?.items?.reduce(
@@ -553,6 +551,7 @@ const totalCost =
                 Bill History
             </h1>
 
+            {notice && <div className="mb-4 rounded border border-green-500 bg-green-950/40 p-3 text-green-300">{notice} You have been redirected to Bill History.</div>}
             {bills.length === 0 ? (
 
                 <div className="bg-gray-800 p-8 rounded text-center">
@@ -577,7 +576,7 @@ const totalCost =
                                 <div>
 
                                     <h2 className="text-white font-bold text-lg">
-                                        Bill #{index + 1}
+                                        INV-{bill.invoiceNumber || index + 1}
                                     </h2>
 
                                     <p className="text-gray-400">
@@ -636,23 +635,7 @@ const totalCost =
       bill.customer?.name
     );
 
-    localStorage.setItem(
-      "editingBill",
-      JSON.stringify(bill)
-    );
-
-    console.log(
-      "SAVED",
-      JSON.parse(
-        localStorage.getItem(
-          "editingBill"
-        )
-      )
-    );
-
-    setCurrentPage(
-      "billing"
-    );
+    onEdit?.(bill);
 
   }}
   className="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded"

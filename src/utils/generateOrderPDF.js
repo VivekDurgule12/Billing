@@ -28,11 +28,8 @@ export const generateOrderPDF = async (
 
   const margin = 2;
 
-  const printableWidth =
-    pageWidth - margin * 2;
-
-  const printableHeight =
-    pageHeight - margin * 2;
+  const printableWidth = pageWidth - margin * 2;
+  const printableHeight = pageHeight - margin * 2;
 
   let firstPage = true;
 
@@ -47,19 +44,14 @@ export const generateOrderPDF = async (
       }
     );
 
-    const imgData = canvas.toDataURL(
-      "image/jpeg",
-      0.95
+    const scale = Math.min(
+      printableWidth / canvas.width,
+      printableHeight / canvas.height
     );
-
-    const imgWidth = printableWidth;
-
-    const imgHeight =
-      (canvas.height * imgWidth) /
-      canvas.width;
-
-    const x =
-      (pageWidth - imgWidth) / 2;
+    const imgWidth = canvas.width * scale;
+    const imgHeight = canvas.height * scale;
+   const x = (pageWidth - imgWidth) / 2;
+const y = margin;
 
     if (!firstPage) {
       pdf.addPage();
@@ -67,83 +59,16 @@ export const generateOrderPDF = async (
 
     firstPage = false;
 
-    // Single page invoice
-    if (imgHeight <= printableHeight) {
-      pdf.addImage(
-        imgData,
-        "JPEG",
-        x,
-        margin,
-        imgWidth,
-        imgHeight
-      );
-    } else {
-      let remainingHeight =
-        imgHeight;
-
-      let yPosition = margin;
-
- console.log("imgWidth =", imgWidth);
-console.log("imgHeight =", imgHeight);
-console.log("x =", x);
-console.log("canvas.width =", canvas.width);
-console.log("canvas.height =", canvas.height);
-
-if (
-  isNaN(imgWidth) ||
-  isNaN(imgHeight) ||
-  isNaN(x) ||
-  !isFinite(imgWidth) ||
-  !isFinite(imgHeight) ||
-  !isFinite(x)
-) {
-  console.error("INVALID VALUES", {
-    imgWidth,
-    imgHeight,
-    x,
-    canvasWidth: canvas.width,
-    canvasHeight: canvas.height
-  });
-
-  return;
-}
-
-      pdf.addImage(
-        imgData,
-        "JPEG",
-        x,
-    
-        yPosition,
-        imgWidth,
-        imgHeight
-      );
-
-      remainingHeight -=
-        printableHeight;
-
-      while (
-        remainingHeight > 0
-      ) {
-        pdf.addPage();
-
-        yPosition =
-          -(imgHeight -
-            remainingHeight) +
-          margin;
-
-        pdf.addImage(
-          imgData,
-          "JPEG",
-          x,
-          yPosition,
-          imgWidth,
-          imgHeight
-        );
-
-        remainingHeight -=
-          printableHeight;
-      }
-    }
+    // OrderDetails already chunks each invoice into safe, complete pages.
+    // Fit each chunk once; never crop or create an accidental blank page.
+    pdf.addImage(
+      canvas.toDataURL("image/jpeg", 0.95),
+      "JPEG",
+      x,
+      y,
+      imgWidth,
+      imgHeight
+    );
   }
 
 const formattedDate =

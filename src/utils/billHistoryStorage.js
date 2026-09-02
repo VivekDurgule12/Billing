@@ -23,6 +23,7 @@ export const billHistoryStorage = {
 
     const bills = this.getBills();
 
+    if (bills.some((existing) => existing.id === bill.id)) return false;
     bills.unshift(bill);
 
     if (bills.length > 100) {

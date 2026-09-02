@@ -13,13 +13,7 @@ import {
   orderStorage
 } from "../utils/orderStorage";
 
-import { generateOrderPDF }
-  from "../utils/generateOrderPDF";
-
-
-
-
-export default function OrdersModule() {
+export default function OrdersModule({ onEditBill }) {
 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -164,6 +158,7 @@ const [shareType,
             billId
           )
         }
+        onEditBill={onEditBill}
       />
     );
   }

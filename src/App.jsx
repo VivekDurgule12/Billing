@@ -15,6 +15,8 @@ function App() {
   );
 
   const [activeModule, setActiveModule] = useState("billing");
+  const [editingBill, setEditingBill] = useState(null);
+  const [notice, setNotice] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogin = () => {
@@ -148,11 +150,20 @@ function App() {
         {/* Page */}
         <main className="flex-1 overflow-auto p-2 md:p-4 lg:p-6">
 
-          {activeModule === "billing" && <BillingModule />}
+          {activeModule === "billing" && <BillingModule
+            editingBill={editingBill}
+            onComplete={(message) => { setEditingBill(null); setNotice(message); setActiveModule("billhistory"); }}
+            onCancelEdit={() => { setEditingBill(null); setActiveModule("billhistory"); }}
+          />}
           {activeModule === "inventory" && <InventoryMaster />}
-          {activeModule === "orders" && <OrdersModule />}
+          {activeModule === "orders" && <OrdersModule
+            onEditBill={(bill) => { setNotice(""); setEditingBill(bill); setActiveModule("billing"); }}
+          />}
           {activeModule === "transport" && <TransportModule />}
-          {activeModule === "billhistory" && <BillHistory />}
+          {activeModule === "billhistory" && <BillHistory
+            notice={notice}
+            onEdit={(bill) => { setNotice(""); setEditingBill(bill); setActiveModule("billing"); }}
+          />}
 
         </main>
 

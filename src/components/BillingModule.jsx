@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { storageManager } from '../utils/storageManager';
+import React, { useState, useEffect, useMemo } from 'react';
 import { generateInvoicePDF } from "../utils/pdfGenerator";
 import InvoiceTemplate from "./InvoiceTemplate";
 import { useRef } from "react";
@@ -7,9 +6,12 @@ import { orderStorage }
   from "../utils/orderStorage";
 import { billHistoryStorage }
   from "../utils/billHistoryStorage";
+import { calculateBillTotals, normalizeBillItems } from "../utils/billCalculations";
 
-export default function BillingModule() {
+export default function BillingModule({ editingBill, onComplete, onCancelEdit }) {
   const searchInputRef = useRef(null);
+  const customerNameRef = useRef(null);
+  const saveInProgressRef = useRef(false);
   const [searchItem, setSearchItem] = useState('');
   const [lineItems, setLineItems] = useState([]);
 
@@ -20,17 +22,22 @@ export default function BillingModule() {
     customerType: "walkin",
     orderId: null
   });
+
   const [summary, setSummary] = useState({
     porterage: 0,
+    porterageRate: 10,
+    porteragePerKg: 30,
     oldBalance: 0,
     discountType: 'fixed',
     discountValue: 0,
     receivedAmount: 0,
     note: '',
   });
+
   const [inventory, setInventory] = useState([]);
-  const [selectedItem, setSelectedItem] = useState('');
+  const [, setSelectedItem] = useState('');
   const [message, setMessage] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const addButtonRef = useRef(null);
 
 
@@ -43,10 +50,14 @@ export default function BillingModule() {
   const [newItemData, setNewItemData] = useState({
     item: "",
     category: "",
+    costPrice: "",
     sellingPrice: "",
     unitType: "KG",
     weightPerUnit: ""
   });
+
+  const [lastNotFoundProduct, setLastNotFoundProduct] = useState("");
+
 
 
 
@@ -65,55 +76,87 @@ export default function BillingModule() {
   }, []);
 
 
+
 useEffect(() => {
-
-  const editingBill = JSON.parse(
-    localStorage.getItem(
-      "editingBill"
-    )
-  );
-
   if (editingBill) {
+    const normalizedItems = normalizeBillItems(editingBill.items || []);
 
-    console.log(
-      "LOADING EDIT BILL",
-      editingBill.customer?.name
-    );
+    const loadedSummary = {
+      ...summary,
+      ...(editingBill.summary || {}),
+      oldBalance:
+        editingBill.totals?.oldBalance ??
+        editingBill.summary?.oldBalance ??
+        0,
+      receivedAmount:
+        editingBill.totals?.receivedAmount ??
+        editingBill.summary?.receivedAmount ??
+        0,
+    };
 
-    setCustomerData(
-      editingBill.customer
-    );
+    // Calculate porterage automatically when saved value is 0/missing
+    if (!Number(loadedSummary.porterage)) {
+      const totalWeight = normalizedItems.reduce(
+        (sum, item) =>
+          sum +
+          (Number(item.qty) || 0) *
+          (Number(item.weightPerUnit) || 0),
+        0
+      );
 
-    setLineItems(
-      editingBill.items || []
-    );
+      const porterageRate =
+        Number(loadedSummary.porterageRate) || 10;
+
+      const porteragePerKg =
+        Number(loadedSummary.porteragePerKg) || 30;
+
+      loadedSummary.porterage =
+        Math.round(
+          (totalWeight / porteragePerKg) *
+          porterageRate *
+          100
+        ) / 100;
+    }
+
+    setCustomerData({
+      name: "",
+      mobile: "",
+      address: "",
+      customerType: "walkin",
+      orderId: null,
+      ...editingBill.customer,
+    });
+
+    setLineItems(normalizedItems);
+    setSummary(loadedSummary);
 
     return;
   }
 
-  const draft =
-    localStorage.getItem(
-      "currentBillingDraft"
-    );
-
+  const draft = localStorage.getItem("currentBillingDraft");
   if (!draft) return;
 
-  const parsed =
-    JSON.parse(draft);
+  try {
+    const parsed = JSON.parse(draft);
 
-  setCustomerData(
-    parsed.customerData
-  );
+    setCustomerData((current) => ({
+      ...current,
+      ...(parsed.customerData || {}),
+    }));
 
-  setLineItems(
-    parsed.lineItems || []
-  );
+    setLineItems(
+      normalizeBillItems(parsed.lineItems || [])
+    );
 
-  setSummary(
-    parsed.summary || {}
-  );
+    setSummary((current) => ({
+      ...current,
+      ...(parsed.summary || {}),
+    }));
+  } catch {
+    localStorage.removeItem("currentBillingDraft");
+  }
+}, [editingBill]);
 
-}, []);
 
 
   useEffect(() => {
@@ -142,55 +185,6 @@ useEffect(() => {
   ]);
 
 
-useEffect(() => {
-
-  const editingBill = JSON.parse(
-    localStorage.getItem(
-      "editingBill"
-    )
-  );
-
-  if (editingBill) {
-
-    console.log(
-      "LOADING EDIT BILL",
-      editingBill
-    );
-
-    setCustomerData(
-      editingBill.customer
-    );
-
-    setLineItems(
-      editingBill.items || []
-    );
-
-    return;
-  }
-
-  const draft =
-    localStorage.getItem(
-      "currentBillingDraft"
-    );
-
-  if (!draft) return;
-
-  const parsed =
-    JSON.parse(draft);
-
-  setCustomerData(
-    parsed.customerData
-  );
-
-  setLineItems(
-    parsed.lineItems || []
-  );
-
-  setSummary(
-    parsed.summary || {}
-  );
-
-}, []);
 
 
 
@@ -199,11 +193,16 @@ useEffect(() => {
 
   const handleSaveBill = () => {
 
-    const editingBill = JSON.parse(
-      localStorage.getItem(
-        "editingBill"
-      )
-    );
+    if (!customerData.name.trim()) {
+      alert("Please enter customer name");
+
+      customerNameRef.current?.focus();
+      customerNameRef.current?.select();
+
+      return;
+    }
+
+    if (isSaving || saveInProgressRef.current) return;
 
     if (
       customerData.customerType === "order"
@@ -238,70 +237,33 @@ useEffect(() => {
       }
     }
 
-    console.log(
-      "CUSTOMER DATA",
-      customerData
-    );
-
-    console.log(
-      "SAVE BILL CLICKED AT",
-      new Date().toISOString()
-    );
-
-    console.log(
-      "LINE ITEMS BEFORE SAVE",
-      lineItems
-    );
-
-
-
-    console.log(
-      "EDITING BILL",
-      editingBill
-    );
-    console.log(
-      "CUSTOMER DATA BEFORE SAVE",
-      customerData
-    );
-
-    console.log(
-      "CUSTOMER TYPE",
-      customerData.customerType
-    );
-
-    console.log(
-      "ORDER ID",
-      customerData.orderId
-    );
-
-    const totalProfit = lineItems.reduce(
-      (sum, item) =>
-        sum +
-        (
-          (item.rate || 0) -
-          (item.costPrice || 0)
-        ) *
-        (item.qty || 0),
-      0
-    );
+    if (!lineItems.length) { setMessage("Please add at least one item"); return; }
+    const normalizedItems = normalizeBillItems(lineItems);
+    if (normalizedItems.some((item) => item.qty <= 0 || item.rate < 0)) { setMessage("Each item needs a valid quantity and rate"); return; }
+    saveInProgressRef.current = true;
+    setIsSaving(true);
+    const calculatedTotals = calculateBillTotals(normalizedItems, summary);
+    const invoiceNumber = editingBill?.invoiceNumber || Math.max(1000, ...billHistoryStorage.getBills().map((bill) => Number(bill.invoiceNumber) || 0)) + 1;
+    const selectedOrder = customerData.customerType === "order"
+      ? orderStorage.getOrders().find((order) => order.id === customerData.orderId)
+      : null;
 
     const billData = {
       id: editingBill
         ? editingBill.id
         : Date.now(),
 
-      customer: customerData,
+      customer: { ...customerData, orderName: selectedOrder?.orderName || customerData.orderName || "" },
 
-     items: lineItems.map(item => ({
-  ...item,
-  packed: item.packed || false,
-  loaded: item.loaded || false
-})),
+      invoiceNumber,
+      items: normalizedItems.map(item => ({
+        ...item,
+        packed: item.packed || false,
+        loaded: item.loaded || false
+      })),
 
-      totals: {
-        ...totals,
-        totalProfit
-      },
+      summary: { ...summary },
+      totals: calculatedTotals,
 
       createdAt: editingBill
         ? editingBill.createdAt
@@ -317,28 +279,7 @@ useEffect(() => {
 
 
     if (editingBill) {
-      console.log(
-        "ADDING EDITED BILL TO ORDER",
-        billData
-      );
-
-      const bills = JSON.parse(
-        localStorage.getItem(
-          "billHistoryData"
-        ) || "[]"
-      );
-
-      const updatedBills =
-        bills.map(bill =>
-          bill.id === editingBill.id
-            ? billData
-            : bill
-        );
-
-      localStorage.setItem(
-        "billHistoryData",
-        JSON.stringify(updatedBills)
-      );
+      if (!billHistoryStorage.updateBill(billData)) { saveInProgressRef.current = false; setIsSaving(false); setMessage("Unable to update: bill no longer exists"); return; }
 
       if (
         customerData.customerType === "order" &&
@@ -365,7 +306,7 @@ useEffect(() => {
             }
 
             const billExists =
-              order.bills.some(
+              (order.bills || []).some(
                 bill =>
                   bill.id === billData.id
               );
@@ -389,7 +330,7 @@ useEffect(() => {
             } else {
 
               updatedOrderBills = [
-                ...order.bills,
+                ...(order.bills || []),
                 billData
               ];
 
@@ -431,15 +372,10 @@ useEffect(() => {
       }
 
 
-      localStorage.removeItem(
-        "editingBill"
-      );
-
- 
-
-      alert(
-        "Bill Updated Successfully"
-      );
+      localStorage.removeItem("currentBillingDraft");
+      saveInProgressRef.current = false;
+      setIsSaving(false);
+      onComplete?.(`Bill INV-${invoiceNumber} updated successfully.`);
 
     } else {
 
@@ -447,19 +383,6 @@ useEffect(() => {
         customerData.customerType === "order" &&
         customerData.orderId
       ) {
-        console.log(
-          "ADDING BILL TO ORDER",
-          customerData.orderId
-        );
-
-        console.log(
-          "BILL DATA",
-          billData
-        );
-        console.log(
-          "ADDING TO ORDER",
-          billData.id
-        );
         orderStorage.addBillToOrder(
           customerData.orderId,
           billData
@@ -472,9 +395,9 @@ useEffect(() => {
         "currentBillingDraft"
       );
 
-      alert(
-        "Bill Saved Successfully"
-      );
+      saveInProgressRef.current = false;
+      setIsSaving(false);
+      onComplete?.(`Bill INV-${invoiceNumber} saved successfully.`);
     }
   };
 
@@ -483,7 +406,7 @@ useEffect(() => {
   const handleWhatsAppBillShare = async () => {
 
 
-   
+
 
     if (!customerData.mobile) {
       alert("Customer mobile number required");
@@ -539,12 +462,12 @@ Thank You
       "_blank"
     );
 
-   const success =
+    const success =
       await handleGeneratePDF();
 
     if (!success) return;
 
-    
+
   };
 
 
@@ -554,11 +477,13 @@ Thank You
     if (
       !newItemData.item ||
       !newItemData.category ||
-      !newItemData.sellingPrice
+      newItemData.costPrice === "" ||
+      newItemData.sellingPrice === ""
     ) {
       alert("Please fill all required fields");
       return;
     }
+
     const inventoryData =
       JSON.parse(
         localStorage.getItem(
@@ -583,17 +508,15 @@ Thank You
       category:
         newItemData.category,
 
-      costPrice: 0,
+      costPrice:
+        Number(newItemData.costPrice),
 
       sellingPrice:
-        Number(
-          newItemData.sellingPrice
-        ),
+        Number(newItemData.sellingPrice),
 
       profit:
-        Number(
-          newItemData.sellingPrice
-        ),
+        Number(newItemData.sellingPrice) -
+        Number(newItemData.costPrice),
 
       unitType:
         newItemData.unitType,
@@ -627,121 +550,97 @@ Thank You
 
 
 
-const handleAddLineItem = () => {
-  const typedName = searchItem.trim();
+  const handleAddLineItem = () => {
+    const typedName = searchItem.trim();
 
-  if (!typedName) {
-    setMessage("Please enter product name");
-    setTimeout(() => setMessage(""), 2000);
-    return;
-  }
-
-  // If product exists in inventory, use inventory details
-  const item = inventory.find(i => {
-    const marathiName = i.item.split("/")[0].trim().toLowerCase();
-    const englishName =
-      i.item.split("/")[1]?.trim().toLowerCase() || "";
-
-    return (
-      marathiName === typedName.toLowerCase() ||
-      englishName === typedName.toLowerCase()
-    );
-  });
-
-  // Existing inventory product
-  if (item) {
-    const existingIndex = lineItems.findIndex(
-      line => line.sn === item.sn
-    );
-
-    if (existingIndex !== -1) {
-      const allowDuplicate = window.confirm(
-        `${item.item.split("/")[0].trim()} already exists at Sr No ${existingIndex + 1}.\n\nAdd again?`
-      );
-
-      if (!allowDuplicate) {
-        setSearchItem("");
-        setSelectedItem("");
-        searchInputRef.current?.focus();
-        return;
-      }
+    if (!typedName) {
+      setMessage("Please enter product name");
+      setTimeout(() => setMessage(""), 2000);
+      return;
     }
 
-    const newId = Date.now();
+    // If product exists in inventory, use inventory details
+    const item =
+      selectedInventoryItem ||
+      inventory.find(i => {
+        const marathiName = i.item.split("/")[0].trim().toLowerCase();
+        const englishName =
+          i.item.split("/")[1]?.trim().toLowerCase() || "";
 
-    setLineItems(prev => [
-      ...prev,
-      {
-        id: newId,
-        sn: item.sn,
-        name: item.item.split("/")[0].trim(),
-        qty: 1,
-        rate: Number(item.sellingPrice) || 0,
-        costPrice: Number(item.costPrice) || 0,
-        amount: Number(item.sellingPrice) || 0,
-        weightPerUnit: Number(item.weightPerUnit) || 0,
-        unitType: item.unitType || "KG",
-      },
-    ]);
-  }
+        return (
+          marathiName === typedName.toLowerCase() ||
+          englishName === typedName.toLowerCase()
+        );
+      });
 
-  // Product NOT in inventory
-  else {
-    const newId = Date.now();
+    // Existing inventory product
+    if (item) {
+      setLastNotFoundProduct("");
+      addSpecificItem(item);
+    }
+    // Product NOT in inventory
+    // Product NOT in inventory
+    else {
+      const productName = typedName.toLowerCase();
 
-    setLineItems(prev => [
-      ...prev,
-      {
-        id: newId,
-        sn: `CUSTOM-${newId}`,
-        name: typedName,
-        qty: 1,
-        rate: 0,
-        costPrice: 0,
-        amount: 0,
-        weightPerUnit: 0,
-        unitType: "KG",
-      },
-    ]);
-  }
+      // Second attempt with same unavailable product
+      if (lastNotFoundProduct === productName) {
+        setNewItemData({
+          item: typedName,
+          category: "",
+          costPrice: "",
+          sellingPrice: "",
+          unitType: "KG",
+          weightPerUnit: ""
+        });
 
-  setSelectedItem("");
-  setSearchItem("");
+        setShowAddItemModal(true);
 
-  setMessage("Item added");
-  setTimeout(() => setMessage(""), 2000);
+        setLastNotFoundProduct("");
 
-  setTimeout(() => {
-    const qtyInputs = document.querySelectorAll(
-      '[data-line-field="qty"]'
-    );
+        return;
+      }
 
-    const lastQty = qtyInputs[qtyInputs.length - 1];
+      // First attempt
+      setLastNotFoundProduct(productName);
 
-    lastQty?.focus();
-    lastQty?.select();
-  }, 100);
-};
+      setMessage("❌ Product not found in inventory. Press Add again to create it.");
+      setTimeout(() => setMessage(""), 2500);
+
+      searchInputRef.current?.focus();
+
+      return;
+    }
+
+
+    setSelectedItem("");
+    setSearchItem("");
+
+    setMessage("Item added");
+    setTimeout(() => setMessage(""), 2000);
+
+    setTimeout(() => {
+      const qtyInputs = document.querySelectorAll(
+        '[data-line-field="qty"]'
+      );
+
+      const lastQty = qtyInputs[qtyInputs.length - 1];
+
+      lastQty?.focus();
+      lastQty?.select();
+    }, 100);
+  };
 
 
   const addSpecificItem = (item) => {
-    const newId = Date.now();
-    console.log("ITEM ADDED", item);
-
-    setLineItems(prev => [
-      ...prev,
-      {
-        id: newId,
-        sn: item.sn,
-        name: item.item.split("/")[0].trim(),
-        qty: 1,
-        rate: item.sellingPrice,
-        costPrice: item.costPrice || 0,
-        amount: item.sellingPrice,
-        weightPerUnit: item.weightPerUnit,
-        unitType: item.unitType,
-      },
-    ]);
+    const productId = item.id ?? item.sku ?? item.sn;
+    setLineItems(prev => {
+      const existing = prev.find((line) => String(line.productId ?? line.sku ?? line.sn) === String(productId));
+      if (existing) return prev.map((line) => line.id === existing.id ? { ...line, qty: Number(line.qty || 0) + 1, amount: (Number(line.qty || 0) + 1) * Number(line.rate || 0) } : line);
+      const qty = 1;
+      const rate = Number(item.sellingPrice) || 0;
+      return [...prev, { id: `item-${productId}-${Date.now()}`, productId, sn: item.sn, name: item.item.split("/")[0].trim(), qty, rate, costPrice: Number(item.costPrice) || 0, amount: qty * rate, weightPerUnit: Number(item.weightPerUnit) || 0, unitType: item.unitType || "KG" }];
+    });
 
     setSearchItem("");
     setSelectedItem("");
@@ -822,97 +721,8 @@ const handleAddLineItem = () => {
 
 
 
-  const handleItemSelectKeyDown = (e) => {
-    if (e.key === 'Enter' && selectedItem) {
-      e.preventDefault();
-      handleAddLineItem();
-      return;
-    }
-
-    handleBillingEnterMove(e);
-  };
-
-
-
-  // const calculateTotals = () => {
-  //   const subtotal = lineItems.reduce((sum, item) => sum + item.amount, 0);
-  //   const discount = summary.discountType === 'percentage'
-  //     ? (subtotal * summary.discountValue) / 100
-  //     : summary.discountValue;
-  //   const afterDiscount = subtotal - discount;
-  //   const total = afterDiscount + summary.porterage + summary.oldBalance;
-  //   const payable = total - summary.receivedAmount;
-  //   const totalWeight = lineItems.reduce((sum, item) => 
-  //     sum + (item.qty * (item.weightPerUnit || 0)), 0);
-
-  //   return { subtotal, discount, afterDiscount, total, payable, totalWeight };
-  // };
-
-
-  const calculateTotals = () => {
-    const subtotal = lineItems.reduce(
-      (sum, item) => {
-        const amount = Number(item.amount);
-        return sum + (Number.isFinite(amount) ? amount : 0);
-      },
-      0
-    );
-
-    const discount =
-      summary.discountType === "percentage"
-        ? (subtotal * summary.discountValue) / 100
-        : summary.discountValue;
-
-    const afterDiscount = subtotal - discount;
-
-    const totalWeight = lineItems.reduce(
-      (sum, item) =>
-        sum + (item.qty * (item.weightPerUnit || 0)),
-      0
-    );
-
-    // Porterage Formula
-    let porterage =
-      Math.round(
-        ((totalWeight / 30) * 10) * 100
-      ) / 100;
-
-    // Only apply porterage if greater than ₹15
-    if (porterage <= 20) {
-      porterage = 0;
-    }
-
-    const total =
-      afterDiscount +
-      porterage +
-      summary.oldBalance;
-
-    const payable =
-      total - summary.receivedAmount;
-
-    return {
-      subtotal,
-      discount,
-      afterDiscount,
-      total,
-      payable,
-      totalWeight,
-      porterage
-    };
-  };
-
-  const totalProfit = lineItems.reduce(
-    (sum, item) =>
-      sum +
-      (
-        (Number(item.rate) || 0) -
-        (Number(item.costPrice) || 0)
-      ) *
-      (Number(item.qty) || 0),
-    0
-  );
-
-  const totals = calculateTotals();
+  const totals = useMemo(() => calculateBillTotals(lineItems, summary), [lineItems, summary]);
+  const totalProfit = totals.totalProfit;
 
 
   const handleGeneratePDF = async () => {
@@ -948,15 +758,8 @@ const handleAddLineItem = () => {
         lineItems,
         totals,
         summary,
-        invoiceNumber:
-          storageManager.getInvoices().length + 1001
-      });
-
-      storageManager.saveInvoice({
-        customer: customerData,
-        items: lineItems,
-        summary,
-        totals
+        invoiceNumber: editingBill?.invoiceNumber || Math.max(1000, ...billHistoryStorage.getBills().map((bill) => Number(bill.invoiceNumber) || 0)) + 1,
+        invoiceDate: editingBill?.billDateTime || new Date().toISOString(),
       });
 
 
@@ -1016,7 +819,7 @@ const handleAddLineItem = () => {
           <strong>Mobile:</strong> ${customerData.mobile}<br>
           <strong>Address:</strong> ${customerData.address}<br>
           <strong>Date:</strong> ${new Date().toLocaleDateString()}<br>
-          <strong>Invoice #:</strong> ${storageManager.getInvoices().length + 1001}
+          <strong>Invoice #:</strong> ${editingBill?.invoiceNumber || Math.max(1000, ...billHistoryStorage.getBills().map((bill) => Number(bill.invoiceNumber) || 0)) + 1}
         </div>
         <table>
           <thead>
@@ -1075,11 +878,15 @@ const handleAddLineItem = () => {
       setCustomerData({
         name: "",
         mobile: "",
-        address: ""
+        address: "",
+        customerType: "walkin",
+        orderId: null
       });
 
       setSummary({
         porterage: 0,
+        porterageRate: 10,
+        porteragePerKg: 30,
         oldBalance: 0,
         discountType: "fixed",
         discountValue: 0,
@@ -1109,8 +916,13 @@ const handleAddLineItem = () => {
 
 
 
-    <div className="p-6 bg-gray-900 min-h-screen">
-      <h1 className="text-3xl font-bold text-teal-300 mb-6">Billing Module</h1>
+    <div className="min-w-0 overflow-x-hidden p-3 sm:p-6 bg-gray-900 min-h-screen">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-teal-300">{editingBill ? `Edit Bill — INV-${editingBill.invoiceNumber}` : "Billing Module"}</h1>
+          {editingBill && <p className="mt-1 text-sm text-yellow-300">Edit mode: changes update this invoice; they will not create a new bill.</p>}
+        </div>
+      </div>
 
       {message && (
         <div className="fixed top-4 right-4 bg-gray-800 border-l-4 border-teal-500 p-4 rounded shadow-lg z-50">
@@ -1118,15 +930,15 @@ const handleAddLineItem = () => {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main Billing Area */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
           {/* Customer Form */}
           <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
             <h2 className="text-xl font-semibold text-teal-300 mb-4">Customer Details</h2>
             <div className="space-y-3">
               <input
-
+                ref={customerNameRef}
                 type="text"
                 data-billing-flow
                 placeholder="Customer Name *"
@@ -1135,28 +947,28 @@ const handleAddLineItem = () => {
                 onKeyDown={handleBillingEnterMove}
                 className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               />
-             <input
-  type="text"
-  data-billing-flow
-  placeholder="Mobile Number"
-  value={customerData.mobile}
-  onChange={(e) => {
+              <input
+                type="text"
+                data-billing-flow
+                placeholder="Mobile Number"
+                value={customerData.mobile}
+                onChange={(e) => {
 
-    const value =
-      e.target.value
-        .replace(/\D/g, "")
-        .slice(0, 10);
+                  const value =
+                    e.target.value
+                      .replace(/\D/g, "")
+                      .slice(0, 10);
 
-    setCustomerData({
-      ...customerData,
-      mobile: value
-    });
+                  setCustomerData({
+                    ...customerData,
+                    mobile: value
+                  });
 
-  }}
-  maxLength={10}
-  onKeyDown={handleBillingEnterMove}
-  className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
-/>
+                }}
+                maxLength={10}
+                onKeyDown={handleBillingEnterMove}
+                className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
+              />
               <input
 
                 type="text"
@@ -1286,12 +1098,12 @@ const handleAddLineItem = () => {
 
                   }}
 
-                 onKeyDown={(e) => {
-  if (e.key === "Enter") {
-    e.preventDefault();
-    handleAddLineItem();
-  }
-}}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddLineItem();
+                    }
+                  }}
 
 
                   placeholder="Search product..."
@@ -1330,6 +1142,8 @@ const handleAddLineItem = () => {
                             key={item.sn}
 
                             onClick={() => {
+                              setLastNotFoundProduct("");
+                              setSelectedInventoryItem(item);
                               addSpecificItem(item);
                             }}
 
@@ -1447,14 +1261,14 @@ const handleAddLineItem = () => {
                               )
                             }
                             onBlur={(e) => {
-  if (e.target.value === "" || Number(e.target.value) < 0) {
-    handleUpdateLineItem(
-      item.id,
-      "qty",
-      0
-    );
-  }
-}}
+                              if (e.target.value === "" || Number(e.target.value) < 0) {
+                                handleUpdateLineItem(
+                                  item.id,
+                                  "qty",
+                                  0
+                                );
+                              }
+                            }}
 
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
@@ -1556,27 +1370,41 @@ const handleAddLineItem = () => {
 
 
         {/* Sidebar - Summary */}
-        <div className="bg-gray-800 p-6 rounded-lg border border-gray-700 h-fit sticky top-6 space-y-4">
+        <div className="min-w-0 bg-gray-800 p-6 rounded-lg border border-gray-700 h-fit sticky top-6 space-y-4">
           <h2 className="text-xl font-semibold text-teal-300 mb-4">Billing Summary</h2>
 
           <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
+            <div className="flex justify-between text-gray-200">
               <span>Subtotal</span>
               <span className="font-bold">₹{totals.subtotal.toFixed(2)}</span>
             </div>
           </div>
 
           <div>
-            <label className="text-sm text-gray-400">Porterage (₹)</label>
-            <input
+            <label className="text-sm text-gray-400">
+              Porterage (₹)
+            </label>
 
-              type="number"
-              data-billing-flow
-              value={summary.porterage}
-              onChange={(e) => setSummary({ ...summary, porterage: parseFloat(e.target.value) || 0 })}
-              onKeyDown={handleBillingEnterMove}
-              className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
-            />
+            <input
+  type="number"
+  data-billing-flow
+  value={
+    summary.porterage > 0
+      ? summary.porterage
+      : totals.porterage
+  }
+  onChange={(e) =>
+    setSummary({
+      ...summary,
+      porterage:
+        e.target.value === ""
+          ? 0
+          : Number(e.target.value)
+    })
+  }
+  onKeyDown={handleBillingEnterMove}
+  className="w-full bg-gray-700 text-white p-2 rounded border border-teal-500 focus:border-teal-500 outline-none"
+/>
           </div>
 
           <div>
@@ -1586,7 +1414,13 @@ const handleAddLineItem = () => {
               type="number"
               data-billing-flow
               value={summary.oldBalance}
-              onChange={(e) => setSummary({ ...summary, oldBalance: parseFloat(e.target.value) || 0 })}
+              onChange={(e) =>
+  setSummary({
+    ...summary,
+    oldBalance: Math.max(0, Number(e.target.value) || 0),
+  })
+}
+min="0"
               onKeyDown={handleBillingEnterMove}
               className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
             />
@@ -1611,7 +1445,13 @@ const handleAddLineItem = () => {
               type="number"
               data-billing-flow
               value={summary.discountValue}
-              onChange={(e) => setSummary({ ...summary, discountValue: parseFloat(e.target.value) || 0 })}
+              onChange={(e) =>
+  setSummary({
+    ...summary,
+    discountValue: Math.max(0, Number(e.target.value) || 0),
+  })
+}
+min="0"
               onKeyDown={handleBillingEnterMove}
               className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               placeholder="0"
@@ -1625,7 +1465,13 @@ const handleAddLineItem = () => {
               type="number"
               data-billing-flow
               value={summary.receivedAmount}
-              onChange={(e) => setSummary({ ...summary, receivedAmount: parseFloat(e.target.value) || 0 })}
+              onChange={(e) =>
+  setSummary({
+    ...summary,
+    receivedAmount: Math.max(0, Number(e.target.value) || 0),
+  })
+}
+min="0"
               onKeyDown={handleBillingEnterMove}
               className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
             />
@@ -1670,13 +1516,15 @@ const handleAddLineItem = () => {
 
           <div className="space-y-2 pt-4">
 
-            <button
-              type="button"
-              onClick={handleSaveBill}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition-all"
-            >
-              Save Bill
-            </button>
+              <button
+                type="button"
+                onClick={handleSaveBill}
+                disabled={isSaving}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition-all"
+              >
+                {isSaving ? "Saving…" : editingBill ? "Update Bill" : "Save Bill"}
+              </button>
+              {editingBill && <button onClick={() => { localStorage.removeItem("currentBillingDraft"); onCancelEdit?.(); }} className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 rounded">Cancel Edit</button>}
             <button
               onClick={handleGeneratePDF}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded transition-all"
@@ -1711,10 +1559,18 @@ const handleAddLineItem = () => {
 
       </div>
       <div
+        aria-hidden="true"
         style={{
-          position: "absolute",
-          left: "-9999px",
-          top: 0
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "794px",
+          transform: "translateX(-200vw)",
+          pointerEvents: "none",
+          zIndex: -1,
+          overflow: "hidden",
+          contain: "layout paint size",
+          isolation: "isolate",
         }}
       >
         <InvoiceTemplate
@@ -1722,9 +1578,8 @@ const handleAddLineItem = () => {
           lineItems={lineItems}
           totals={totals}
           summary={summary}
-          invoiceNumber={
-            storageManager.getInvoices().length + 1001
-          }
+          invoiceNumber={editingBill?.invoiceNumber || Math.max(1000, ...billHistoryStorage.getBills().map((bill) => Number(bill.invoiceNumber) || 0)) + 1}
+          invoiceDate={editingBill?.billDateTime || new Date().toISOString()}
         />
       </div>
 
@@ -1772,6 +1627,19 @@ const handleAddLineItem = () => {
                     setNewItemData({
                       ...newItemData,
                       category: e.target.value
+                    })
+                  }
+                  className="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:border-teal-500 outline-none"
+                />
+
+                <input
+                  type="number"
+                  placeholder="Cost Price"
+                  value={newItemData.costPrice}
+                  onChange={(e) =>
+                    setNewItemData({
+                      ...newItemData,
+                      costPrice: e.target.value
                     })
                   }
                   className="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:border-teal-500 outline-none"
