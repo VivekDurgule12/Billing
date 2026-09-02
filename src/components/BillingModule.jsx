@@ -278,127 +278,205 @@ useEffect(() => {
 
 
 
-    if (editingBill) {
-      if (!billHistoryStorage.updateBill(billData)) { saveInProgressRef.current = false; setIsSaving(false); setMessage("Unable to update: bill no longer exists"); return; }
+  if (editingBill) {
 
-      if (
-        customerData.customerType === "order" &&
-        customerData.orderId
-      ) {
+  // -----------------------------------------
+  // 1. UPDATE BILL HISTORY
+  // -----------------------------------------
 
-        const orders = JSON.parse(
-          localStorage.getItem(
-            "orderBatchesData"
-          ) || "[]"
+  const updated =
+    billHistoryStorage.updateBill(billData);
+
+  if (!updated) {
+    saveInProgressRef.current = false;
+    setIsSaving(false);
+
+    setMessage(
+      "Unable to update: bill no longer exists"
+    );
+
+    return;
+  }
+
+
+  // -----------------------------------------
+  // 2. UPDATE BILL INSIDE ORDER
+  // -----------------------------------------
+
+  if (
+    customerData.customerType === "order" &&
+    customerData.orderId
+  ) {
+
+    const orders = JSON.parse(
+      localStorage.getItem(
+        "orderBatchesData"
+      ) || "[]"
+    );
+
+    const updatedOrders =
+      orders.map(order => {
+
+        // Not our order
+        if (
+          String(order.id) !==
+          String(customerData.orderId)
+        ) {
+          return order;
+        }
+
+        const bills =
+          Array.isArray(order.bills)
+            ? order.bills
+            : [];
+
+
+        // Find existing bill
+        const billIndex =
+          bills.findIndex(
+            bill =>
+              String(bill.id) ===
+              String(billData.id)
+          );
+
+
+        console.log(
+          "UPDATING BILL",
+          {
+            orderId: customerData.orderId,
+            billId: billData.id,
+            billIndex
+          }
         );
 
-        window.dispatchEvent(
-          new Event("storage")
-        );
 
-        const updatedOrders =
-          orders.map(order => {
+        // IMPORTANT:
+        // During UPDATE, never create a new bill.
+        if (billIndex === -1) {
 
-            if (
-              order.id !== customerData.orderId
-            ) {
-              return order;
-            }
+          console.error(
+            "Bill not found inside order. Update cancelled.",
+            billData.id
+          );
 
-            const billExists =
-              (order.bills || []).some(
+          return order;
+        }
+
+
+        // Replace existing bill
+        const updatedOrderBills =
+          bills.map((bill, index) =>
+            index === billIndex
+              ? billData
+              : bill
+          );
+
+
+        return {
+          ...order,
+
+          bills:
+            updatedOrderBills,
+
+          billCount:
+            updatedOrderBills.length,
+
+          customerCount:
+            new Set(
+              updatedOrderBills.map(
                 bill =>
-                  bill.id === billData.id
-              );
+                  (bill.customer?.mobile || "")
+                    .replace(/\D/g, "")
+                    .replace(/^0+/, "")
+              )
+            ).size,
 
-            console.log(
-              "BILL EXISTS",
-              billExists
-            );
+          totalWeight:
+            updatedOrderBills.reduce(
+              (sum, bill) =>
+                sum +
+                Number(
+                  bill.totals?.totalWeight || 0
+                ),
+              0
+            )
+        };
 
-            let updatedOrderBills;
-
-            if (billExists) {
-
-              updatedOrderBills =
-                order.bills.map(bill =>
-                  bill.id === billData.id
-                    ? billData
-                    : bill
-                );
-
-            } else {
-
-              updatedOrderBills = [
-                ...(order.bills || []),
-                billData
-              ];
-
-            }
-
-            return {
-              ...order,
-              bills: updatedOrderBills,
-              billCount:
-                updatedOrderBills.length,
-              customerCount:
-                new Set(
-                  updatedOrderBills.map(
-                    b =>
-                      (b.customer?.mobile || "")
-                        .replace(/\D/g, "")
-                        .replace(/^0+/, "")
-                  )
-                ).size,
-              totalWeight:
-                updatedOrderBills.reduce(
-                  (sum, b) =>
-                    sum +
-                    (b.totals?.totalWeight || 0),
-                  0
-                )
-            };
-
-          });
-
-        localStorage.setItem(
-          "orderBatchesData",
-          JSON.stringify(updatedOrders)
-        );
-
-        window.dispatchEvent(
-          new Event("storage")
-        );
-      }
+      });
 
 
-      localStorage.removeItem("currentBillingDraft");
-      saveInProgressRef.current = false;
-      setIsSaving(false);
-      onComplete?.(`Bill INV-${invoiceNumber} updated successfully.`);
+    // -----------------------------------------
+    // 3. SAVE UPDATED ORDER
+    // -----------------------------------------
 
-    } else {
+    localStorage.setItem(
+      "orderBatchesData",
+      JSON.stringify(updatedOrders)
+    );
 
-      if (
-        customerData.customerType === "order" &&
-        customerData.orderId
-      ) {
-        orderStorage.addBillToOrder(
-          customerData.orderId,
-          billData
-        );
-      }
-      billHistoryStorage.addBill(
-        billData
-      );
-      localStorage.removeItem(
-        "currentBillingDraft"
-      );
 
-      saveInProgressRef.current = false;
-      setIsSaving(false);
-      onComplete?.(`Bill INV-${invoiceNumber} saved successfully.`);
-    }
+    // IMPORTANT:
+    // Dispatch AFTER localStorage is updated
+    window.dispatchEvent(
+      new Event("storage")
+    );
+  }
+
+
+  // -----------------------------------------
+  // 4. CLEANUP
+  // -----------------------------------------
+
+  localStorage.removeItem(
+    "currentBillingDraft"
+  );
+
+  saveInProgressRef.current = false;
+  setIsSaving(false);
+
+
+  // -----------------------------------------
+  // 5. RETURN UPDATED BILL TO APP
+  // -----------------------------------------
+
+  onComplete?.(billData);
+
+
+} else {
+
+  // =========================================
+  // NEW BILL
+  // =========================================
+
+  if (
+    customerData.customerType === "order" &&
+    customerData.orderId
+  ) {
+
+    orderStorage.addBillToOrder(
+      customerData.orderId,
+      billData
+    );
+  }
+
+
+  billHistoryStorage.addBill(
+    billData
+  );
+
+
+  localStorage.removeItem(
+    "currentBillingDraft"
+  );
+
+  saveInProgressRef.current = false;
+  setIsSaving(false);
+
+  onComplete?.(
+    `Bill INV-${invoiceNumber} saved successfully.`
+  );
+}
+
   };
 
 
@@ -632,31 +710,102 @@ Thank You
   };
 
 
-  const addSpecificItem = (item) => {
-    const productId = item.id ?? item.sku ?? item.sn;
-    setLineItems(prev => {
-      const existing = prev.find((line) => String(line.productId ?? line.sku ?? line.sn) === String(productId));
-      if (existing) return prev.map((line) => line.id === existing.id ? { ...line, qty: Number(line.qty || 0) + 1, amount: (Number(line.qty || 0) + 1) * Number(line.rate || 0) } : line);
-      const qty = 1;
-      const rate = Number(item.sellingPrice) || 0;
-      return [...prev, { id: `item-${productId}-${Date.now()}`, productId, sn: item.sn, name: item.item.split("/")[0].trim(), qty, rate, costPrice: Number(item.costPrice) || 0, amount: qty * rate, weightPerUnit: Number(item.weightPerUnit) || 0, unitType: item.unitType || "KG" }];
-    });
+const addSpecificItem = (item) => {
+  const productId = item.id ?? item.sku ?? item.sn;
 
-    setSearchItem("");
-    setSelectedItem("");
+  const itemName =
+    item.item?.split("/")[0]?.trim() || "";
 
-    setTimeout(() => {
-      const qtyInputs = document.querySelectorAll(
-        '[data-line-field="qty"]'
-      );
+  const normalizedName =
+    itemName.toLowerCase();
 
-      const lastInput =
-        qtyInputs[qtyInputs.length - 1];
+  // Check existing item
+  const existing = lineItems.find((line) => {
 
-      lastInput?.focus();
-      lastInput?.select();
-    }, 100);
+    const lineProductId =
+      line.productId ?? line.sku ?? line.sn;
+
+    const lineName =
+      line.name?.trim().toLowerCase() || "";
+
+    return (
+      (
+        productId != null &&
+        lineProductId != null &&
+        String(lineProductId) ===
+          String(productId)
+      ) ||
+      (
+        normalizedName &&
+        lineName === normalizedName
+      )
+    );
+  });
+
+
+  // Same product exists → ask permission
+  if (existing) {
+
+    const allowDuplicate = window.confirm(
+      `"${itemName}" already exists in the bill.\n\nDo you want to add it again?`
+    );
+
+    // NO
+    if (!allowDuplicate) {
+      return;
+    }
+  }
+
+
+  // YES or completely new product
+  const qty = 1;
+
+  const rate =
+    Number(item.sellingPrice) || 0;
+
+  const newItem = {
+    id: `item-${productId}-${Date.now()}-${Math.random()}`,
+
+    productId,
+
+    sn: item.sn,
+
+    name: itemName,
+
+    qty,
+
+    rate,
+
+    costPrice:
+      Number(item.costPrice) || 0,
+
+    amount:
+      qty * rate,
+
+    weightPerUnit:
+      Number(item.weightPerUnit) || 0,
+
+    unitType:
+      item.unitType || "KG",
   };
+
+
+  setLineItems((prev) => [
+    ...prev,
+    newItem
+  ]);
+
+
+  setSearchItem("");
+  setSelectedItem("");
+  setSelectedInventoryItem(null);
+
+  setMessage("Item added");
+
+  setTimeout(() => {
+    setMessage("");
+  }, 2000);
+};
 
 
 
@@ -1477,7 +1626,7 @@ min="0"
             />
           </div>
 
-          <div className="bg-gray-700 p-4 rounded space-y-2 border border-gray-600">
+          {/* <div className="bg-gray-700 p-4 rounded space-y-2 border border-gray-600">
             <div className="flex justify-between text-sm">
               <span>After Discount:</span>
               <span>₹{totals.afterDiscount.toFixed(2)}</span>
@@ -1501,7 +1650,170 @@ min="0"
               <span>₹{totalProfit.toFixed(2)}</span>
             </div>
 
+          </div> */}
+
+          <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 mt-4">
+  <h3 className="text-lg font-bold text-teal-300 mb-4">
+    Calculation Summary
+  </h3>
+
+  <div className="space-y-4 text-sm">
+
+    {/* SUBTOTAL */}
+    <div>
+      <div className="text-gray-400 mb-1">
+        Subtotal
+      </div>
+
+      <div className="text-white font-semibold">
+        ₹{totals.subtotal.toFixed(2)}
+      </div>
+    </div>
+
+
+    {/* DISCOUNT */}
+    <div>
+      <div className="text-gray-400 mb-1">
+        Discount
+      </div>
+
+      {totals.discount > 0 ? (
+        <>
+          <div className="text-gray-300">
+            ₹{totals.subtotal.toFixed(2)}
+            {" − "}
+            ₹{totals.discount.toFixed(2)}
           </div>
+
+          <div className="text-green-400 font-semibold">
+            = ₹{totals.afterDiscount.toFixed(2)}
+          </div>
+        </>
+      ) : (
+        <div className="text-gray-300">
+          No discount
+        </div>
+      )}
+    </div>
+
+
+    {/* PORTERAGE */}
+    <div>
+      <div className="text-gray-400 mb-1">
+        Porterage
+      </div>
+
+      {summary.porterage === "" ||
+      summary.porterage === undefined ||
+      summary.porterage === null ? (
+        <>
+          <div className="text-gray-300">
+            {totals.totalWeight.toFixed(2)}
+            {" ÷ "}
+            {Number(summary.porteragePerKg || 30)}
+            {" × ₹"}
+            {Number(summary.porterageRate || 10)}
+          </div>
+
+          <div className="text-green-400 font-semibold">
+            = ₹{totals.porterage.toFixed(2)}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="text-gray-300">
+            Manual Porterage
+          </div>
+
+          <div className="text-green-400 font-semibold">
+            = ₹{totals.porterage.toFixed(2)}
+          </div>
+        </>
+      )}
+    </div>
+
+
+    {/* OLD BALANCE */}
+    <div>
+      <div className="text-gray-400 mb-1">
+        Old Balance
+      </div>
+
+      <div className="text-white font-semibold">
+        ₹{totals.oldBalance.toFixed(2)}
+      </div>
+    </div>
+
+
+    {/* GRAND TOTAL */}
+    <div className="border-t border-gray-600 pt-4">
+
+      <div className="text-gray-400 mb-1">
+        Grand Total
+      </div>
+
+      <div className="text-gray-300">
+        ₹{totals.afterDiscount.toFixed(2)}
+        {" + "}
+        ₹{totals.porterage.toFixed(2)}
+        {" + "}
+        ₹{totals.oldBalance.toFixed(2)}
+      </div>
+
+      <div className="text-teal-300 text-lg font-bold mt-1">
+        = ₹{totals.total.toFixed(2)}
+      </div>
+
+    </div>
+
+
+    {/* RECEIVED */}
+    <div>
+      <div className="text-gray-400 mb-1">
+        Received Amount
+      </div>
+
+      <div className="text-white font-semibold">
+        ₹{totals.receivedAmount.toFixed(2)}
+      </div>
+    </div>
+
+
+    {/* PAYABLE */}
+    <div className="border-t border-gray-700 pt-4">
+
+      <div className="text-gray-400 mb-1">
+        Payable
+      </div>
+
+      <div className="text-gray-300">
+        ₹{totals.total.toFixed(2)}
+        {" − "}
+        ₹{totals.receivedAmount.toFixed(2)}
+      </div>
+
+      <div className="text-yellow-300 text-lg font-bold mt-1">
+        = ₹{totals.payable.toFixed(2)}
+      </div>
+
+    </div>
+
+
+    {/* PROFIT */}
+    <div className="border-t border-gray-700 pt-4">
+
+      <div className="text-gray-400 mb-1">
+        Profit
+      </div>
+
+      <div className="text-green-400 text-lg font-bold">
+        ₹{totals.totalProfit.toFixed(2)}
+      </div>
+
+    </div>
+
+  </div>
+</div>
 
           <div>
             <label className="text-sm text-gray-400">Note</label>

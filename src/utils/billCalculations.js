@@ -39,10 +39,14 @@ export const calculateBillTotals = (items = [], summary = {}) => {
 
   // If user entered a porterage value, use it.
   // Otherwise use the automatically calculated value.
-  const porterage =
-    number(summary.porterage) > 0
-      ? number(summary.porterage)
-      : calculatedPorterage;
+ // Empty Porterage = automatic calculation.
+// 0 and negative values are valid manual values.
+const porterage =
+  summary.porterage === "" ||
+  summary.porterage === undefined ||
+  summary.porterage === null
+    ? calculatedPorterage
+    : number(summary.porterage);
 
   const oldBalance = Math.max(
     0,

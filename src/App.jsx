@@ -150,11 +150,28 @@ function App() {
         {/* Page */}
         <main className="flex-1 overflow-auto p-2 md:p-4 lg:p-6">
 
-          {activeModule === "billing" && <BillingModule
-            editingBill={editingBill}
-            onComplete={(message) => { setEditingBill(null); setNotice(message); setActiveModule("billhistory"); }}
-            onCancelEdit={() => { setEditingBill(null); setActiveModule("billhistory"); }}
-          />}
+          {activeModule === "billing" && (
+  <BillingModule
+    editingBill={editingBill}
+
+    onComplete={(savedBill) => {
+      if (savedBill && typeof savedBill === "object") {
+        // First Save → immediately switch to Update mode
+        setEditingBill(savedBill);
+        setNotice(`Bill INV-${savedBill.invoiceNumber} saved successfully.`);
+      } else {
+        // Fallback for any old string message
+        setNotice(savedBill || "");
+        setActiveModule("billhistory");
+      }
+    }}
+
+    onCancelEdit={() => {
+      setEditingBill(null);
+      setActiveModule("billhistory");
+    }}
+  />
+)}
           {activeModule === "inventory" && <InventoryMaster />}
           {activeModule === "orders" && <OrdersModule
             onEditBill={(bill) => { setNotice(""); setEditingBill(bill); setActiveModule("billing"); }}
