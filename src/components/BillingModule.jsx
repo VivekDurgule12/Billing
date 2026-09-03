@@ -48,12 +48,14 @@ export default function BillingModule({ editingBill, onComplete, onCancelEdit })
     useState(false);
 
   const [newItemData, setNewItemData] = useState({
-    item: "",
-    category: "",
-    costPrice: "",
-    sellingPrice: "",
-    unitType: "KG",
-    weightPerUnit: ""
+    marathiName: '',
+    englishName: '',
+    type: '',
+    category: '',
+    costPrice: '',
+    sellingPrice: '',
+    unitType: 'Piece',
+    weightPerUnit: '',
   });
 
   const [lastNotFoundProduct, setLastNotFoundProduct] = useState("");
@@ -77,85 +79,85 @@ export default function BillingModule({ editingBill, onComplete, onCancelEdit })
 
 
 
-useEffect(() => {
-  if (editingBill) {
-    const normalizedItems = normalizeBillItems(editingBill.items || []);
+  useEffect(() => {
+    if (editingBill) {
+      const normalizedItems = normalizeBillItems(editingBill.items || []);
 
-    const loadedSummary = {
-      ...summary,
-      ...(editingBill.summary || {}),
-      oldBalance:
-        editingBill.totals?.oldBalance ??
-        editingBill.summary?.oldBalance ??
-        0,
-      receivedAmount:
-        editingBill.totals?.receivedAmount ??
-        editingBill.summary?.receivedAmount ??
-        0,
-    };
+      const loadedSummary = {
+        ...summary,
+        ...(editingBill.summary || {}),
+        oldBalance:
+          editingBill.totals?.oldBalance ??
+          editingBill.summary?.oldBalance ??
+          0,
+        receivedAmount:
+          editingBill.totals?.receivedAmount ??
+          editingBill.summary?.receivedAmount ??
+          0,
+      };
 
-    // Calculate porterage automatically when saved value is 0/missing
-    if (!Number(loadedSummary.porterage)) {
-      const totalWeight = normalizedItems.reduce(
-        (sum, item) =>
-          sum +
-          (Number(item.qty) || 0) *
-          (Number(item.weightPerUnit) || 0),
-        0
-      );
+      // Calculate porterage automatically when saved value is 0/missing
+      if (!Number(loadedSummary.porterage)) {
+        const totalWeight = normalizedItems.reduce(
+          (sum, item) =>
+            sum +
+            (Number(item.qty) || 0) *
+            (Number(item.weightPerUnit) || 0),
+          0
+        );
 
-      const porterageRate =
-        Number(loadedSummary.porterageRate) || 10;
+        const porterageRate =
+          Number(loadedSummary.porterageRate) || 10;
 
-      const porteragePerKg =
-        Number(loadedSummary.porteragePerKg) || 30;
+        const porteragePerKg =
+          Number(loadedSummary.porteragePerKg) || 30;
 
-      loadedSummary.porterage =
-        Math.round(
-          (totalWeight / porteragePerKg) *
-          porterageRate *
-          100
-        ) / 100;
+        loadedSummary.porterage =
+          Math.round(
+            (totalWeight / porteragePerKg) *
+            porterageRate *
+            100
+          ) / 100;
+      }
+
+      setCustomerData({
+        name: "",
+        mobile: "",
+        address: "",
+        customerType: "walkin",
+        orderId: null,
+        ...editingBill.customer,
+      });
+
+      setLineItems(normalizedItems);
+      setSummary(loadedSummary);
+
+      return;
     }
 
-    setCustomerData({
-      name: "",
-      mobile: "",
-      address: "",
-      customerType: "walkin",
-      orderId: null,
-      ...editingBill.customer,
-    });
+    const draft = localStorage.getItem("currentBillingDraft");
+    if (!draft) return;
 
-    setLineItems(normalizedItems);
-    setSummary(loadedSummary);
+    try {
+      const parsed = JSON.parse(draft);
 
-    return;
-  }
+      setCustomerData((current) => ({
+        ...current,
+        ...(parsed.customerData || {}),
+      }));
 
-  const draft = localStorage.getItem("currentBillingDraft");
-  if (!draft) return;
+      setLineItems(
+        normalizeBillItems(parsed.lineItems || [])
+      );
 
-  try {
-    const parsed = JSON.parse(draft);
-
-    setCustomerData((current) => ({
-      ...current,
-      ...(parsed.customerData || {}),
-    }));
-
-    setLineItems(
-      normalizeBillItems(parsed.lineItems || [])
-    );
-
-    setSummary((current) => ({
-      ...current,
-      ...(parsed.summary || {}),
-    }));
-  } catch {
-    localStorage.removeItem("currentBillingDraft");
-  }
-}, [editingBill]);
+      setSummary((current) => ({
+        ...current,
+        ...(parsed.summary || {}),
+      }));
+    } catch {
+      localStorage.removeItem("currentBillingDraft");
+    }
+  }, [editingBill]);
 
 
 
@@ -187,7 +189,29 @@ useEffect(() => {
 
 
 
+  const getItemNames = (item) => {
+    if (item.marathiName || item.englishName) {
+      return {
+        marathiName: item.marathiName || "",
+        englishName: item.englishName || "",
+      };
+    }
 
+    // Support old inventory records
+    if (item.item) {
+      const parts = item.item.split("/").map(name => name.trim());
+
+      return {
+        marathiName: parts[0] || "",
+        englishName: parts.slice(1).join(" / ") || "",
+      };
+    }
+
+    return {
+      marathiName: "",
+      englishName: "",
+    };
+  };
 
 
 
@@ -278,204 +302,204 @@ useEffect(() => {
 
 
 
-  if (editingBill) {
+    if (editingBill) {
 
-  // -----------------------------------------
-  // 1. UPDATE BILL HISTORY
-  // -----------------------------------------
+      // -----------------------------------------
+      // 1. UPDATE BILL HISTORY
+      // -----------------------------------------
 
-  const updated =
-    billHistoryStorage.updateBill(billData);
+      const updated =
+        billHistoryStorage.updateBill(billData);
 
-  if (!updated) {
-    saveInProgressRef.current = false;
-    setIsSaving(false);
+      if (!updated) {
+        saveInProgressRef.current = false;
+        setIsSaving(false);
 
-    setMessage(
-      "Unable to update: bill no longer exists"
-    );
+        setMessage(
+          "Unable to update: bill no longer exists"
+        );
 
-    return;
-  }
-
-
-  // -----------------------------------------
-  // 2. UPDATE BILL INSIDE ORDER
-  // -----------------------------------------
-
-  if (
-    customerData.customerType === "order" &&
-    customerData.orderId
-  ) {
-
-    const orders = JSON.parse(
-      localStorage.getItem(
-        "orderBatchesData"
-      ) || "[]"
-    );
-
-    const updatedOrders =
-      orders.map(order => {
-
-        // Not our order
-        if (
-          String(order.id) !==
-          String(customerData.orderId)
-        ) {
-          return order;
-        }
-
-        const bills =
-          Array.isArray(order.bills)
-            ? order.bills
-            : [];
+        return;
+      }
 
 
-        // Find existing bill
-        const billIndex =
-          bills.findIndex(
-            bill =>
-              String(bill.id) ===
-              String(billData.id)
-          );
+      // -----------------------------------------
+      // 2. UPDATE BILL INSIDE ORDER
+      // -----------------------------------------
+
+      if (
+        customerData.customerType === "order" &&
+        customerData.orderId
+      ) {
+
+        const orders = JSON.parse(
+          localStorage.getItem(
+            "orderBatchesData"
+          ) || "[]"
+        );
+
+        const updatedOrders =
+          orders.map(order => {
+
+            // Not our order
+            if (
+              String(order.id) !==
+              String(customerData.orderId)
+            ) {
+              return order;
+            }
+
+            const bills =
+              Array.isArray(order.bills)
+                ? order.bills
+                : [];
 
 
-        console.log(
-          "UPDATING BILL",
-          {
-            orderId: customerData.orderId,
-            billId: billData.id,
-            billIndex
-          }
+            // Find existing bill
+            const billIndex =
+              bills.findIndex(
+                bill =>
+                  String(bill.id) ===
+                  String(billData.id)
+              );
+
+
+            console.log(
+              "UPDATING BILL",
+              {
+                orderId: customerData.orderId,
+                billId: billData.id,
+                billIndex
+              }
+            );
+
+
+            // IMPORTANT:
+            // During UPDATE, never create a new bill.
+            if (billIndex === -1) {
+
+              console.error(
+                "Bill not found inside order. Update cancelled.",
+                billData.id
+              );
+
+              return order;
+            }
+
+
+            // Replace existing bill
+            const updatedOrderBills =
+              bills.map((bill, index) =>
+                index === billIndex
+                  ? billData
+                  : bill
+              );
+
+
+            return {
+              ...order,
+
+              bills:
+                updatedOrderBills,
+
+              billCount:
+                updatedOrderBills.length,
+
+              customerCount:
+                new Set(
+                  updatedOrderBills.map(
+                    bill =>
+                      (bill.customer?.mobile || "")
+                        .replace(/\D/g, "")
+                        .replace(/^0+/, "")
+                  )
+                ).size,
+
+              totalWeight:
+                updatedOrderBills.reduce(
+                  (sum, bill) =>
+                    sum +
+                    Number(
+                      bill.totals?.totalWeight || 0
+                    ),
+                  0
+                )
+            };
+
+          });
+
+
+        // -----------------------------------------
+        // 3. SAVE UPDATED ORDER
+        // -----------------------------------------
+
+        localStorage.setItem(
+          "orderBatchesData",
+          JSON.stringify(updatedOrders)
         );
 
 
         // IMPORTANT:
-        // During UPDATE, never create a new bill.
-        if (billIndex === -1) {
-
-          console.error(
-            "Bill not found inside order. Update cancelled.",
-            billData.id
-          );
-
-          return order;
-        }
+        // Dispatch AFTER localStorage is updated
+        window.dispatchEvent(
+          new Event("storage")
+        );
+      }
 
 
-        // Replace existing bill
-        const updatedOrderBills =
-          bills.map((bill, index) =>
-            index === billIndex
-              ? billData
-              : bill
-          );
+      // -----------------------------------------
+      // 4. CLEANUP
+      // -----------------------------------------
+
+      localStorage.removeItem(
+        "currentBillingDraft"
+      );
+
+      saveInProgressRef.current = false;
+      setIsSaving(false);
 
 
-        return {
-          ...order,
+      // -----------------------------------------
+      // 5. RETURN UPDATED BILL TO APP
+      // -----------------------------------------
 
-          bills:
-            updatedOrderBills,
-
-          billCount:
-            updatedOrderBills.length,
-
-          customerCount:
-            new Set(
-              updatedOrderBills.map(
-                bill =>
-                  (bill.customer?.mobile || "")
-                    .replace(/\D/g, "")
-                    .replace(/^0+/, "")
-              )
-            ).size,
-
-          totalWeight:
-            updatedOrderBills.reduce(
-              (sum, bill) =>
-                sum +
-                Number(
-                  bill.totals?.totalWeight || 0
-                ),
-              0
-            )
-        };
-
-      });
+      onComplete?.(billData);
 
 
-    // -----------------------------------------
-    // 3. SAVE UPDATED ORDER
-    // -----------------------------------------
+    } else {
 
-    localStorage.setItem(
-      "orderBatchesData",
-      JSON.stringify(updatedOrders)
-    );
+      // =========================================
+      // NEW BILL
+      // =========================================
 
+      if (
+        customerData.customerType === "order" &&
+        customerData.orderId
+      ) {
 
-    // IMPORTANT:
-    // Dispatch AFTER localStorage is updated
-    window.dispatchEvent(
-      new Event("storage")
-    );
-  }
-
-
-  // -----------------------------------------
-  // 4. CLEANUP
-  // -----------------------------------------
-
-  localStorage.removeItem(
-    "currentBillingDraft"
-  );
-
-  saveInProgressRef.current = false;
-  setIsSaving(false);
+        orderStorage.addBillToOrder(
+          customerData.orderId,
+          billData
+        );
+      }
 
 
-  // -----------------------------------------
-  // 5. RETURN UPDATED BILL TO APP
-  // -----------------------------------------
-
-  onComplete?.(billData);
+      billHistoryStorage.addBill(
+        billData
+      );
 
 
-} else {
+      localStorage.removeItem(
+        "currentBillingDraft"
+      );
 
-  // =========================================
-  // NEW BILL
-  // =========================================
+      saveInProgressRef.current = false;
+      setIsSaving(false);
 
-  if (
-    customerData.customerType === "order" &&
-    customerData.orderId
-  ) {
-
-    orderStorage.addBillToOrder(
-      customerData.orderId,
-      billData
-    );
-  }
-
-
-  billHistoryStorage.addBill(
-    billData
-  );
-
-
-  localStorage.removeItem(
-    "currentBillingDraft"
-  );
-
-  saveInProgressRef.current = false;
-  setIsSaving(false);
-
-  onComplete?.(
-    `Bill INV-${invoiceNumber} saved successfully.`
-  );
-}
+      onComplete?.(
+        `Bill INV-${invoiceNumber} saved successfully.`
+      );
+    }
 
   };
 
@@ -553,8 +577,10 @@ Thank You
 
   const handleCreateInventoryItem = () => {
     if (
-      !newItemData.item ||
+      !newItemData.marathiName ||
+      !newItemData.englishName ||
       !newItemData.category ||
+      !newItemData.type ||
       newItemData.costPrice === "" ||
       newItemData.sellingPrice === ""
     ) {
@@ -564,24 +590,24 @@ Thank You
 
     const inventoryData =
       JSON.parse(
-        localStorage.getItem(
-          "inventoryData"
-        )
+        localStorage.getItem("inventoryData")
       ) || [];
 
     const newItem = {
       sn:
         Math.max(
-          ...inventoryData.map(
-            i => i.sn
-          ),
+          ...inventoryData.map(i => i.sn),
           0
         ) + 1,
 
-      item:
-        `${newItemData.item}/${newItemData.item}`,
+      marathiName:
+        newItemData.marathiName,
 
-      type: "Custom",
+      englishName:
+        newItemData.englishName,
+
+      type:
+        newItemData.type,
 
       category:
         newItemData.category,
@@ -600,10 +626,7 @@ Thank You
         newItemData.unitType,
 
       weightPerUnit:
-        Number(
-          newItemData.weightPerUnit
-        )
-
+        Number(newItemData.weightPerUnit || 1)
     };
 
     const updatedInventory = [
@@ -613,9 +636,7 @@ Thank You
 
     localStorage.setItem(
       "inventoryData",
-      JSON.stringify(
-        updatedInventory
-      )
+      JSON.stringify(updatedInventory)
     );
 
     setInventory(updatedInventory);
@@ -624,7 +645,6 @@ Thank You
 
     setShowAddItemModal(false);
   };
-
 
 
 
@@ -641,13 +661,15 @@ Thank You
     const item =
       selectedInventoryItem ||
       inventory.find(i => {
-        const marathiName = i.item.split("/")[0].trim().toLowerCase();
-        const englishName =
-          i.item.split("/")[1]?.trim().toLowerCase() || "";
+        const { marathiName, englishName } =
+          getItemNames(i);
+
+        const search =
+          typedName.toLowerCase();
 
         return (
-          marathiName === typedName.toLowerCase() ||
-          englishName === typedName.toLowerCase()
+          marathiName.toLowerCase() === search ||
+          englishName.toLowerCase() === search
         );
       });
 
@@ -664,7 +686,9 @@ Thank You
       // Second attempt with same unavailable product
       if (lastNotFoundProduct === productName) {
         setNewItemData({
-          item: typedName,
+          marathiName: typedName,
+          englishName: "",
+          type: "",
           category: "",
           costPrice: "",
           sellingPrice: "",
@@ -710,102 +734,105 @@ Thank You
   };
 
 
-const addSpecificItem = (item) => {
-  const productId = item.id ?? item.sku ?? item.sn;
+  const addSpecificItem = (item) => {
+    const productId = item.id ?? item.sku ?? item.sn;
 
-  const itemName =
-    item.item?.split("/")[0]?.trim() || "";
+    const { marathiName, englishName } =
+      getItemNames(item);
 
-  const normalizedName =
-    itemName.toLowerCase();
+    const itemName =
+      marathiName || englishName || "";
 
-  // Check existing item
-  const existing = lineItems.find((line) => {
+    const normalizedName =
+      itemName.toLowerCase();
 
-    const lineProductId =
-      line.productId ?? line.sku ?? line.sn;
+    // Check existing item
+    const existing = lineItems.find((line) => {
 
-    const lineName =
-      line.name?.trim().toLowerCase() || "";
+      const lineProductId =
+        line.productId ?? line.sku ?? line.sn;
 
-    return (
-      (
-        productId != null &&
-        lineProductId != null &&
-        String(lineProductId) ===
+      const lineName =
+        line.name?.trim().toLowerCase() || "";
+
+      return (
+        (
+          productId != null &&
+          lineProductId != null &&
+          String(lineProductId) ===
           String(productId)
-      ) ||
-      (
-        normalizedName &&
-        lineName === normalizedName
-      )
-    );
-  });
+        ) ||
+        (
+          normalizedName &&
+          lineName === normalizedName
+        )
+      );
+    });
 
 
-  // Same product exists → ask permission
-  if (existing) {
+    // Same product exists → ask permission
+    if (existing) {
 
-    const allowDuplicate = window.confirm(
-      `"${itemName}" already exists in the bill.\n\nDo you want to add it again?`
-    );
+      const allowDuplicate = window.confirm(
+        `"${itemName}" already exists in the bill.\n\nDo you want to add it again?`
+      );
 
-    // NO
-    if (!allowDuplicate) {
-      return;
+      // NO
+      if (!allowDuplicate) {
+        return;
+      }
     }
-  }
 
 
-  // YES or completely new product
-  const qty = 1;
+    // YES or completely new product
+    const qty = 1;
 
-  const rate =
-    Number(item.sellingPrice) || 0;
+    const rate =
+      Number(item.sellingPrice) || 0;
 
-  const newItem = {
-    id: `item-${productId}-${Date.now()}-${Math.random()}`,
+    const newItem = {
+      id: `item-${productId}-${Date.now()}-${Math.random()}`,
 
-    productId,
+      productId,
 
-    sn: item.sn,
+      sn: item.sn,
 
-    name: itemName,
+      name: itemName,
 
-    qty,
+      qty,
 
-    rate,
+      rate,
 
-    costPrice:
-      Number(item.costPrice) || 0,
+      costPrice:
+        Number(item.costPrice) || 0,
 
-    amount:
-      qty * rate,
+      amount:
+        qty * rate,
 
-    weightPerUnit:
-      Number(item.weightPerUnit) || 0,
+      weightPerUnit:
+        Number(item.weightPerUnit) || 0,
 
-    unitType:
-      item.unitType || "KG",
+      unitType:
+        item.unitType || "KG",
+    };
+
+
+    setLineItems((prev) => [
+      ...prev,
+      newItem
+    ]);
+
+
+    setSearchItem("");
+    setSelectedItem("");
+    setSelectedInventoryItem(null);
+
+    setMessage("Item added");
+
+    setTimeout(() => {
+      setMessage("");
+    }, 2000);
   };
-
-
-  setLineItems((prev) => [
-    ...prev,
-    newItem
-  ]);
-
-
-  setSearchItem("");
-  setSelectedItem("");
-  setSelectedInventoryItem(null);
-
-  setMessage("Item added");
-
-  setTimeout(() => {
-    setMessage("");
-  }, 2000);
-};
 
 
 
@@ -1217,15 +1244,14 @@ const addSpecificItem = (item) => {
                     setSearchItem(value);
 
                     const firstMatch = inventory.find(item => {
+                      const { marathiName, englishName } =
+                        getItemNames(item);
+
                       const marathi =
-                        item.item.split("/")[0]
-                          .trim()
-                          .toLowerCase();
+                        marathiName.toLowerCase();
 
                       const english =
-                        item.item.split("/")[1]
-                          ?.trim()
-                          .toLowerCase() || "";
+                        englishName.toLowerCase();
 
                       return (
                         marathi.includes(value.toLowerCase()) ||
@@ -1234,10 +1260,9 @@ const addSpecificItem = (item) => {
                     });
 
                     if (firstMatch) {
-                      setSelectedItem(
-                        firstMatch.item.split("/")[0].trim()
-                      );
+                      const { marathiName } = getItemNames(firstMatch);
 
+                      setSelectedItem(marathiName);
                       setSelectedInventoryItem(firstMatch);
                     } else {
                       setSelectedItem("");
@@ -1263,87 +1288,89 @@ const addSpecificItem = (item) => {
 
 
 
-                {searchItem.trim() !== "" && (
-                  <div className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-xl max-h-64 overflow-y-auto">
+                {
+                  searchItem.trim() !== "" && (
+                    <div className="absolute z-50 w-full mt-1 bg-gray-800 border border-gray-600 rounded-lg shadow-xl max-h-64 overflow-y-auto">
 
-                    {inventory
-                      .filter((item) => {
-                        const search = searchItem.toLowerCase().trim();
+                      {inventory
+                        .filter((item) => {
+                          const search = searchItem.toLowerCase().trim();
 
-                        const marathiName =
-                          item.item.split("/")[0].trim().toLowerCase();
+                          const { marathiName, englishName } =
+                            getItemNames(item);
 
-                        const englishName =
-                          item.item.split("/")[1]?.trim().toLowerCase() || "";
+                          const normalizedMarathi =
+                            marathiName.toLowerCase();
 
-                        return (
-                          marathiName.includes(search) ||
-                          englishName.includes(search)
-                        );
-                      })
-                      .slice(0, 15)
-                      .map((item) => {
-                        const marathiName =
-                          item.item.split("/")[0].trim();
+                          const normalizedEnglish =
+                            englishName.toLowerCase();
 
-                        return (
-                          <div
-                            key={item.sn}
+                          return (
+                            normalizedMarathi.includes(search) ||
+                            normalizedEnglish.includes(search)
+                          );
+                        })
+                        .slice(0, 15)
+                        .map((item) => {
+                          const { marathiName, englishName } = getItemNames(item);
 
-                            onClick={() => {
-                              setLastNotFoundProduct("");
-                              setSelectedInventoryItem(item);
-                              addSpecificItem(item);
-                            }}
+                          return (
+                            <div
+                              key={item.sn}
 
-                            className="p-3 cursor-pointer hover:bg-teal-600/20 border-b border-gray-700 transition-colors"
-                          >
-                            <div className="flex justify-between items-center">
-                              <span className="font-medium text-white">
-                                {marathiName}
-                              </span>
+                              onClick={() => {
+                                setLastNotFoundProduct("");
+                                setSelectedInventoryItem(item);
+                                addSpecificItem(item);
+                              }}
 
-                              <span className="text-teal-300 font-semibold">
-                                ₹{item.sellingPrice}
-                              </span>
+                              className="p-3 cursor-pointer hover:bg-teal-600/20 border-b border-gray-700 transition-colors"
+                            >
+                              <div className="flex justify-between items-center">
+                                <span className="font-medium text-white">
+                                  {marathiName} / {englishName}
+                                </span>
+
+                                <span className="text-teal-300 font-semibold">
+                                  ₹{item.sellingPrice}
+                                </span>
+                              </div>
+
+                              <div className="text-xs text-gray-400 mt-1">
+                                {item.category || item.type}
+                              </div>
                             </div>
-
-                            <div className="text-xs text-gray-400 mt-1">
-                              {item.category || item.type}
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                )}
+                          );
+                        })}
+                    </div>
+                  )}
 
                 {
                   searchItem.trim() !== "" &&
                   inventory.filter(item => {
                     const search = searchItem.toLowerCase().trim();
 
-                    const marathiName =
-                      item.item.split("/")[0]
-                        .trim()
-                        .toLowerCase();
-
-                    const englishName =
-                      item.item.split("/")[1]
-                        ?.trim()
-                        .toLowerCase() || "";
+                    const { marathiName, englishName } =
+                      getItemNames(item);
 
                     return (
-                      marathiName.includes(search) ||
-                      englishName.includes(search)
+                      marathiName.toLowerCase().includes(search) ||
+                      englishName.toLowerCase().includes(search)
                     );
                   }).length === 0 && (
-
                     <div className="mt-2">
                       <button
                         onClick={() => {
                           setNewItemData(prev => ({
                             ...prev,
-                            item: searchItem
+                            marathiName: searchItem,
+                            englishName: "",
+                            type: "",
+                            category: "",
+                            costPrice: "",
+                            sellingPrice: "",
+                            unitType: "Piece",
+                            weightPerUnit: ""
                           }));
 
                           setShowAddItemModal(true);
@@ -1535,25 +1562,25 @@ const addSpecificItem = (item) => {
             </label>
 
             <input
-  type="number"
-  data-billing-flow
-  value={
-    summary.porterage > 0
-      ? summary.porterage
-      : totals.porterage
-  }
-  onChange={(e) =>
-    setSummary({
-      ...summary,
-      porterage:
-        e.target.value === ""
-          ? 0
-          : Number(e.target.value)
-    })
-  }
-  onKeyDown={handleBillingEnterMove}
-  className="w-full bg-gray-700 text-white p-2 rounded border border-teal-500 focus:border-teal-500 outline-none"
-/>
+              type="number"
+              data-billing-flow
+              value={
+                summary.porterage > 0
+                  ? summary.porterage
+                  : totals.porterage
+              }
+              onChange={(e) =>
+                setSummary({
+                  ...summary,
+                  porterage:
+                    e.target.value === ""
+                      ? 0
+                      : Number(e.target.value)
+                })
+              }
+              onKeyDown={handleBillingEnterMove}
+              className="w-full bg-gray-700 text-white p-2 rounded border border-teal-500 focus:border-teal-500 outline-none"
+            />
           </div>
 
           <div>
@@ -1564,12 +1591,12 @@ const addSpecificItem = (item) => {
               data-billing-flow
               value={summary.oldBalance}
               onChange={(e) =>
-  setSummary({
-    ...summary,
-    oldBalance: Math.max(0, Number(e.target.value) || 0),
-  })
-}
-min="0"
+                setSummary({
+                  ...summary,
+                  oldBalance: Math.max(0, Number(e.target.value) || 0),
+                })
+              }
+              min="0"
               onKeyDown={handleBillingEnterMove}
               className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
             />
@@ -1595,12 +1622,12 @@ min="0"
               data-billing-flow
               value={summary.discountValue}
               onChange={(e) =>
-  setSummary({
-    ...summary,
-    discountValue: Math.max(0, Number(e.target.value) || 0),
-  })
-}
-min="0"
+                setSummary({
+                  ...summary,
+                  discountValue: Math.max(0, Number(e.target.value) || 0),
+                })
+              }
+              min="0"
               onKeyDown={handleBillingEnterMove}
               className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
               placeholder="0"
@@ -1615,12 +1642,12 @@ min="0"
               data-billing-flow
               value={summary.receivedAmount}
               onChange={(e) =>
-  setSummary({
-    ...summary,
-    receivedAmount: Math.max(0, Number(e.target.value) || 0),
-  })
-}
-min="0"
+                setSummary({
+                  ...summary,
+                  receivedAmount: Math.max(0, Number(e.target.value) || 0),
+                })
+              }
+              min="0"
               onKeyDown={handleBillingEnterMove}
               className="w-full bg-gray-700 text-white p-2 rounded border border-gray-600 focus:border-teal-500 outline-none"
             />
@@ -1653,167 +1680,167 @@ min="0"
           </div> */}
 
           <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 mt-4">
-  <h3 className="text-lg font-bold text-teal-300 mb-4">
-    Calculation Summary
-  </h3>
+            <h3 className="text-lg font-bold text-teal-300 mb-4">
+              Calculation Summary
+            </h3>
 
-  <div className="space-y-4 text-sm">
+            <div className="space-y-4 text-sm">
 
-    {/* SUBTOTAL */}
-    <div>
-      <div className="text-gray-400 mb-1">
-        Subtotal
-      </div>
+              {/* SUBTOTAL */}
+              <div>
+                <div className="text-gray-400 mb-1">
+                  Subtotal
+                </div>
 
-      <div className="text-white font-semibold">
-        ₹{totals.subtotal.toFixed(2)}
-      </div>
-    </div>
+                <div className="text-white font-semibold">
+                  ₹{totals.subtotal.toFixed(2)}
+                </div>
+              </div>
 
 
-    {/* DISCOUNT */}
-    <div>
-      <div className="text-gray-400 mb-1">
-        Discount
-      </div>
+              {/* DISCOUNT */}
+              <div>
+                <div className="text-gray-400 mb-1">
+                  Discount
+                </div>
 
-      {totals.discount > 0 ? (
-        <>
-          <div className="text-gray-300">
-            ₹{totals.subtotal.toFixed(2)}
-            {" − "}
-            ₹{totals.discount.toFixed(2)}
+                {totals.discount > 0 ? (
+                  <>
+                    <div className="text-gray-300">
+                      ₹{totals.subtotal.toFixed(2)}
+                      {" − "}
+                      ₹{totals.discount.toFixed(2)}
+                    </div>
+
+                    <div className="text-green-400 font-semibold">
+                      = ₹{totals.afterDiscount.toFixed(2)}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-gray-300">
+                    No discount
+                  </div>
+                )}
+              </div>
+
+
+              {/* PORTERAGE */}
+              <div>
+                <div className="text-gray-400 mb-1">
+                  Porterage
+                </div>
+
+                {summary.porterage === "" ||
+                  summary.porterage === undefined ||
+                  summary.porterage === null ? (
+                  <>
+                    <div className="text-gray-300">
+                      {totals.totalWeight.toFixed(2)}
+                      {" ÷ "}
+                      {Number(summary.porteragePerKg || 30)}
+                      {" × ₹"}
+                      {Number(summary.porterageRate || 10)}
+                    </div>
+
+                    <div className="text-green-400 font-semibold">
+                      = ₹{totals.porterage.toFixed(2)}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-gray-300">
+                      Manual Porterage
+                    </div>
+
+                    <div className="text-green-400 font-semibold">
+                      = ₹{totals.porterage.toFixed(2)}
+                    </div>
+                  </>
+                )}
+              </div>
+
+
+              {/* OLD BALANCE */}
+              <div>
+                <div className="text-gray-400 mb-1">
+                  Old Balance
+                </div>
+
+                <div className="text-white font-semibold">
+                  ₹{totals.oldBalance.toFixed(2)}
+                </div>
+              </div>
+
+
+              {/* GRAND TOTAL */}
+              <div className="border-t border-gray-600 pt-4">
+
+                <div className="text-gray-400 mb-1">
+                  Grand Total
+                </div>
+
+                <div className="text-gray-300">
+                  ₹{totals.afterDiscount.toFixed(2)}
+                  {" + "}
+                  ₹{totals.porterage.toFixed(2)}
+                  {" + "}
+                  ₹{totals.oldBalance.toFixed(2)}
+                </div>
+
+                <div className="text-teal-300 text-lg font-bold mt-1">
+                  = ₹{totals.total.toFixed(2)}
+                </div>
+
+              </div>
+
+
+              {/* RECEIVED */}
+              <div>
+                <div className="text-gray-400 mb-1">
+                  Received Amount
+                </div>
+
+                <div className="text-white font-semibold">
+                  ₹{totals.receivedAmount.toFixed(2)}
+                </div>
+              </div>
+
+
+              {/* PAYABLE */}
+              <div className="border-t border-gray-700 pt-4">
+
+                <div className="text-gray-400 mb-1">
+                  Payable
+                </div>
+
+                <div className="text-gray-300">
+                  ₹{totals.total.toFixed(2)}
+                  {" − "}
+                  ₹{totals.receivedAmount.toFixed(2)}
+                </div>
+
+                <div className="text-yellow-300 text-lg font-bold mt-1">
+                  = ₹{totals.payable.toFixed(2)}
+                </div>
+
+              </div>
+
+
+              {/* PROFIT */}
+              <div className="border-t border-gray-700 pt-4">
+
+                <div className="text-gray-400 mb-1">
+                  Profit
+                </div>
+
+                <div className="text-green-400 text-lg font-bold">
+                  ₹{totals.totalProfit.toFixed(2)}
+                </div>
+
+              </div>
+
+            </div>
           </div>
-
-          <div className="text-green-400 font-semibold">
-            = ₹{totals.afterDiscount.toFixed(2)}
-          </div>
-        </>
-      ) : (
-        <div className="text-gray-300">
-          No discount
-        </div>
-      )}
-    </div>
-
-
-    {/* PORTERAGE */}
-    <div>
-      <div className="text-gray-400 mb-1">
-        Porterage
-      </div>
-
-      {summary.porterage === "" ||
-      summary.porterage === undefined ||
-      summary.porterage === null ? (
-        <>
-          <div className="text-gray-300">
-            {totals.totalWeight.toFixed(2)}
-            {" ÷ "}
-            {Number(summary.porteragePerKg || 30)}
-            {" × ₹"}
-            {Number(summary.porterageRate || 10)}
-          </div>
-
-          <div className="text-green-400 font-semibold">
-            = ₹{totals.porterage.toFixed(2)}
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="text-gray-300">
-            Manual Porterage
-          </div>
-
-          <div className="text-green-400 font-semibold">
-            = ₹{totals.porterage.toFixed(2)}
-          </div>
-        </>
-      )}
-    </div>
-
-
-    {/* OLD BALANCE */}
-    <div>
-      <div className="text-gray-400 mb-1">
-        Old Balance
-      </div>
-
-      <div className="text-white font-semibold">
-        ₹{totals.oldBalance.toFixed(2)}
-      </div>
-    </div>
-
-
-    {/* GRAND TOTAL */}
-    <div className="border-t border-gray-600 pt-4">
-
-      <div className="text-gray-400 mb-1">
-        Grand Total
-      </div>
-
-      <div className="text-gray-300">
-        ₹{totals.afterDiscount.toFixed(2)}
-        {" + "}
-        ₹{totals.porterage.toFixed(2)}
-        {" + "}
-        ₹{totals.oldBalance.toFixed(2)}
-      </div>
-
-      <div className="text-teal-300 text-lg font-bold mt-1">
-        = ₹{totals.total.toFixed(2)}
-      </div>
-
-    </div>
-
-
-    {/* RECEIVED */}
-    <div>
-      <div className="text-gray-400 mb-1">
-        Received Amount
-      </div>
-
-      <div className="text-white font-semibold">
-        ₹{totals.receivedAmount.toFixed(2)}
-      </div>
-    </div>
-
-
-    {/* PAYABLE */}
-    <div className="border-t border-gray-700 pt-4">
-
-      <div className="text-gray-400 mb-1">
-        Payable
-      </div>
-
-      <div className="text-gray-300">
-        ₹{totals.total.toFixed(2)}
-        {" − "}
-        ₹{totals.receivedAmount.toFixed(2)}
-      </div>
-
-      <div className="text-yellow-300 text-lg font-bold mt-1">
-        = ₹{totals.payable.toFixed(2)}
-      </div>
-
-    </div>
-
-
-    {/* PROFIT */}
-    <div className="border-t border-gray-700 pt-4">
-
-      <div className="text-gray-400 mb-1">
-        Profit
-      </div>
-
-      <div className="text-green-400 text-lg font-bold">
-        ₹{totals.totalProfit.toFixed(2)}
-      </div>
-
-    </div>
-
-  </div>
-</div>
 
           <div>
             <label className="text-sm text-gray-400">Note</label>
@@ -1828,15 +1855,15 @@ min="0"
 
           <div className="space-y-2 pt-4">
 
-              <button
-                type="button"
-                onClick={handleSaveBill}
-                disabled={isSaving}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition-all"
-              >
-                {isSaving ? "Saving…" : editingBill ? "Update Bill" : "Save Bill"}
-              </button>
-              {editingBill && <button onClick={() => { localStorage.removeItem("currentBillingDraft"); onCancelEdit?.(); }} className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 rounded">Cancel Edit</button>}
+            <button
+              type="button"
+              onClick={handleSaveBill}
+              disabled={isSaving}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition-all"
+            >
+              {isSaving ? "Saving…" : editingBill ? "Update Bill" : "Save Bill"}
+            </button>
+            {editingBill && <button onClick={() => { localStorage.removeItem("currentBillingDraft"); onCancelEdit?.(); }} className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 rounded">Cancel Edit</button>}
             <button
               onClick={handleGeneratePDF}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded transition-all"
@@ -1907,9 +1934,7 @@ min="0"
                 </h2>
 
                 <button
-                  onClick={() =>
-                    setShowAddItemModal(false)
-                  }
+                  onClick={() => setShowAddItemModal(false)}
                   className="text-gray-400 hover:text-white text-xl"
                 >
                   ×
@@ -1918,22 +1943,59 @@ min="0"
 
               <div className="space-y-3">
 
+                {/* Marathi Name */}
                 <input
                   type="text"
-                  placeholder="Product Name"
-                  value={newItemData.item}
+                  placeholder="Marathi Name *"
+                  value={newItemData.marathiName}
                   onChange={(e) =>
                     setNewItemData({
                       ...newItemData,
-                      item: e.target.value
+                      marathiName: e.target.value
                     })
                   }
                   className="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:border-teal-500 outline-none"
                 />
 
+                {/* English Name */}
                 <input
                   type="text"
-                  placeholder="Category"
+                  placeholder="English Name *"
+                  value={newItemData.englishName}
+                  onChange={(e) =>
+                    setNewItemData({
+                      ...newItemData,
+                      englishName: e.target.value
+                    })
+                  }
+                  className="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:border-teal-500 outline-none"
+                />
+
+                {/* Type */}
+                <select
+                  value={newItemData.type}
+                  onChange={(e) =>
+                    setNewItemData({
+                      ...newItemData,
+                      type: e.target.value
+                    })
+                  }
+                  className="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:border-teal-500 outline-none"
+                >
+                  <option value="">Select Type *</option>
+                  <option value="KG">KG</option>
+                  <option value="Gram">Gram</option>
+                  <option value="Litre">Litre</option>
+                  <option value="ML">ML</option>
+                  <option value="Piece">Piece</option>
+                  <option value="Packet">Packet</option>
+                  <option value="Box">Box</option>
+                  <option value="Bottle">Bottle</option>
+                  <option value="Dozen">Dozen</option>
+                </select>
+
+                {/* Category */}
+                <select
                   value={newItemData.category}
                   onChange={(e) =>
                     setNewItemData({
@@ -1942,11 +2004,63 @@ min="0"
                     })
                   }
                   className="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:border-teal-500 outline-none"
-                />
+                >
+                  <option value="">Select Category *</option>
 
+                  <option value="Grocery">Grocery</option>
+                  <option value="Pulses & Dals">Pulses & Dals</option>
+                  <option value="Rice & Grains">Rice & Grains</option>
+                  <option value="Flours & Atta">Flours & Atta</option>
+                  <option value="Sugar & Salt">Sugar & Salt</option>
+                  <option value="Oil & Ghee">Oil & Ghee</option>
+                  <option value="Spices & Masala">Spices & Masala</option>
+                  <option value="Dry Fruits & Nuts">Dry Fruits & Nuts</option>
+                  <option value="Tea & Coffee">Tea & Coffee</option>
+                  <option value="Biscuits & Cookies">Biscuits & Cookies</option>
+                  <option value="Namkeen & Snacks">Namkeen & Snacks</option>
+                  <option value="Instant & Packaged Food">
+                    Instant & Packaged Food
+                  </option>
+                  <option value="Noodles & Pasta">Noodles & Pasta</option>
+                  <option value="Breakfast & Cereals">
+                    Breakfast & Cereals
+                  </option>
+                  <option value="Sauces & Spreads">
+                    Sauces & Spreads
+                  </option>
+                  <option value="Pickles & Chutneys">
+                    Pickles & Chutneys
+                  </option>
+                  <option value="Beverages">Beverages</option>
+
+                  <option value="Dairy Products">Dairy Products</option>
+                  <option value="Bakery Products">Bakery Products</option>
+                  <option value="Frozen Foods">Frozen Foods</option>
+                  <option value="Fruits & Vegetables">
+                    Fruits & Vegetables
+                  </option>
+
+                  <option value="Personal Care">Personal Care</option>
+                  <option value="Home Care & Cleaning">
+                    Home Care & Cleaning
+                  </option>
+                  <option value="Household Items">
+                    Household Items
+                  </option>
+                  <option value="Baby Care">Baby Care</option>
+                  <option value="Pet Care">Pet Care</option>
+                  <option value="Stationery">Stationery</option>
+                  <option value="Pooja & Religious Items">
+                    Pooja & Religious Items
+                  </option>
+
+                  <option value="Other">Other</option>
+                </select>
+
+                {/* Cost Price */}
                 <input
                   type="number"
-                  placeholder="Cost Price"
+                  placeholder="Cost Price (₹) *"
                   value={newItemData.costPrice}
                   onChange={(e) =>
                     setNewItemData({
@@ -1957,9 +2071,10 @@ min="0"
                   className="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:border-teal-500 outline-none"
                 />
 
+                {/* Selling Price */}
                 <input
                   type="number"
-                  placeholder="Selling Price"
+                  placeholder="Selling Price (₹) *"
                   value={newItemData.sellingPrice}
                   onChange={(e) =>
                     setNewItemData({
@@ -1970,6 +2085,30 @@ min="0"
                   className="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:border-teal-500 outline-none"
                 />
 
+                {/* Unit Type */}
+                <select
+                  value={newItemData.unitType}
+                  onChange={(e) =>
+                    setNewItemData({
+                      ...newItemData,
+                      unitType: e.target.value
+                    })
+                  }
+                  className="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:border-teal-500 outline-none"
+                >
+                  <option value="">Select Unit</option>
+                  <option value="KG">KG</option>
+                  <option value="Gram">Gram</option>
+                  <option value="Litre">Litre</option>
+                  <option value="ML">ML</option>
+                  <option value="Piece">Piece</option>
+                  <option value="Packet">Packet</option>
+                  <option value="Box">Box</option>
+                  <option value="Bottle">Bottle</option>
+                  <option value="Dozen">Dozen</option>
+                </select>
+
+                {/* Weight Per Unit */}
                 <input
                   type="number"
                   placeholder="Weight Per Unit"
@@ -1983,30 +2122,12 @@ min="0"
                   className="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:border-teal-500 outline-none"
                 />
 
-                <select
-                  value={newItemData.unitType}
-                  onChange={(e) =>
-                    setNewItemData({
-                      ...newItemData,
-                      unitType: e.target.value
-                    })
-                  }
-                  className="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:border-teal-500 outline-none"
-                >
-                  <option value="KG">KG</option>
-                  <option value="Gram">Gram</option>
-                  <option value="Piece">Piece</option>
-                  <option value="Box">Box</option>
-                </select>
-
               </div>
 
               <div className="flex gap-3 mt-6">
 
                 <button
-                  onClick={() =>
-                    setShowAddItemModal(false)
-                  }
+                  onClick={() => setShowAddItemModal(false)}
                   className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-3 rounded font-semibold"
                 >
                   Cancel
@@ -2022,7 +2143,6 @@ min="0"
               </div>
 
             </div>
-
           </div>
         )
       }

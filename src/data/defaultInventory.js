@@ -2884,16 +2884,35 @@ export const defaultInventory = [
   
   
 ]
-.filter((item, index, self) =>
-  index === self.findIndex(i =>
-    i.item.trim().toLowerCase() === item.item.trim().toLowerCase()
-  )
-)
-.map((item, index) => ({
-  ...item,
-  sn: index + 1,
-  profit: item.sellingPrice - item.costPrice,
-  unitType: item.type,
-  weightPerUnit: item.weightPerUnit || 1,
-  createdAt: '2026-06-10T00:00:00.000Z',
-}));
+// .filter((item, index, self) =>
+//   index === self.findIndex(i =>
+//     i.item.trim().toLowerCase() === item.item.trim().toLowerCase()
+//   )
+// )
+// .map((item, index) => ({
+//   ...item,
+//   sn: index + 1,
+//   profit: item.sellingPrice - item.costPrice,
+//   unitType: item.type,
+//   weightPerUnit: item.weightPerUnit || 1,
+//   createdAt: '2026-06-10T00:00:00.000Z',
+// }));
+
+.map((item, index) => {
+  const [marathiName = '', englishName = ''] = item.item
+    .split('/')
+    .map(name => name.trim());
+
+  return {
+    ...item,
+    sn: index + 1,
+
+    marathiName,
+    englishName,
+
+    profit: item.sellingPrice - item.costPrice,
+    unitType: item.type,
+    weightPerUnit: item.weightPerUnit || 1,
+    createdAt: '2026-06-10T00:00:00.000Z',
+  };
+});
